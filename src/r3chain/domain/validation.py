@@ -206,6 +206,8 @@ def _check_references(scenario: Scenario, found: _Collector) -> None:
                 f"connection {route.to_connection_id!r} is not defined",
             )
 
+    _check_coupling_references(scenario, found)
+
     document = scenario.to_json_dict()
     for model in scenario.uncertainty_models:
         for variable in model.variables:
@@ -234,6 +236,103 @@ def _check_references(scenario: Scenario, found: _Collector) -> None:
                     f"{base}.series[{reference.series_id}].dataset_id",
                     f"dataset {reference.dataset_id!r} is not registered in this scenario",
                 )
+
+
+def _check_coupling_references(scenario: Scenario, found: _Collector) -> None:
+    """Operating cases and coupling cases must refer to records that exist and fit together."""
+    networks = {item.network_id: item for item in scenario.networks}
+    well_scenarios = {item.source_scenario_id: item for item in scenario.well_scenarios}
+    plants = {item.plant_id for item in scenario.plants}
+    connections = {item.connection_id: item for item in scenario.connections}
+    operating_cases = {item.operating_case_id: item for item in scenario.operating_cases}
+    routes = {item.route_id: item for item in scenario.routes}
+    sites = {item.site_id for item in scenario.sites}
+
+    for operating_case in scenario.operating_cases:
+        base = f"operating_cases[{operating_case.operating_case_id}]"
+        network = networks.get(operating_case.network_id)
+        if network is None:
+            found.error(
+                "unknown_reference",
+                f"{base}.network_id",
+                f"network {operating_case.network_id!r} is not defined",
+            )
+            continue
+        loads = value_or_none(operating_case.loads)
+        if loads is None:
+            continue
+        consumers = {consumer.consumer_id for consumer in network.consumers}
+        given = {load.consumer_id for load in loads}
+        for unknown in sorted(given - consumers):
+            found.error(
+                "unknown_reference",
+                f"{base}.loads",
+                f"consumer {unknown!r} is not in network {network.network_id!r}",
+            )
+        for absent in sorted(consumers - given):
+            found.error(
+                "missing_load",
+                f"{base}.loads",
+                f"no load is given for consumer {absent!r}. State a heat of zero explicitly",
+            )
+
+    for case in scenario.coupling_cases:
+        base = f"coupling_cases[{case.coupling_case_id}]"
+        for field, known, what in (
+            ("source_scenario_id", well_scenarios, "well scenario"),
+            ("plant_id", plants, "plant"),
+            ("connection_id", connections, "connection"),
+            ("operating_case_id", operating_cases, "operating case"),
+        ):
+            identifier = getattr(case, field)
+            if identifier not in known:
+                found.error(
+                    "unknown_reference", f"{base}.{field}", f"{what} {identifier!r} is not defined"
+                )
+        connection = connections.get(case.connection_id)
+        operated = operating_cases.get(case.operating_case_id)
+        if (
+            connection is not None
+            and operated is not None
+            and connection.network_id != operated.network_id
+        ):
+            found.error(
+                "network_mismatch",
+                f"{base}.operating_case_id",
+                f"operating case {operated.operating_case_id!r} is for network "
+                f"{operated.network_id!r}, connection {connection.connection_id!r} is on "
+                f"{connection.network_id!r}",
+            )
+        if case.route_id is None:
+            continue
+        route = routes.get(case.route_id)
+        if route is None:
+            found.error(
+                "unknown_reference", f"{base}.route_id", f"route {case.route_id!r} is not defined"
+            )
+            continue
+        well_scenario = well_scenarios.get(case.source_scenario_id)
+        # A reference that is itself broken is reported once, where it is broken. Only a route
+        # and a source that both exist can disagree.
+        from_other_site = (
+            well_scenario is not None
+            and well_scenario.site_id in sites
+            and route.from_site_id in sites
+            and route.from_site_id != well_scenario.site_id
+        )
+        to_other_connection = (
+            case.connection_id in connections
+            and route.to_connection_id in connections
+            and route.to_connection_id != case.connection_id
+        )
+        if from_other_site or to_other_connection:
+            found.error(
+                "route_mismatch",
+                f"{base}.route_id",
+                f"route {route.route_id!r} runs from site {route.from_site_id!r} to connection "
+                f"{route.to_connection_id!r}. It cannot be combined with a source at another "
+                "site or with another connection",
+            )
 
 
 def _check_sources(scenario: Scenario, found: _Collector) -> bool:

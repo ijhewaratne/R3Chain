@@ -10,8 +10,8 @@ a change to this file requires a new dataset version.
 ## 1. Purpose
 
 A small public study that exercises every part of the evaluation chain, so that development and
-tests never depend on restricted data. This is the milestone M1 version, registered as dataset
-version 2. Milestone M3 extends it with full screening inputs, and milestone M4 adds demand,
+tests never depend on restricted data. This is the milestone M2 version, registered as dataset
+version 3. Milestone M3 extends it with full screening inputs, and milestone M4 adds demand,
 availability and price series.
 
 ## 2. Sites
@@ -66,3 +66,47 @@ example. They are not project assumptions. Cost amounts are round invented numbe
 
 Two scenario sets without probabilities. The geological success event is left undefined, because
 its definition is open decision O05.
+
+## 7. Plants
+
+Three integration concepts, one for each registered arrangement. All equipment values are round
+invented numbers. None describes a selected product.
+
+| Plant | Arrangement | Purpose in the study |
+|---|---|---|
+| plant-direct | direct_exchanger | Direct heat through one exchanger |
+| plant-heat-pump | heat_pump_assisted | Heat for a source that is colder than the required supply |
+| plant-separated | pressure_separation_exchanger | A second exchanger that separates the network pressure zone |
+
+The exchangers have a conductance of 450 kW/K, a fouling allowance of 10 percent and a minimum
+approach of 5 K. The separation exchanger has 600 kW/K and 3 K. The pressure loss on the network
+side of the direct exchanger is left unknown on purpose, so that its check stays visible as not
+evaluated.
+
+The heat pump map is an invented table of the coefficient of performance and the capacity over
+source inlet and sink outlet temperature. It is not a product and not manufacturer data. The
+geothermal stream is not cooled below 303.15 K, the same value as the lowest injection
+temperature of the synthetic sources. Five percent of the compressor electricity is taken as
+lost to the surroundings.
+
+## 8. Operating cases and coupling cases
+
+Three steady network states. Every consumer returns water at 323.15 K.
+
+| Operating case | Load | Ground temperature |
+|---|---|---|
+| winter-design | 100 percent of the design heat, 3.0 MW | 278.15 K |
+| shoulder-season | 40 percent, 1.2 MW | 283.15 K |
+| summer-minimum | 20 percent, 0.6 MW | 288.15 K |
+
+Six coupling cases at the western connection, with a circulation pressure lift of 150 000 Pa.
+They are chosen so that every outcome of the coupling occurs once.
+
+| Coupling case | What it shows |
+|---|---|
+| alpha-direct-shoulder | Direct heat covers the demand |
+| alpha-direct-winter | The source reaches its drawdown limit and leaves a deficit |
+| alpha-direct-winter-backup | The same shortfall, covered by a declared backup boiler of 1.5 MW |
+| beta-direct-summer | The source is colder than the required supply, so direct heat fails at the hot end |
+| beta-heat-pump-shoulder | The same source covers the demand with a heat pump |
+| alpha-separated-shoulder | Direct heat through a pressure separation exchanger |

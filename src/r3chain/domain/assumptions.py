@@ -26,6 +26,10 @@ def _plain(value: Any) -> Any:
         return value.model_dump(mode="json")
     if isinstance(value, Enum):
         return value.value
+    if isinstance(value, tuple | list):
+        return [_plain(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _plain(item) for key, item in value.items()}
     return value
 
 

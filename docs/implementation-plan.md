@@ -1,7 +1,7 @@
 # R3CHAIN Geothermal Planning System: Implementation Plan
 
 Draft 1, 15 November 2026. Based on the Implementation Specification v1.0 (15 November 2026).
-Status: approved as the basis for building on 15 November 2026. Milestones M0 and M1 are built. M2 to M9 are not. Section 11 records progress and every departure from this plan.
+Status: approved as the basis for building on 15 November 2026. Milestones M0, M1 and M2 are built. M3 to M9 are not. Section 11 records progress and every departure from this plan.
 
 References such as §7.2 point to sections of the specification. W, P, O and A identifiers are the specification's own (workshop points, proposals, open decisions, acceptance tests). M0 to M9 are the milestones of this plan, and X1 to X15 are its extension points.
 
@@ -557,3 +557,42 @@ Choices made beyond the plan:
 
 - pandapipes is an optional dependency, pinned to the tested release. The core works without it.
 - The synthetic network's pressure reference was raised from 4 to 7.5 bar absolute. At 4 bar its highest node, 50 m above the reference, would be below zero absolute pressure. The lower value is kept in the tests as a deliberate infeasible case.
+
+### M2. Plant coupling (built)
+
+Delivered:
+
+- Enthalpy models for liquid streams: a constant heat capacity that must state its basis, and a tabulated heat capacity that is integrated exactly and never extrapolated.
+- Counterflow exchanger with five named limits (demand, hot end approach, cold end approach, lowest geothermal outlet temperature, surface rating by effectiveness and NTU), a fouling allowance and a pressure loss scaled from a rated point.
+- Heat pump behind one interface: a tabulated performance map that is interpolated and never extrapolated, and a Carnot based screening model whose results are labelled as such. The energy balance uses a stated share of the compressor electricity that is lost to the surroundings.
+- Plant registry with three arrangements: `direct_exchanger`, `heat_pump_assisted` and `pressure_separation_exchanger`. A new arrangement is one registry entry, which a test demonstrates.
+- The coupling iteration of specification 10.4, with residuals for temperature, heat and flow, a recorded history of every pass and damping from the numerical policy.
+- Energy ledger from reservoir extraction to consumer delivery, with a balance for the geothermal circuit, the plant and the network, and an audit of the ideal boundary of the network model.
+- Records: plant, operating case, coupling case and coupling result. The scenario gains plants, operating cases and coupling cases (scenario 0.2.0, with a migration).
+- The coupling stage of the pipeline replaces its placeholder. `r3chain couple` evaluates the coupling cases of a scenario file.
+- Six coupling cases in the synthetic study, chosen so that every outcome occurs once. The forced non convergence, the failures of each engine and the unsupported cases are produced in the tests by changing these cases.
+
+Gate: A01, A02, A03, A05 and A13 are met. The same frozen input reproduces the identical result. The heat of the ideal network boundary is always assigned to the plant, to a declared backup or to a reported deficit.
+
+How the coupling is set up. These are modelling decisions that the specification leaves open. Each one should be reviewed by Tanja and Jan before pilot use:
+
+1. **The network is solved at the supply temperature the connection requires.** Its return temperature, mass flow and heat at the connection are the demand. The iteration then runs between the source and the plant. The reason is the consumer model: a consumer takes a fixed heat, so a source that is short of power has no steady state at a lower supply temperature. A shortfall is therefore a deficit at the connection, or heat from a declared backup. It is never a silently lower temperature in the network. Operating the network below its required supply temperature would need a consumer model that responds to temperature.
+2. **Each engine owns the heat accounting of its own fluid.** The plant takes the mean heat capacity of the geothermal stream from the source result and that of the network stream from the network result. A fixed 4180 J/(kg K) for network water would be 0.2 percent off between 50 and 80 degrees Celsius, which is more than the heat tolerance of 0.1 percent.
+3. **Geothermal flow control.** `follow_demand` uses the smallest flow that covers the demand. If the demand cannot be covered, it uses the smallest flow that delivers as much heat as the largest flow would, so a source that is too cold is not driven to its flow limit for nothing. For a heat pump plant the smallest flow means the largest cooling of the geothermal stream and the largest compressor work. That is a stated rule and not an optimum. `fixed` takes a given flow. A dispatch strategy arrives with M4.
+4. **The source is operated inside the flow range of the source policy.** When the source rejects a flow, the largest flow it accepts is found by bisection on the answers of the source model itself. No engine specific limit is read.
+5. **The minimum approach is a design rule on top of the surface rating.** A very large UA never lets two streams come closer than the approach.
+6. **Checks are evaluated in a fixed order, each for the duty the earlier ones permit.** A shortfall is then reported once, at the limit that causes it. A source that is both too cold and too small shows both.
+7. **A backup stands in series after the plant at the same connection.** The network adapter supports one supply point. A second source elsewhere in the network needs the adapter work planned with M4.
+8. **A heat pump operating point outside its performance map is a failed check.** The map is taken as the range the machine may run in.
+
+Not modelled yet, and listed in every coupling result: heat loss and pressure loss of the route between site and connection (M3), electricity of the network circulation pump (its hydraulic power is reported), part load behaviour, and pumping of the intermediate loop. Exchanger pressure losses are reported and checked against a limit. They are not yet fed back into the network hydraulics.
+
+Choices made beyond the plan:
+
+- The coupling stage needs the source stage only, because the coupling cases are written out in the scenario. From M3 they come from the screened candidates.
+- A coupling case that fails physically is a valid evaluation and leaves the stage complete. A case that could not be evaluated gives the stage its own state, and the stages after it then do not run for any case. Results per candidate arrive with M3.
+- A coupling case at the eastern connection ends as `unsupported_model`, because the pandapipes adapter needs the pressure reference at the connection it supplies.
+- Results are converged to the tolerances of the numerical policy and not beyond. The balance of the geothermal circuit can therefore show a residual of up to 0.1 percent of the heat.
+- The numerical policy is now version 2. It adds absolute tolerances, damping and the settings of the network engine.
+- The definitions of the synthetic study are dataset version 3.
+- A unit suffix `_ratio` was added for dimensionless ratios such as a coefficient of performance.

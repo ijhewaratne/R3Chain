@@ -52,8 +52,11 @@ entries:
     statement: Implement a bounded, controllable source component and shared result contracts
     milestone: M2
     lands_in: [coupling, adapters]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_undersized_source_leaves_a_reported_deficit
+      - test_a_fixed_flow_gives_only_the_heat_that_is_asked_for
+      - test_failures_keep_their_origin_and_category
   - id: W06
     kind: workshop
     source: "p 8, 20:36-21:42"
@@ -68,8 +71,10 @@ entries:
     statement: Evaluate site and connection together with explicit plant coupling
     milestone: M3
     lands_in: [coupling, search]
-    status: planned
-    tests: []
+    status: partial
+    tests:
+      - test_direct_heat_covers_the_shoulder_season
+      - test_coupling_cases_must_fit_the_scenario
   - id: W08
     kind: workshop
     source: "p 11, 30:02-31:26"
@@ -124,8 +129,10 @@ entries:
       economics as explicit scenario fields and modelled alternatives
     milestone: M4
     lands_in: [economics, coupling, uncertainty]
-    status: planned
-    tests: []
+    status: partial
+    tests:
+      - test_heat_pump_assisted_case_balances_in_the_ledger
+      - test_screening_model_results_are_labelled
   - id: W14
     kind: workshop
     source: "pp 16-21, 47:51-1:01:20"
@@ -148,8 +155,11 @@ entries:
     statement: Define temperature zones and evaluate alternative integration architectures
     milestone: M4
     lands_in: [coupling, domain]
-    status: planned
-    tests: []
+    status: partial
+    tests:
+      - test_registry_holds_the_three_arrangements_of_the_plan
+      - test_a_new_arrangement_is_one_registry_entry
+      - test_pressure_separation_costs_temperature
   - id: W17
     kind: workshop
     source: "pp 30-31, 1:21:49-1:25:02"
@@ -408,8 +418,12 @@ entries:
       within the numerical policy
     milestone: M2
     lands_in: [coupling]
-    status: partial
-    tests: [test_exchanger_energy_balance_closes]
+    status: built
+    tests:
+      - test_exchanger_energy_balance_closes
+      - test_enthalpy_of_tabulated_heat_capacity_matches_numerical_integration
+      - test_exchanger_balance_closes_on_enthalpy_with_a_temperature_dependent_fluid
+      - test_coupled_heat_balance_agrees_with_independent_calculations
   - id: A02
     kind: acceptance
     statement: >-
@@ -417,8 +431,11 @@ entries:
       specific limiting terminal
     milestone: M2
     lands_in: [coupling]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_terminal_checks_name_the_failing_end
+      - test_a_source_that_is_too_cold_fails_at_the_hot_end_only
+      - test_inadequate_hot_end_approach_fails_direct_heat_with_its_terminal
   - id: A03
     kind: acceptance
     statement: >-
@@ -426,8 +443,12 @@ entries:
       stated loss model
     milestone: M2
     lands_in: [coupling]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_heat_pump_balance_closes_under_the_stated_loss_model
+      - test_heat_pump_balance_closes_for_any_operating_point
+      - test_heat_pump_assisted_plant_keeps_its_two_heat_paths_apart
+      - test_heat_pump_assisted_case_balances_in_the_ledger
   - id: A04
     kind: acceptance
     statement: >-
@@ -447,8 +468,11 @@ entries:
       backup source
     milestone: M2
     lands_in: [coupling]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_undersized_source_leaves_a_reported_deficit
+      - test_declared_backup_covers_the_shortfall_explicitly
+      - test_a_backup_that_is_too_small_still_leaves_a_deficit
   - id: A06
     kind: acceptance
     statement: >-
@@ -526,17 +550,25 @@ entries:
       - test_a_missing_input_gives_no_number
       - test_an_unknown_required_input_stops_the_request
       - test_an_unknown_source_input_is_reported_and_not_defaulted
+      - test_an_unknown_required_plant_value_is_not_defaulted
+      - test_pressure_loss_is_reported_checked_or_left_open
+      - test_a_missing_required_input_stops_the_case_and_names_it
+      - test_unknown_limit_stays_an_unevaluated_check
+      - test_an_unknown_plant_input_is_reported_by_the_stage
   - id: A13
     kind: acceptance
     statement: >-
       Failure categories. Nonconvergence remains distinct from an infeasible resource or network
     milestone: M2
     lands_in: [domain, adapters, coupling]
-    status: partial
+    status: built
     tests:
       - test_non_convergence_is_not_a_technical_failure
       - test_a_numerical_failure_is_not_a_physical_one
       - test_non_convergence_and_a_pressure_limit_are_different_outcomes
+      - test_forced_non_convergence_is_not_reported_as_infeasible
+      - test_failures_keep_their_origin_and_category
+      - test_a_case_that_does_not_converge_leaves_the_study_unresolved
   - id: A14
     kind: acceptance
     statement: >-
@@ -558,6 +590,7 @@ entries:
       - test_changed_input_recomputes_dependent_stages
       - test_variant_creates_revision_with_change_record
       - test_only_the_stage_that_depends_on_a_change_is_recomputed
+      - test_changing_a_plant_value_recomputes_only_the_coupling
   - id: A16
     kind: acceptance
     statement: >-
@@ -573,7 +606,9 @@ entries:
     milestone: M6
     lands_in: [pipeline, reporting]
     status: partial
-    tests: [test_replay_is_identical]
+    tests:
+      - test_replay_is_identical
+      - test_a_run_with_coupling_replays_to_the_identical_result
   - id: A18
     kind: acceptance
     statement: >-

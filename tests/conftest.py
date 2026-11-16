@@ -10,7 +10,9 @@ from typing import Any
 import pytest
 
 from r3chain.adapters.source_synthetic import SyntheticSourceModel
+from r3chain.coupling.cases import CaseOutcome, MemoNetworkModel, evaluate_case
 from r3chain.domain.paths import PatchOperation, apply_patch
+from r3chain.domain.records.runs import Policy
 from r3chain.domain.records.scenario import Scenario
 from r3chain.domain.validation import read_data_file
 from r3chain.ports.network import NetworkCase
@@ -27,6 +29,10 @@ SYNTHETIC_SCENARIO = REPO_ROOT / "examples" / "synthetic" / "scenario.yaml"
 POLICY_DIRECTORY = REPO_ROOT / "policies"
 
 SYNTHETIC = {"provenance_type": "synthetic", "source_id": "syn-definitions"}
+
+
+# An engineering input that is not available yet.
+UNKNOWN_INPUT = {"state": "unknown", "reason": "not supplied yet", "owner": "study owner"}
 
 
 def known(value: Any) -> dict[str, Any]:
@@ -164,4 +170,62 @@ def source_request(scenario: Scenario, source_scenario_id: str = "source-alpha")
             max_iterations_count=50, temperature_tolerance_delta_k=1e-9
         ),
         capabilities=model.capabilities(),
+    )
+
+
+# --- helpers for the coupling tests ---------------------------------------------------------
+
+
+@pytest.fixture(scope="session")
+def network_model() -> MemoNetworkModel:
+    """One network engine for the whole session. Identical network cases are solved once."""
+    from r3chain.adapters.pandapipes_network import PandapipesNetworkModel
+
+    return MemoNetworkModel(PandapipesNetworkModel())
+
+
+def repository_policies() -> dict[str, Policy]:
+    return {policy.policy_id: policy for policy in load_policies(POLICY_DIRECTORY)}
+
+
+def policy_variant(policy: Policy, **parameters: Any) -> Policy:
+    """A policy with some values replaced. It is a new version, as the rules require."""
+    data = policy.to_json_dict()
+    return Policy.model_validate(
+        {**data, "version": "test", "parameters": {**data["parameters"], **parameters}}
+    )
+
+
+def couple(
+    network_model: MemoNetworkModel,
+    data: dict[str, Any],
+    case_id: str,
+    *,
+    patches: tuple[tuple[str, Any], ...] = (),
+    numerical: dict[str, Any] | None = None,
+    source: dict[str, Any] | None = None,
+) -> CaseOutcome:
+    """Evaluate one coupling case of scenario data, after optional changes.
+
+    ``patches`` are field path and value pairs applied to the scenario. ``numerical`` and
+    ``source`` replace values of the two policies.
+    """
+    if patches:
+        data = apply_patch(data, [PatchOperation("set", path, value) for path, value in patches])
+    scenario = Scenario.model_validate(data)
+    policies = repository_policies()
+    numerical_policy = policies["numerical-coupling-default"]
+    source_policy = policies["source-envelope-synthetic"]
+    if numerical:
+        numerical_policy = policy_variant(numerical_policy, **numerical)
+    if source:
+        source_policy = policy_variant(source_policy, **source)
+    case = next(item for item in scenario.coupling_cases if item.coupling_case_id == case_id)
+    return evaluate_case(
+        scenario,
+        case,
+        source_models=[SyntheticSourceModel()],
+        network_model=network_model,
+        source_policy=source_policy,
+        numerical_policy=numerical_policy,
     )

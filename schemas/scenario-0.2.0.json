@@ -1,0 +1,3339 @@
+{
+  "$defs": {
+    "AllowedUse": {
+      "enum": [
+        "public",
+        "project_internal",
+        "restricted"
+      ],
+      "title": "AllowedUse",
+      "type": "string"
+    },
+    "Alternative": {
+      "additionalProperties": false,
+      "description": "A supply concept compared in the study. One of them is the baseline.",
+      "properties": {
+        "alternative_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Alternative Id",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "alternative_id",
+        "label"
+      ],
+      "title": "Alternative",
+      "type": "object"
+    },
+    "AmountBasis": {
+      "enum": [
+        "total",
+        "per_year",
+        "per_joule_heat",
+        "per_joule_electricity"
+      ],
+      "title": "AmountBasis",
+      "type": "string"
+    },
+    "BackupSource": {
+      "additionalProperties": false,
+      "description": "An explicit heat source that tops up what the plant cannot deliver.\n\nIt stands in series after the plant at the same connection. Its heat is always reported as\nits own ledger entry. Without a backup, a shortfall is reported as a deficit.",
+      "properties": {
+        "backup_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Backup Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "max_heat_w": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        }
+      },
+      "required": [
+        "backup_id",
+        "description",
+        "max_heat_w"
+      ],
+      "title": "BackupSource",
+      "type": "object"
+    },
+    "BoundaryCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "boundary_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Boundary Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/BoundaryKind"
+        },
+        "node_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "pressure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pressure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temperature K"
+        }
+      },
+      "required": [
+        "boundary_id",
+        "node_id",
+        "kind"
+      ],
+      "title": "BoundaryCondition",
+      "type": "object"
+    },
+    "BoundaryKind": {
+      "enum": [
+        "pressure_reference",
+        "fixed_supply_temperature"
+      ],
+      "title": "BoundaryKind",
+      "type": "string"
+    },
+    "Circuit": {
+      "enum": [
+        "supply",
+        "return"
+      ],
+      "title": "Circuit",
+      "type": "string"
+    },
+    "Conflict_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "Conflict_Annotated_str__StringConstraints__": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Annotated_str__StringConstraints__"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Annotated[str, StringConstraints]]",
+      "type": "object"
+    },
+    "Conflict_ConstraintOutcome_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_ConstraintOutcome_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[ConstraintOutcome]",
+      "type": "object"
+    },
+    "Conflict_Depth_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Depth_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Depth]",
+      "type": "object"
+    },
+    "Conflict_Elevation_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Elevation_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Elevation]",
+      "type": "object"
+    },
+    "Conflict_Geometry_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Geometry_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Geometry]",
+      "type": "object"
+    },
+    "Conflict_HeatPumpMap_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_HeatPumpMap_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[HeatPumpMap]",
+      "type": "object"
+    },
+    "Conflict_LandStatus_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_LandStatus_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[LandStatus]",
+      "type": "object"
+    },
+    "Conflict_Pressure_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Pressure_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Pressure]",
+      "type": "object"
+    },
+    "Conflict_SuccessDefinition_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_SuccessDefinition_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[SuccessDefinition]",
+      "type": "object"
+    },
+    "Conflict_tuple_ConsumerLoad__________": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_tuple_ConsumerLoad__________"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[tuple[ConsumerLoad, ...]]",
+      "type": "object"
+    },
+    "Connection": {
+      "additionalProperties": false,
+      "description": "A supply and return node pair at which a plant can exchange heat with a network.",
+      "properties": {
+        "connection_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Connection Id",
+          "type": "string"
+        },
+        "heat_carrier": {
+          "$ref": "#/$defs/HeatCarrier"
+        },
+        "interface_type": {
+          "$ref": "#/$defs/InterfaceType"
+        },
+        "limits": {
+          "$ref": "#/$defs/ConnectionLimits"
+        },
+        "network_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Network Id",
+          "type": "string"
+        },
+        "return_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Return Node",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "supply_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Supply Node",
+          "type": "string"
+        },
+        "zone_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Zone Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "connection_id",
+        "network_id",
+        "zone_id",
+        "supply_node",
+        "return_node",
+        "interface_type",
+        "heat_carrier",
+        "limits"
+      ],
+      "title": "Connection",
+      "type": "object"
+    },
+    "ConnectionLimits": {
+      "additionalProperties": false,
+      "properties": {
+        "max_heat_w": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        "max_mass_flow_kg_s": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        "max_pressure": {
+          "$ref": "#/$defs/Evidence_Pressure_"
+        },
+        "min_pressure": {
+          "$ref": "#/$defs/Evidence_Pressure_"
+        },
+        "required_supply_temperature_k": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        "return_temperature_k": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        }
+      },
+      "required": [
+        "max_heat_w",
+        "max_mass_flow_kg_s",
+        "required_supply_temperature_k",
+        "return_temperature_k",
+        "min_pressure",
+        "max_pressure"
+      ],
+      "title": "ConnectionLimits",
+      "type": "object"
+    },
+    "ConstraintOutcome": {
+      "enum": [
+        "satisfied",
+        "violated"
+      ],
+      "title": "ConstraintOutcome",
+      "type": "string"
+    },
+    "Consumer": {
+      "additionalProperties": false,
+      "properties": {
+        "consumer_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Consumer Id",
+          "type": "string"
+        },
+        "design_heat_w": {
+          "exclusiveMinimum": 0.0,
+          "title": "Design Heat W",
+          "type": "number"
+        },
+        "return_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Return Node",
+          "type": "string"
+        },
+        "supply_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Supply Node",
+          "type": "string"
+        }
+      },
+      "required": [
+        "consumer_id",
+        "supply_node",
+        "return_node",
+        "design_heat_w"
+      ],
+      "title": "Consumer",
+      "type": "object"
+    },
+    "ConsumerLoad": {
+      "additionalProperties": false,
+      "description": "The demand of one consumer in one operating case.\n\nExactly one control is given: a fixed mass flow, or a return temperature that the consumer\nreaches by adjusting its flow.",
+      "properties": {
+        "consumer_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Consumer Id",
+          "type": "string"
+        },
+        "heat_w": {
+          "title": "Heat W",
+          "type": "number"
+        },
+        "mass_flow_kg_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mass Flow Kg S"
+        },
+        "return_temperature_k": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Return Temperature K"
+        }
+      },
+      "required": [
+        "consumer_id",
+        "heat_w"
+      ],
+      "title": "ConsumerLoad",
+      "type": "object"
+    },
+    "Control": {
+      "additionalProperties": false,
+      "properties": {
+        "control_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Control Id",
+          "type": "string"
+        },
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Parameters",
+          "type": "object"
+        },
+        "target_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Target Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "control_id",
+        "kind",
+        "target_id"
+      ],
+      "title": "Control",
+      "type": "object"
+    },
+    "CostCategory": {
+      "enum": [
+        "capex",
+        "fixed_opex",
+        "variable_cost",
+        "replacement",
+        "decommissioning",
+        "residual_value"
+      ],
+      "title": "CostCategory",
+      "type": "string"
+    },
+    "CostItem": {
+      "additionalProperties": false,
+      "description": "One line of the cost ledger.\n\n``asset_id`` and ``cost_owner`` exist so that a well, pump or exchanger already costed by\nthe source model is not added again downstream.",
+      "properties": {
+        "amount": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___",
+          "unit": "currency"
+        },
+        "amount_basis": {
+          "$ref": "#/$defs/AmountBasis"
+        },
+        "asset_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/CostCategory"
+        },
+        "cost_owner": {
+          "minLength": 1,
+          "title": "Cost Owner",
+          "type": "string"
+        },
+        "currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "included": {
+          "title": "Included",
+          "type": "boolean"
+        },
+        "item_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "lifetime_years": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "location": {
+          "minLength": 1,
+          "title": "Location",
+          "type": "string"
+        },
+        "price_convention": {
+          "$ref": "#/$defs/PriceConvention"
+        },
+        "price_year": {
+          "title": "Price Year",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item_id",
+        "asset_id",
+        "category",
+        "cost_owner",
+        "location",
+        "included",
+        "amount",
+        "amount_basis",
+        "currency",
+        "price_year",
+        "price_convention"
+      ],
+      "title": "CostItem",
+      "type": "object"
+    },
+    "CouplingCase": {
+      "additionalProperties": false,
+      "description": "One coupled operating point: a source, a plant, a connection and an operating case.",
+      "properties": {
+        "backup": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BackupSource"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "connection_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Connection Id",
+          "type": "string"
+        },
+        "coupling_case_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Coupling Case Id",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "fixed_geothermal_mass_flow_kg_s": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "flow_control": {
+          "$ref": "#/$defs/FlowControl"
+        },
+        "network_pressure_lift_pa": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        "operating_case_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Operating Case Id",
+          "type": "string"
+        },
+        "plant_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Plant Id",
+          "type": "string"
+        },
+        "route_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Route Id"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_scenario_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Source Scenario Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "coupling_case_id",
+        "source_scenario_id",
+        "plant_id",
+        "connection_id",
+        "operating_case_id",
+        "flow_control",
+        "network_pressure_lift_pa"
+      ],
+      "title": "CouplingCase",
+      "type": "object"
+    },
+    "Crossing": {
+      "additionalProperties": false,
+      "properties": {
+        "chainage_m": {
+          "minimum": 0.0,
+          "title": "Chainage M",
+          "type": "number"
+        },
+        "crossing_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Crossing Id",
+          "type": "string"
+        },
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "crossing_id",
+        "kind",
+        "chainage_m"
+      ],
+      "title": "Crossing",
+      "type": "object"
+    },
+    "Dataset": {
+      "additionalProperties": false,
+      "description": "One immutable version of a source file or package, identified by its checksum.",
+      "properties": {
+        "access_group": {
+          "minLength": 1,
+          "title": "Access Group",
+          "type": "string"
+        },
+        "acquired_at": {
+          "format": "date-time",
+          "title": "Acquired At",
+          "type": "string"
+        },
+        "allowed_use": {
+          "$ref": "#/$defs/AllowedUse"
+        },
+        "checksum": {
+          "title": "Checksum",
+          "type": "string"
+        },
+        "dataset_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/DatasetKind"
+        },
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        },
+        "quality": {
+          "$ref": "#/$defs/QualityStatus"
+        },
+        "quality_note": {
+          "default": "",
+          "title": "Quality Note",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_uri": {
+          "minLength": 1,
+          "title": "Source Uri",
+          "type": "string"
+        },
+        "spatial_extent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Geometry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "synthetic": {
+          "default": false,
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "time_extent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimeExtent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "version",
+        "kind",
+        "title",
+        "source_uri",
+        "checksum",
+        "owner",
+        "acquired_at",
+        "allowed_use",
+        "access_group",
+        "quality"
+      ],
+      "title": "Dataset",
+      "type": "object"
+    },
+    "DatasetKind": {
+      "enum": [
+        "gis",
+        "timeseries",
+        "measurement",
+        "document",
+        "parameter_package",
+        "definitions"
+      ],
+      "title": "DatasetKind",
+      "type": "string"
+    },
+    "Depth": {
+      "additionalProperties": false,
+      "description": "A depth together with its kind: true vertical depth or measured length along the well.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/DepthKind"
+        },
+        "value_m": {
+          "minimum": 0.0,
+          "title": "Value M",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value_m",
+        "kind"
+      ],
+      "title": "Depth",
+      "type": "object"
+    },
+    "DepthKind": {
+      "enum": [
+        "vertical",
+        "measured"
+      ],
+      "title": "DepthKind",
+      "type": "string"
+    },
+    "DistributionSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "minLength": 1,
+          "title": "Family",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Parameters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "family",
+        "parameters"
+      ],
+      "title": "DistributionSpec",
+      "type": "object"
+    },
+    "EconomicScenario": {
+      "additionalProperties": false,
+      "properties": {
+        "cost_items": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/CostItem"
+          },
+          "title": "Cost Items",
+          "type": "array"
+        },
+        "currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "discount_rate_per_year": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        "economic_scenario_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Economic Scenario Id",
+          "type": "string"
+        },
+        "horizon_years": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        "price_base_year": {
+          "title": "Price Base Year",
+          "type": "integer"
+        },
+        "price_convention": {
+          "$ref": "#/$defs/PriceConvention"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "vat_included": {
+          "title": "Vat Included",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "economic_scenario_id",
+        "price_base_year",
+        "currency",
+        "price_convention",
+        "vat_included",
+        "discount_rate_per_year",
+        "horizon_years"
+      ],
+      "title": "EconomicScenario",
+      "type": "object"
+    },
+    "Elevation": {
+      "additionalProperties": false,
+      "description": "A height together with its vertical datum.",
+      "properties": {
+        "value_m": {
+          "title": "Value M",
+          "type": "number"
+        },
+        "vertical_datum": {
+          "minLength": 1,
+          "title": "Vertical Datum",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value_m",
+        "vertical_datum"
+      ],
+      "title": "Elevation",
+      "type": "object"
+    },
+    "Equipment": {
+      "additionalProperties": false,
+      "properties": {
+        "equipment_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Equipment Id",
+          "type": "string"
+        },
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        },
+        "node_ids": {
+          "items": {
+            "maxLength": 120,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+            "type": "string"
+          },
+          "title": "Node Ids",
+          "type": "array"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Parameters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "equipment_id",
+        "kind",
+        "node_ids"
+      ],
+      "title": "Equipment",
+      "type": "object"
+    },
+    "Evidence_Annotated_float__Strict_strict_True___": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Annotated_float__Strict_strict_True___",
+          "known": "#/$defs/Known_Annotated_float__Strict_strict_True___",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Annotated_float__Strict_strict_True___"
+        }
+      ]
+    },
+    "Evidence_Annotated_str__StringConstraints__": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Annotated_str__StringConstraints__",
+          "known": "#/$defs/Known_Annotated_str__StringConstraints__",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Annotated_str__StringConstraints__"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Annotated_str__StringConstraints__"
+        }
+      ]
+    },
+    "Evidence_ConstraintOutcome_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_ConstraintOutcome_",
+          "known": "#/$defs/Known_ConstraintOutcome_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_ConstraintOutcome_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_ConstraintOutcome_"
+        }
+      ]
+    },
+    "Evidence_Depth_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Depth_",
+          "known": "#/$defs/Known_Depth_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Depth_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Depth_"
+        }
+      ]
+    },
+    "Evidence_Elevation_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Elevation_",
+          "known": "#/$defs/Known_Elevation_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Elevation_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Elevation_"
+        }
+      ]
+    },
+    "Evidence_Geometry_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Geometry_",
+          "known": "#/$defs/Known_Geometry_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Geometry_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Geometry_"
+        }
+      ]
+    },
+    "Evidence_HeatPumpMap_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_HeatPumpMap_",
+          "known": "#/$defs/Known_HeatPumpMap_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_HeatPumpMap_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_HeatPumpMap_"
+        }
+      ]
+    },
+    "Evidence_LandStatus_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_LandStatus_",
+          "known": "#/$defs/Known_LandStatus_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_LandStatus_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_LandStatus_"
+        }
+      ]
+    },
+    "Evidence_Pressure_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Pressure_",
+          "known": "#/$defs/Known_Pressure_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Pressure_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Pressure_"
+        }
+      ]
+    },
+    "Evidence_SuccessDefinition_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_SuccessDefinition_",
+          "known": "#/$defs/Known_SuccessDefinition_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_SuccessDefinition_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_SuccessDefinition_"
+        }
+      ]
+    },
+    "Evidence_tuple_ConsumerLoad__________": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_tuple_ConsumerLoad__________",
+          "known": "#/$defs/Known_tuple_ConsumerLoad__________",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_tuple_ConsumerLoad__________"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_tuple_ConsumerLoad__________"
+        }
+      ]
+    },
+    "FlowControl": {
+      "enum": [
+        "follow_demand",
+        "fixed"
+      ],
+      "title": "FlowControl",
+      "type": "string"
+    },
+    "Fluid": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "property_model": {
+          "minLength": 1,
+          "title": "Property Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "property_model"
+      ],
+      "title": "Fluid",
+      "type": "object"
+    },
+    "Geometry": {
+      "additionalProperties": false,
+      "description": "A GeoJSON geometry with its coordinate reference system, for example ``EPSG:25832``.",
+      "properties": {
+        "crs": {
+          "pattern": "^[A-Za-z]+:\\d+$",
+          "title": "Crs",
+          "type": "string"
+        },
+        "geojson": {
+          "additionalProperties": true,
+          "title": "Geojson",
+          "type": "object"
+        }
+      },
+      "required": [
+        "crs",
+        "geojson"
+      ],
+      "title": "Geometry",
+      "type": "object"
+    },
+    "HeatCarrier": {
+      "enum": [
+        "hot_water",
+        "steam"
+      ],
+      "title": "HeatCarrier",
+      "type": "string"
+    },
+    "HeatPumpMap": {
+      "additionalProperties": false,
+      "description": "Tabulated heat pump performance from a manufacturer or another reviewed source.\n\nRows follow ``source_inlet_temperatures_k`` and columns follow\n``sink_outlet_temperatures_k``. The coefficient of performance is the condenser heat divided\nby the electrical input of the compressor. An operating point outside the table is outside\nthe map. It is never extrapolated.",
+      "properties": {
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "heating_cop_ratio": {
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Heating Cop Ratio",
+          "type": "array"
+        },
+        "map_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Map Id",
+          "type": "string"
+        },
+        "max_condenser_heat_w": {
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Max Condenser Heat W",
+          "type": "array"
+        },
+        "sink_outlet_temperatures_k": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "title": "Sink Outlet Temperatures K",
+          "type": "array"
+        },
+        "source_inlet_temperatures_k": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "title": "Source Inlet Temperatures K",
+          "type": "array"
+        }
+      },
+      "required": [
+        "map_id",
+        "description",
+        "source_inlet_temperatures_k",
+        "sink_outlet_temperatures_k",
+        "heating_cop_ratio",
+        "max_condenser_heat_w"
+      ],
+      "title": "HeatPumpMap",
+      "type": "object"
+    },
+    "InterfaceType": {
+      "enum": [
+        "separated_exchanger",
+        "direct_hydraulic"
+      ],
+      "title": "InterfaceType",
+      "type": "string"
+    },
+    "Known_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "Known_Annotated_str__StringConstraints__": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Annotated[str, StringConstraints]]",
+      "type": "object"
+    },
+    "Known_ConstraintOutcome_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/ConstraintOutcome"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[ConstraintOutcome]",
+      "type": "object"
+    },
+    "Known_Depth_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Depth"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Depth]",
+      "type": "object"
+    },
+    "Known_Elevation_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Elevation"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Elevation]",
+      "type": "object"
+    },
+    "Known_Geometry_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Geometry"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Geometry]",
+      "type": "object"
+    },
+    "Known_HeatPumpMap_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/HeatPumpMap"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[HeatPumpMap]",
+      "type": "object"
+    },
+    "Known_LandStatus_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/LandStatus"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[LandStatus]",
+      "type": "object"
+    },
+    "Known_Pressure_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Pressure"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Pressure]",
+      "type": "object"
+    },
+    "Known_SuccessDefinition_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/SuccessDefinition"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[SuccessDefinition]",
+      "type": "object"
+    },
+    "Known_tuple_ConsumerLoad__________": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "items": {
+            "$ref": "#/$defs/ConsumerLoad"
+          },
+          "title": "Value",
+          "type": "array"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[tuple[ConsumerLoad, ...]]",
+      "type": "object"
+    },
+    "LandStatus": {
+      "enum": [
+        "available",
+        "restricted",
+        "unavailable"
+      ],
+      "title": "LandStatus",
+      "type": "string"
+    },
+    "Network": {
+      "additionalProperties": false,
+      "description": "A district heating network with separate supply and return circuits.",
+      "properties": {
+        "boundary_conditions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BoundaryCondition"
+          },
+          "title": "Boundary Conditions",
+          "type": "array"
+        },
+        "consumers": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Consumer"
+          },
+          "title": "Consumers",
+          "type": "array"
+        },
+        "controls": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Control"
+          },
+          "title": "Controls",
+          "type": "array"
+        },
+        "dataset_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "equipment": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Equipment"
+          },
+          "title": "Equipment",
+          "type": "array"
+        },
+        "fluid": {
+          "$ref": "#/$defs/Fluid"
+        },
+        "heat_carrier": {
+          "$ref": "#/$defs/HeatCarrier"
+        },
+        "network_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Network Id",
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/NetworkNode"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "pipes": {
+          "items": {
+            "$ref": "#/$defs/NetworkPipe"
+          },
+          "title": "Pipes",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "vertical_datum": {
+          "minLength": 1,
+          "title": "Vertical Datum",
+          "type": "string"
+        }
+      },
+      "required": [
+        "network_id",
+        "version",
+        "dataset_id",
+        "heat_carrier",
+        "fluid",
+        "vertical_datum",
+        "nodes",
+        "pipes"
+      ],
+      "title": "Network",
+      "type": "object"
+    },
+    "NetworkNode": {
+      "additionalProperties": false,
+      "properties": {
+        "circuit": {
+          "$ref": "#/$defs/Circuit"
+        },
+        "elevation_m": {
+          "title": "Elevation M",
+          "type": "number"
+        },
+        "node_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "original_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Original Id"
+        },
+        "zone_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Zone Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node_id",
+        "circuit",
+        "elevation_m",
+        "zone_id"
+      ],
+      "title": "NetworkNode",
+      "type": "object"
+    },
+    "NetworkPipe": {
+      "additionalProperties": false,
+      "properties": {
+        "estimated_fields": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Estimated Fields",
+          "type": "array"
+        },
+        "from_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "From Node",
+          "type": "string"
+        },
+        "heat_transfer_coefficient_w_m2_k": {
+          "minimum": 0.0,
+          "title": "Heat Transfer Coefficient W M2 K",
+          "type": "number"
+        },
+        "inner_diameter_m": {
+          "exclusiveMinimum": 0.0,
+          "title": "Inner Diameter M",
+          "type": "number"
+        },
+        "length_m": {
+          "exclusiveMinimum": 0.0,
+          "title": "Length M",
+          "type": "number"
+        },
+        "original_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Original Id"
+        },
+        "pipe_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Pipe Id",
+          "type": "string"
+        },
+        "roughness_m": {
+          "minimum": 0.0,
+          "title": "Roughness M",
+          "type": "number"
+        },
+        "to_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "To Node",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pipe_id",
+        "from_node",
+        "to_node",
+        "length_m",
+        "inner_diameter_m",
+        "roughness_m",
+        "heat_transfer_coefficient_w_m2_k"
+      ],
+      "title": "NetworkPipe",
+      "type": "object"
+    },
+    "OperatingCase": {
+      "additionalProperties": false,
+      "description": "One steady state of a network.\n\nEvery consumer of the network needs a load. A consumer that takes nothing is stated with a\nheat of zero, so that an omission can never pass for a closed consumer.",
+      "properties": {
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "ground_temperature_k": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        "loads": {
+          "$ref": "#/$defs/Evidence_tuple_ConsumerLoad__________"
+        },
+        "network_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Network Id",
+          "type": "string"
+        },
+        "operating_case_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Operating Case Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operating_case_id",
+        "network_id",
+        "ground_temperature_k",
+        "loads"
+      ],
+      "title": "OperatingCase",
+      "type": "object"
+    },
+    "OperatingScenario": {
+      "additionalProperties": false,
+      "description": "Demand, source availability, temperature requirements, tariffs and dispatch policy.\n\nDemand, tariffs and availability must cover the same intervals. That is checked against the\nactual series by ``validate_scenario``.",
+      "properties": {
+        "demand": {
+          "$ref": "#/$defs/SeriesRef"
+        },
+        "dispatch_policy_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Dispatch Policy Id",
+          "type": "string"
+        },
+        "operating_scenario_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Operating Scenario Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_availability": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SourceAvailability"
+          },
+          "title": "Source Availability",
+          "type": "array"
+        },
+        "tariffs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SeriesRef"
+          },
+          "title": "Tariffs",
+          "type": "array"
+        },
+        "temperature_curves": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SeriesRef"
+          },
+          "title": "Temperature Curves",
+          "type": "array"
+        },
+        "time_basis": {
+          "$ref": "#/$defs/TimeBasis"
+        }
+      },
+      "required": [
+        "operating_scenario_id",
+        "demand",
+        "dispatch_policy_id",
+        "time_basis"
+      ],
+      "title": "OperatingScenario",
+      "type": "object"
+    },
+    "Plant": {
+      "additionalProperties": false,
+      "description": "One integration concept between a geothermal source and a network connection.",
+      "properties": {
+        "arrangement": {
+          "minLength": 1,
+          "title": "Arrangement",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "heat_pump_map": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Evidence_HeatPumpMap_"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "parameters": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+          },
+          "title": "Parameters",
+          "type": "object"
+        },
+        "plant_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Plant Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "plant_id",
+        "arrangement",
+        "parameters"
+      ],
+      "title": "Plant",
+      "type": "object"
+    },
+    "PolicyRef": {
+      "additionalProperties": false,
+      "properties": {
+        "policy_hash": {
+          "title": "Policy Hash",
+          "type": "string"
+        },
+        "policy_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_id",
+        "version",
+        "policy_hash"
+      ],
+      "title": "PolicyRef",
+      "type": "object"
+    },
+    "Pressure": {
+      "additionalProperties": false,
+      "description": "A pressure together with its reference.",
+      "properties": {
+        "reference": {
+          "$ref": "#/$defs/PressureReference"
+        },
+        "value_pa": {
+          "title": "Value Pa",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value_pa",
+        "reference"
+      ],
+      "title": "Pressure",
+      "type": "object"
+    },
+    "PressureReference": {
+      "enum": [
+        "absolute",
+        "gauge"
+      ],
+      "title": "PressureReference",
+      "type": "string"
+    },
+    "PriceConvention": {
+      "enum": [
+        "real",
+        "nominal"
+      ],
+      "title": "PriceConvention",
+      "type": "string"
+    },
+    "ProfilePoint": {
+      "additionalProperties": false,
+      "properties": {
+        "chainage_m": {
+          "minimum": 0.0,
+          "title": "Chainage M",
+          "type": "number"
+        },
+        "elevation_m": {
+          "title": "Elevation M",
+          "type": "number"
+        }
+      },
+      "required": [
+        "chainage_m",
+        "elevation_m"
+      ],
+      "title": "ProfilePoint",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Where a value came from.",
+      "properties": {
+        "author": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Author"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "provenance_type": {
+          "$ref": "#/$defs/ProvenanceType"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Id"
+        }
+      },
+      "required": [
+        "provenance_type"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "ProvenanceType": {
+      "enum": [
+        "measured",
+        "imported",
+        "guideline",
+        "user_supplied",
+        "estimated",
+        "inferred",
+        "synthetic"
+      ],
+      "title": "ProvenanceType",
+      "type": "string"
+    },
+    "QualityStatus": {
+      "enum": [
+        "reviewed",
+        "unreviewed",
+        "known_issues"
+      ],
+      "title": "QualityStatus",
+      "type": "string"
+    },
+    "Route": {
+      "additionalProperties": false,
+      "description": "A corridor between a site and a connection.\n\nTrench length and pipe lengths are stored separately so that costs cannot be counted twice.",
+      "properties": {
+        "corridor_length_m": {
+          "exclusiveMinimum": 0.0,
+          "title": "Corridor Length M",
+          "type": "number"
+        },
+        "crossings": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Crossing"
+          },
+          "title": "Crossings",
+          "type": "array"
+        },
+        "elevation_profile": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ProfilePoint"
+          },
+          "title": "Elevation Profile",
+          "type": "array"
+        },
+        "from_site_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "From Site Id",
+          "type": "string"
+        },
+        "geometry": {
+          "$ref": "#/$defs/Geometry"
+        },
+        "linked_customer_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 120,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+            "type": "string"
+          },
+          "title": "Linked Customer Ids",
+          "type": "array"
+        },
+        "return_pipe_length_m": {
+          "exclusiveMinimum": 0.0,
+          "title": "Return Pipe Length M",
+          "type": "number"
+        },
+        "route_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Route Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "supply_pipe_length_m": {
+          "exclusiveMinimum": 0.0,
+          "title": "Supply Pipe Length M",
+          "type": "number"
+        },
+        "to_connection_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "To Connection Id",
+          "type": "string"
+        },
+        "vertical_datum": {
+          "minLength": 1,
+          "title": "Vertical Datum",
+          "type": "string"
+        }
+      },
+      "required": [
+        "route_id",
+        "from_site_id",
+        "to_connection_id",
+        "geometry",
+        "corridor_length_m",
+        "supply_pipe_length_m",
+        "return_pipe_length_m",
+        "vertical_datum"
+      ],
+      "title": "Route",
+      "type": "object"
+    },
+    "SeriesRef": {
+      "additionalProperties": false,
+      "description": "A time series inside a registered dataset.",
+      "properties": {
+        "dataset_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "series_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Series Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "series_id",
+        "dataset_id"
+      ],
+      "title": "SeriesRef",
+      "type": "object"
+    },
+    "Site": {
+      "additionalProperties": false,
+      "properties": {
+        "access": {
+          "$ref": "#/$defs/Evidence_Annotated_str__StringConstraints__"
+        },
+        "constraints": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SiteConstraint"
+          },
+          "title": "Constraints",
+          "type": "array"
+        },
+        "elevation": {
+          "$ref": "#/$defs/Evidence_Elevation_"
+        },
+        "land_status": {
+          "$ref": "#/$defs/Evidence_LandStatus_"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "parcel_geometry": {
+          "$ref": "#/$defs/Geometry"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "site_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Site Id",
+          "type": "string"
+        },
+        "usable_pad_area_m2": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        "usable_pad_geometry": {
+          "$ref": "#/$defs/Evidence_Geometry_"
+        }
+      },
+      "required": [
+        "site_id",
+        "name",
+        "parcel_geometry",
+        "usable_pad_geometry",
+        "usable_pad_area_m2",
+        "elevation",
+        "access",
+        "land_status"
+      ],
+      "title": "Site",
+      "type": "object"
+    },
+    "SiteConstraint": {
+      "additionalProperties": false,
+      "description": "One documented site criterion, for example a permit or a setback.",
+      "properties": {
+        "constraint_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Constraint Id",
+          "type": "string"
+        },
+        "criterion": {
+          "minLength": 1,
+          "title": "Criterion",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Evidence_ConstraintOutcome_"
+        }
+      },
+      "required": [
+        "constraint_id",
+        "criterion",
+        "outcome"
+      ],
+      "title": "SiteConstraint",
+      "type": "object"
+    },
+    "SourceAvailability": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {
+          "$ref": "#/$defs/SeriesRef"
+        },
+        "source_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "availability"
+      ],
+      "title": "SourceAvailability",
+      "type": "object"
+    },
+    "Study": {
+      "additionalProperties": false,
+      "description": "A declared study inside a project. All candidates and documents belong to one.",
+      "properties": {
+        "baseline_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Baseline Id",
+          "type": "string"
+        },
+        "objective": {
+          "minLength": 1,
+          "title": "Objective",
+          "type": "string"
+        },
+        "planning_date": {
+          "format": "date",
+          "title": "Planning Date",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "study_area": {
+          "$ref": "#/$defs/Geometry"
+        },
+        "study_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Study Id",
+          "type": "string"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "study_id",
+        "project_id",
+        "title",
+        "objective",
+        "study_area",
+        "planning_date",
+        "baseline_id",
+        "synthetic"
+      ],
+      "title": "Study",
+      "type": "object"
+    },
+    "SuccessDefinition": {
+      "additionalProperties": false,
+      "description": "The event that counts as geological success (specification 14.2).",
+      "properties": {
+        "conditional_on": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Conditional On"
+        },
+        "criteria": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Criteria",
+          "type": "array"
+        },
+        "event": {
+          "minLength": 1,
+          "title": "Event",
+          "type": "string"
+        },
+        "information_time": {
+          "minLength": 1,
+          "title": "Information Time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event",
+        "criteria",
+        "information_time"
+      ],
+      "title": "SuccessDefinition",
+      "type": "object"
+    },
+    "Support": {
+      "additionalProperties": false,
+      "properties": {
+        "lower": {
+          "title": "Lower",
+          "type": "number",
+          "unit": "unit of the variable"
+        },
+        "upper": {
+          "title": "Upper",
+          "type": "number",
+          "unit": "unit of the variable"
+        }
+      },
+      "required": [
+        "lower",
+        "upper"
+      ],
+      "title": "Support",
+      "type": "object"
+    },
+    "TimeBasis": {
+      "additionalProperties": false,
+      "properties": {
+        "end_utc": {
+          "format": "date-time",
+          "title": "End Utc",
+          "type": "string"
+        },
+        "interval_s": {
+          "exclusiveMinimum": 0.0,
+          "title": "Interval S",
+          "type": "number"
+        },
+        "presentation_timezone": {
+          "default": "Europe/Berlin",
+          "title": "Presentation Timezone",
+          "type": "string"
+        },
+        "start_utc": {
+          "format": "date-time",
+          "title": "Start Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_utc",
+        "end_utc",
+        "interval_s"
+      ],
+      "title": "TimeBasis",
+      "type": "object"
+    },
+    "TimeExtent": {
+      "additionalProperties": false,
+      "properties": {
+        "end_utc": {
+          "format": "date-time",
+          "title": "End Utc",
+          "type": "string"
+        },
+        "start_utc": {
+          "format": "date-time",
+          "title": "Start Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_utc",
+        "end_utc"
+      ],
+      "title": "TimeExtent",
+      "type": "object"
+    },
+    "UncertainVariable": {
+      "additionalProperties": false,
+      "description": "One uncertain input.\n\nA range alone does not imply a probability distribution. A variable is either a scenario set\nwithout probabilities or a named distribution with its own evidence.",
+      "properties": {
+        "correlation_group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Group"
+        },
+        "distribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DistributionSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evidence": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "field_path": {
+          "minLength": 1,
+          "title": "Field Path",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/UncertaintyKind"
+        },
+        "scenario_values": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "Scenario Values",
+          "type": "array",
+          "unit": "unit of the variable"
+        },
+        "support": {
+          "$ref": "#/$defs/Support"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "variable_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Variable Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "variable_id",
+        "field_path",
+        "unit",
+        "kind",
+        "support",
+        "evidence"
+      ],
+      "title": "UncertainVariable",
+      "type": "object"
+    },
+    "UncertaintyKind": {
+      "enum": [
+        "distribution",
+        "scenario_set"
+      ],
+      "title": "UncertaintyKind",
+      "type": "string"
+    },
+    "UncertaintyModel": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "success_definition": {
+          "$ref": "#/$defs/Evidence_SuccessDefinition_"
+        },
+        "uncertainty_model_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Uncertainty Model Id",
+          "type": "string"
+        },
+        "variables": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/UncertainVariable"
+          },
+          "title": "Variables",
+          "type": "array"
+        }
+      },
+      "required": [
+        "uncertainty_model_id",
+        "success_definition"
+      ],
+      "title": "UncertaintyModel",
+      "type": "object"
+    },
+    "Unknown": {
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "state": {
+          "const": "unknown",
+          "default": "unknown",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason",
+        "owner"
+      ],
+      "title": "Unknown",
+      "type": "object"
+    },
+    "Well": {
+      "additionalProperties": false,
+      "properties": {
+        "bottom_hole_target_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Bottom Hole Target Id",
+          "type": "string"
+        },
+        "measured_length": {
+          "$ref": "#/$defs/Evidence_Depth_"
+        },
+        "role": {
+          "$ref": "#/$defs/WellRole"
+        },
+        "surface_site_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Surface Site Id",
+          "type": "string"
+        },
+        "trajectory": {
+          "$ref": "#/$defs/Evidence_Geometry_"
+        },
+        "vertical_depth": {
+          "$ref": "#/$defs/Evidence_Depth_"
+        },
+        "well_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Well Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "well_id",
+        "role",
+        "surface_site_id",
+        "bottom_hole_target_id",
+        "vertical_depth",
+        "measured_length",
+        "trajectory"
+      ],
+      "title": "Well",
+      "type": "object"
+    },
+    "WellRole": {
+      "enum": [
+        "production",
+        "injection"
+      ],
+      "title": "WellRole",
+      "type": "string"
+    },
+    "WellScenario": {
+      "additionalProperties": false,
+      "description": "One subsurface concept for a site: target, wells and reservoir parameters.",
+      "properties": {
+        "model_family": {
+          "minLength": 1,
+          "title": "Model Family",
+          "type": "string"
+        },
+        "parameter_package_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Parameter Package Id",
+          "type": "string"
+        },
+        "reservoir_parameters": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+          },
+          "title": "Reservoir Parameters",
+          "type": "object"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "site_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Site Id",
+          "type": "string"
+        },
+        "source_scenario_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Source Scenario Id",
+          "type": "string"
+        },
+        "target_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "well_configuration_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Well Configuration Id",
+          "type": "string"
+        },
+        "wells": {
+          "items": {
+            "$ref": "#/$defs/Well"
+          },
+          "minItems": 1,
+          "title": "Wells",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_scenario_id",
+        "site_id",
+        "target_id",
+        "model_family",
+        "parameter_package_id",
+        "well_configuration_id",
+        "wells",
+        "reservoir_parameters"
+      ],
+      "title": "WellScenario",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "alternatives": {
+      "items": {
+        "$ref": "#/$defs/Alternative"
+      },
+      "minItems": 1,
+      "title": "Alternatives",
+      "type": "array"
+    },
+    "connections": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Connection"
+      },
+      "title": "Connections",
+      "type": "array"
+    },
+    "coupling_cases": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CouplingCase"
+      },
+      "title": "Coupling Cases",
+      "type": "array"
+    },
+    "datasets": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Dataset"
+      },
+      "title": "Datasets",
+      "type": "array"
+    },
+    "economic_scenarios": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/EconomicScenario"
+      },
+      "title": "Economic Scenarios",
+      "type": "array"
+    },
+    "networks": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Network"
+      },
+      "title": "Networks",
+      "type": "array"
+    },
+    "operating_cases": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/OperatingCase"
+      },
+      "title": "Operating Cases",
+      "type": "array"
+    },
+    "operating_scenarios": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/OperatingScenario"
+      },
+      "title": "Operating Scenarios",
+      "type": "array"
+    },
+    "plants": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Plant"
+      },
+      "title": "Plants",
+      "type": "array"
+    },
+    "policies": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PolicyRef"
+      },
+      "title": "Policies",
+      "type": "array"
+    },
+    "routes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Route"
+      },
+      "title": "Routes",
+      "type": "array"
+    },
+    "scenario_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Scenario Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.2.0",
+      "default": "0.2.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sites": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Site"
+      },
+      "title": "Sites",
+      "type": "array"
+    },
+    "study": {
+      "$ref": "#/$defs/Study"
+    },
+    "uncertainty_models": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/UncertaintyModel"
+      },
+      "title": "Uncertainty Models",
+      "type": "array"
+    },
+    "well_scenarios": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/WellScenario"
+      },
+      "title": "Well Scenarios",
+      "type": "array"
+    }
+  },
+  "required": [
+    "scenario_id",
+    "study",
+    "alternatives"
+  ],
+  "title": "Scenario",
+  "type": "object"
+}

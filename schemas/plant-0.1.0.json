@@ -1,0 +1,411 @@
+{
+  "$defs": {
+    "Conflict_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "Conflict_HeatPumpMap_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_HeatPumpMap_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[HeatPumpMap]",
+      "type": "object"
+    },
+    "Evidence_Annotated_float__Strict_strict_True___": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Annotated_float__Strict_strict_True___",
+          "known": "#/$defs/Known_Annotated_float__Strict_strict_True___",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Annotated_float__Strict_strict_True___"
+        }
+      ]
+    },
+    "Evidence_HeatPumpMap_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_HeatPumpMap_",
+          "known": "#/$defs/Known_HeatPumpMap_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_HeatPumpMap_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_HeatPumpMap_"
+        }
+      ]
+    },
+    "HeatPumpMap": {
+      "additionalProperties": false,
+      "description": "Tabulated heat pump performance from a manufacturer or another reviewed source.\n\nRows follow ``source_inlet_temperatures_k`` and columns follow\n``sink_outlet_temperatures_k``. The coefficient of performance is the condenser heat divided\nby the electrical input of the compressor. An operating point outside the table is outside\nthe map. It is never extrapolated.",
+      "properties": {
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "heating_cop_ratio": {
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Heating Cop Ratio",
+          "type": "array"
+        },
+        "map_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Map Id",
+          "type": "string"
+        },
+        "max_condenser_heat_w": {
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Max Condenser Heat W",
+          "type": "array"
+        },
+        "sink_outlet_temperatures_k": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "title": "Sink Outlet Temperatures K",
+          "type": "array"
+        },
+        "source_inlet_temperatures_k": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "title": "Source Inlet Temperatures K",
+          "type": "array"
+        }
+      },
+      "required": [
+        "map_id",
+        "description",
+        "source_inlet_temperatures_k",
+        "sink_outlet_temperatures_k",
+        "heating_cop_ratio",
+        "max_condenser_heat_w"
+      ],
+      "title": "HeatPumpMap",
+      "type": "object"
+    },
+    "Known_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "Known_HeatPumpMap_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/HeatPumpMap"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[HeatPumpMap]",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Where a value came from.",
+      "properties": {
+        "author": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Author"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "provenance_type": {
+          "$ref": "#/$defs/ProvenanceType"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Id"
+        }
+      },
+      "required": [
+        "provenance_type"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "ProvenanceType": {
+      "enum": [
+        "measured",
+        "imported",
+        "guideline",
+        "user_supplied",
+        "estimated",
+        "inferred",
+        "synthetic"
+      ],
+      "title": "ProvenanceType",
+      "type": "string"
+    },
+    "Unknown": {
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "state": {
+          "const": "unknown",
+          "default": "unknown",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason",
+        "owner"
+      ],
+      "title": "Unknown",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One integration concept between a geothermal source and a network connection.",
+  "properties": {
+    "arrangement": {
+      "minLength": 1,
+      "title": "Arrangement",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "heat_pump_map": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Evidence_HeatPumpMap_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "parameters": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+      },
+      "title": "Parameters",
+      "type": "object"
+    },
+    "plant_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Plant Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "plant_id",
+    "arrangement",
+    "parameters"
+  ],
+  "title": "Plant",
+  "type": "object"
+}

@@ -175,9 +175,10 @@ def test_a_test_engine_labels_the_result_synthetic(
     assert stage(result, "source").synthetic
     assert not stage(result, "site_evidence").synthetic
     assert result.synthetic
-    # The network and coupling calculations have not run, so the study has no technical result.
+    # Screening, operation and cost do not exist yet, so the study has no technical result.
     assert stage(result, "screen").status is StageStatus.NOT_ESTABLISHED
-    assert stage(result, "couple").status is StageStatus.NOT_RUN
+    assert stage(result, "couple").synthetic
+    assert stage(result, "operate").status is StageStatus.NOT_ESTABLISHED
     assert result.evaluation_status is EvaluationStatus.NOT_EVALUATED
     assert result.kpis == ()
 

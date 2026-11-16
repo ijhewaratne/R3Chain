@@ -84,7 +84,8 @@ def test_policy_version_cannot_change(store: Store) -> None:
     )
     with pytest.raises(ImmutabilityError):
         store.register_policy(loosened)
-    newer = store.register_policy(loosened.model_copy(update={"version": "2"}))
+    following = f"{policy.version}-next"
+    newer = store.register_policy(loosened.model_copy(update={"version": following}))
     assert newer.policy_hash != reference.policy_hash
 
 
@@ -476,8 +477,8 @@ def test_synthetic_values_label_the_result(
         "site_evidence": "completed",
         "source": "completed",
         "screen": "not_established",
-        "couple": "not_run",
-        "operate": "not_run",
+        "couple": "completed",
+        "operate": "not_established",
         "cost": "not_run",
         "compare": "not_run",
     }
@@ -494,7 +495,7 @@ def test_synthetic_values_label_the_result(
     assert screen.payload == {} and "milestone M3" in screen.reason
     assert result.technical_status is TechnicalStatus.NOT_ESTABLISHED
     assert result.kpis == () and result.checks == ()
-    assert set(run.input_hashes) == {"site_evidence", "source", "screen"}
+    assert set(run.input_hashes) == {"site_evidence", "source", "screen", "couple", "operate"}
     assert store.get_results(run.run_id) == (result,)
 
     # Synthetic values inside a study that is not marked synthetic still label the result.

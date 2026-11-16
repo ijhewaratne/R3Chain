@@ -11,10 +11,18 @@ from typing import Any, ClassVar, Literal
 
 from pydantic import Field, model_validator
 
-from r3chain.domain.base import Identifier, NonEmptyStr, Record, VersionedRecord
+from r3chain.domain.base import (
+    Identifier,
+    JsonDict,
+    NonEmptyStr,
+    Record,
+    VersionedRecord,
+    register_migration,
+)
 from r3chain.domain.hashing import short_hash
 from r3chain.domain.records.common import require_unique
 from r3chain.domain.records.network import Connection, Network, Route
+from r3chain.domain.records.plant import CouplingCase, OperatingCase, Plant
 from r3chain.domain.records.runs import PolicyRef
 from r3chain.domain.records.scenarios import EconomicScenario, OperatingScenario, UncertaintyModel
 from r3chain.domain.records.site import Site, WellScenario
@@ -32,7 +40,7 @@ class Alternative(Record):
 
 class Scenario(VersionedRecord):
     SCHEMA_NAME: ClassVar[str] = "scenario"
-    schema_version: Literal["0.1.0"] = "0.1.0"
+    schema_version: Literal["0.2.0"] = "0.2.0"
 
     scenario_id: Identifier
     study: Study
@@ -43,6 +51,9 @@ class Scenario(VersionedRecord):
     networks: tuple[Network, ...] = ()
     connections: tuple[Connection, ...] = ()
     routes: tuple[Route, ...] = ()
+    plants: tuple[Plant, ...] = ()
+    operating_cases: tuple[OperatingCase, ...] = ()
+    coupling_cases: tuple[CouplingCase, ...] = ()
     operating_scenarios: tuple[OperatingScenario, ...] = ()
     economic_scenarios: tuple[EconomicScenario, ...] = ()
     uncertainty_models: tuple[UncertaintyModel, ...] = ()
@@ -59,6 +70,11 @@ class Scenario(VersionedRecord):
         require_unique((item.network_id for item in self.networks), "network_id")
         require_unique((item.connection_id for item in self.connections), "connection_id")
         require_unique((item.route_id for item in self.routes), "route_id")
+        require_unique((item.plant_id for item in self.plants), "plant_id")
+        require_unique(
+            (item.operating_case_id for item in self.operating_cases), "operating_case_id"
+        )
+        require_unique((item.coupling_case_id for item in self.coupling_cases), "coupling_case_id")
         require_unique(
             (item.operating_scenario_id for item in self.operating_scenarios),
             "operating_scenario_id",
@@ -105,3 +121,12 @@ class ScenarioRevision(VersionedRecord):
     author: NonEmptyStr
     rationale: NonEmptyStr
     changes: tuple[FieldChange, ...] = ()
+
+
+# --- schema migrations ----------------------------------------------------------------------
+
+
+@register_migration("scenario", "0.1.0", "0.2.0")
+def _scenario_gains_plants_and_cases(data: JsonDict) -> JsonDict:
+    """0.2.0 adds plants, operating cases and coupling cases. Older scenarios have none."""
+    return data

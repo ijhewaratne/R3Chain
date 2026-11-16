@@ -36,6 +36,7 @@ from r3chain.domain.base import (
 from r3chain.domain.hashing import content_hash
 from r3chain.domain.records.common import require_unique
 from r3chain.domain.records.network import HeatCarrier, Network
+from r3chain.domain.records.plant import ConsumerLoad
 from r3chain.domain.records.runs import Check
 from r3chain.domain.status import AdapterState
 from r3chain.domain.units import Pressure, PressureReference
@@ -54,25 +55,6 @@ class FrictionModel(StrEnum):
     SWAMEE_JAIN = "swamee_jain"
     NIKURADSE = "nikuradse"
     COLEBROOK = "colebrook"
-
-
-class ConsumerLoad(Record):
-    """The demand of one consumer in one operating case.
-
-    Exactly one control is given: a fixed mass flow, or a return temperature that the consumer
-    reaches by adjusting its flow.
-    """
-
-    consumer_id: Identifier
-    heat_w: Real
-    mass_flow_kg_s: Real | None = None
-    return_temperature_k: Real | None = None
-
-    @model_validator(mode="after")
-    def _has_exactly_one_control(self) -> ConsumerLoad:
-        if (self.mass_flow_kg_s is None) == (self.return_temperature_k is None):
-            raise ValueError("give exactly one of mass_flow_kg_s and return_temperature_k")
-        return self
 
 
 class SupplyPoint(Record):

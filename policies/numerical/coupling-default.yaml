@@ -1,14 +1,27 @@
-# Convergence targets for the plant and network coupling loop (used from milestone M2).
+# Convergence targets and numerical settings for the plant and network coupling (milestone M2).
+#
+# Version 2 adds the absolute tolerances, the damping and the settings of the network engine.
+# Version 1 held the first four values only and was never used by a calculation.
 policy_id: numerical-coupling-default
 kind: numerical
-version: "1"
+version: "2"
 title: Convergence targets for the plant and network coupling loop
 origin: >-
-  Specification section 10.4. The three tolerances are proposed software test targets, not agreed
-  WSW design standards. The iteration limit is an implementation default.
+  Specification section 10.4. The temperature, heat and flow tolerances are proposed software
+  test targets, not agreed WSW design standards. The absolute tolerances, the iteration limit,
+  the damping and the network engine settings are implementation defaults.
 status: unreviewed
 parameters:
   max_iterations_count: 50
   temperature_change_tolerance_delta_k: 0.05
   relative_heat_mismatch_tolerance_fraction: 0.001
   relative_flow_mismatch_tolerance_fraction: 0.001
+  # Used instead of the relative tolerances near zero heat and zero flow.
+  absolute_heat_mismatch_tolerance_w: 1.0
+  absolute_flow_mismatch_tolerance_kg_s: 0.0001
+  # Share of each update that is applied. 1 applies it in full.
+  damping_fraction: 1.0
+  network_max_iterations_count: 30
+  network_pipe_sections_count: 5
+  network_friction_model: swamee_jain
+  network_zero_flow_tolerance_kg_s: 0.000001

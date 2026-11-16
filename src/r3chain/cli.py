@@ -7,6 +7,7 @@
     r3chain show RUN|REVISION          show a stored run or revision
     r3chain replay RUN                 execute a stored run again and compare the result
     r3chain network SCENARIO CASE      solve one operating case of a network
+    r3chain couple SCENARIO            evaluate the coupling cases of a scenario file
     r3chain policies [DIRECTORY]       list policy files with their hashes
     r3chain schemas export|check       write or verify the committed JSON Schemas
 
@@ -23,9 +24,11 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from r3chain.coupling.cases import CaseOutcome, MemoNetworkModel, evaluate_case
+from r3chain.coupling.loop import CouplingResult
 from r3chain.domain.assumptions import assumption_register
 from r3chain.domain.paths import PatchOperation, apply_patch
-from r3chain.domain.records.runs import Assumption, Result, Run
+from r3chain.domain.records.runs import Assumption, CheckOutcome, PolicyKind, Result, Run
 from r3chain.domain.records.scenario import FieldChange, Scenario
 from r3chain.domain.status import AdapterState
 from r3chain.domain.units import kelvin_to_celsius, pa_to_bar
@@ -37,7 +40,12 @@ from r3chain.domain.validation import (
     read_data_file,
 )
 from r3chain.pipeline.runner import PipelineRunner, ScenarioNotExecutableError
-from r3chain.pipeline.stages import default_stages
+from r3chain.pipeline.stages import (
+    coupling_case_summary,
+    default_source_models,
+    default_stages,
+    single_policy,
+)
 from r3chain.ports.network import NetworkCase, NetworkResult
 from r3chain.schemas import (
     DEFAULT_SCHEMA_DIRECTORY,
@@ -148,6 +156,127 @@ def _print_network_result(result: NetworkResult) -> None:
         print(f"Warning: {warning}")
 
 
+def _kw(power_w: float) -> str:
+    return f"{power_w / 1e3:10.1f} kW"
+
+
+def _degc(temperature_k: float | None) -> str:
+    return "-" if temperature_k is None else f"{kelvin_to_celsius(temperature_k):.2f} degC"
+
+
+def _describe_coupling_case(summary: dict[str, Any]) -> str:
+    """One line for a coupling case in a run listing."""
+    point = summary.get("operating_point")
+    if point is None:
+        return f"{summary['state']} ({summary.get('reason', '')})"
+    text = (
+        f"{summary['state']}. Plant {point['plant_heat_w'] / 1e6:.2f} of "
+        f"{point['demand_heat_w'] / 1e6:.2f} MW"
+    )
+    if point["backup_heat_w"] > 0.0:
+        text += f", backup {point['backup_heat_w'] / 1e6:.2f} MW"
+    if point["deficit_heat_w"] > 0.0 and summary["state"] != "completed":
+        text += f", deficit {point['deficit_heat_w'] / 1e6:.2f} MW"
+    if summary["limiting_conditions"]:
+        text += f", limited by {', '.join(summary['limiting_conditions'])}"
+    if summary.get("performance_basis") == "screening_model":
+        text += ". Heat pump numbers are from a screening model"
+    return text
+
+
+def _print_coupling_result(result: CouplingResult) -> None:
+    print(f"Case      {result.coupling_case_id}, arrangement {result.arrangement}")
+    print(f"State     {result.state.value}" + (f": {result.reason}" if result.reason else ""))
+    label = ", a synthetic test engine" if result.synthetic else ""
+    print(f"Engines   {result.engines['source']}{label}; {result.engines['network']}")
+    if result.performance_basis == "screening_model":
+        print("          Heat pump numbers come from a screening model, not from equipment data.")
+    point = result.operating_point
+    if point is not None:
+        print("\nOperating point")
+        print(
+            f"  network     {point.network_mass_flow_kg_s:7.3f} kg/s, return "
+            f"{_degc(point.network_return_temperature_k)}, required supply "
+            f"{_degc(point.required_supply_temperature_k)}, plant outlet "
+            f"{_degc(point.plant_outlet_temperature_k)}"
+        )
+        if point.source_operated:
+            print(
+                f"  geothermal  {point.geothermal_mass_flow_kg_s:7.3f} kg/s, wellhead "
+                f"{_degc(point.wellhead_temperature_k)}, injection "
+                f"{_degc(point.injection_temperature_k)}"
+            )
+        else:
+            print(
+                f"  geothermal  not operated. Wellhead {_degc(point.wellhead_temperature_k)} "
+                "at the trial flow"
+            )
+        print("\nHeat at the connection")
+        print(f"  demand    {_kw(point.demand_heat_w)}")
+        print(f"  plant     {_kw(point.plant_heat_w)}")
+        if result.backup_id is not None:
+            print(f"  backup    {_kw(point.backup_heat_w)}   {result.backup_id}")
+        print(f"  deficit   {_kw(point.deficit_heat_w)}")
+        print("Electricity")
+        print(f"  well pumps{_kw(point.source_pump_electricity_w)}")
+        print(f"  compressor{_kw(point.compressor_electricity_w)}")
+    if result.limiting_conditions:
+        causes = ", ".join(cause.value for cause in result.shortfall_causes)
+        print(f"\nLimited by  {', '.join(result.limiting_conditions)} ({causes})")
+    if result.checks:
+        print("\nChecks")
+        for check in result.checks:
+            if check.outcome is CheckOutcome.NOT_EVALUATED:
+                print(f"  open  {check.check_id}: {check.description}")
+                continue
+            margin = ""
+            if check.margin is not None:
+                # A margin of a few rounding errors reads as zero.
+                shown = 0.0 if abs(check.margin) < 1e-9 else check.margin
+                margin = f", margin {shown:.4g} {check.unit}"
+            print(f"  {check.outcome.value:<6}{check.check_id}{margin}")
+    if result.iterations:
+        line = f"\nIterations  {len(result.iterations)}, source evaluations "
+        line += f"{result.source_evaluations_count}"
+        if result.residuals is not None:
+            line += (
+                f". Residuals: {result.residuals.temperature_delta_k:.2g} K, "
+                f"{result.residuals.heat_fraction:.2g} of the heat, "
+                f"{result.residuals.flow_fraction:.2g} of the flow"
+            )
+        print(line)
+        for record in result.iterations:
+            if record.note:
+                print(f"  pass {record.iteration}: {record.note}")
+    if result.ledger is not None:
+        print("\nEnergy ledger")
+        for entry in result.ledger.entries:
+            print(
+                f"  {entry.entry_id:<28}{_kw(entry.power_w)}  {entry.quantity.value:<16}"
+                f"{entry.from_boundary} -> {entry.to_boundary}"
+            )
+        for balance in result.ledger.balances:
+            state = "closed" if balance.closed else "NOT CLOSED"
+            print(
+                f"  balance of {balance.boundary}: residual {balance.residual_w / 1e3:.3f} kW, "
+                f"{state}"
+            )
+    for warning in result.warnings:
+        print(f"Note: {warning}")
+    if result.not_modelled:
+        print("Not modelled: " + "; ".join(result.not_modelled))
+
+
+def _print_case_outcome(outcome: CaseOutcome) -> None:
+    if outcome.result is not None:
+        _print_coupling_result(outcome.result)
+        return
+    print(f"Case      {outcome.coupling_case_id}")
+    print(f"State     {outcome.status.value}: {outcome.reason}")
+    for item in outcome.missing_inputs:
+        print(f"  needs {item.field_path} ({item.state})")
+
+
 # --- printing ---------------------------------------------------------------------------------
 
 
@@ -233,6 +362,8 @@ def _print_run(run: Run, results: Sequence[Result], *, detail: bool) -> None:
                 print(f"      site {site_id}: {summary['evidence_status']}")
             for source_id, source in output.payload.get("sources", {}).items():
                 print(f"      source {source_id}: {_describe_source(source)}")
+            for case_id, case in output.payload.get("cases", {}).items():
+                print(f"      case {case_id}: {_describe_coupling_case(case['summary'])}")
     for result in results:
         label = "synthetic" if result.synthetic else "not synthetic"
         print(
@@ -418,6 +549,84 @@ def cmd_network(arguments: argparse.Namespace) -> int:
     return 0 if result.state is AdapterState.COMPLETED else 1
 
 
+def cmd_couple(arguments: argparse.Namespace) -> int:
+    """Evaluate the coupling cases of a scenario file directly, without the store."""
+    scenario = _load_or_report(Path(arguments.scenario))
+    if scenario is None:
+        return 1
+    available = {
+        (policy.policy_id, policy.version): policy
+        for policy in load_policies(Path(arguments.policies))
+    }
+    policies = {}
+    for reference in scenario.policies:
+        policy = available.get((reference.policy_id, reference.version))
+        if policy is None or policy_ref(policy).policy_hash != reference.policy_hash:
+            raise ValueError(
+                f"policy {reference.policy_id} version {reference.version} with the hash "
+                f"recorded in the scenario is not in {arguments.policies}"
+            )
+        policies[reference.policy_id] = policy
+    numerical = single_policy(policies, PolicyKind.NUMERICAL)
+    source = single_policy(policies, PolicyKind.SOURCE)
+    if numerical is None or source is None:
+        raise ValueError(
+            "the scenario must reference exactly one policy of kind 'numerical' and exactly one "
+            "of kind 'source'"
+        )
+    cases = [
+        case
+        for case in scenario.coupling_cases
+        if arguments.case is None or case.coupling_case_id == arguments.case
+    ]
+    if not cases:
+        raise NotFoundError(
+            f"coupling case {arguments.case} is not in the scenario"
+            if arguments.case
+            else "the scenario defines no coupling cases"
+        )
+    from r3chain.adapters.pandapipes_network import PandapipesNetworkModel
+
+    network_model = MemoNetworkModel(PandapipesNetworkModel())
+    try:
+        outcomes = [
+            evaluate_case(
+                scenario,
+                case,
+                source_models=default_source_models(),
+                network_model=network_model,
+                source_policy=source,
+                numerical_policy=numerical,
+            )
+            for case in cases
+        ]
+    except ModuleNotFoundError as error:
+        raise ValueError(
+            f"the network engine is not installed ({error.name}). Install r3chain[network]"
+        ) from error
+    if arguments.json:
+        print(
+            json.dumps(
+                {
+                    outcome.coupling_case_id: {
+                        "summary": coupling_case_summary(outcome),
+                        "result": outcome.result.to_json_dict() if outcome.result else None,
+                    }
+                    for outcome in outcomes
+                },
+                indent=2,
+            )
+        )
+    elif len(outcomes) == 1:
+        _print_case_outcome(outcomes[0])
+    else:
+        for outcome in outcomes:
+            summary = coupling_case_summary(outcome)
+            print(f"{outcome.coupling_case_id}: {_describe_coupling_case(summary)}")
+        print("\nUse --case to see one case in full.")
+    return 0 if all(outcome.status.value == "completed" for outcome in outcomes) else 1
+
+
 def cmd_policies(arguments: argparse.Namespace) -> int:
     policies = load_policies(Path(arguments.directory))
     if not policies:
@@ -506,6 +715,13 @@ def build_parser() -> argparse.ArgumentParser:
     network.add_argument("case", help="network case file")
     network.add_argument("--json", action="store_true")
     network.set_defaults(handler=cmd_network)
+
+    couple = commands.add_parser("couple", help="evaluate the coupling cases of a scenario")
+    couple.add_argument("scenario", help="scenario file")
+    couple.add_argument("--case", help="one coupling case, shown in full")
+    couple.add_argument("--policies", default=DEFAULT_POLICY_DIRECTORY)
+    couple.add_argument("--json", action="store_true")
+    couple.set_defaults(handler=cmd_couple)
 
     policies = commands.add_parser("policies", help="list policy files with their hashes")
     policies.add_argument("directory", nargs="?", default=DEFAULT_POLICY_DIRECTORY)

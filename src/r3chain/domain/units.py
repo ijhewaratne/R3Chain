@@ -141,6 +141,7 @@ _SUFFIX_UNITS: tuple[tuple[str, str], ...] = (
     ("_kg_m3", "kg/m3"),
     ("_per_year", "1/a"),
     ("_fraction", "1"),
+    ("_ratio", "1"),
     ("_kg_s", "kg/s"),
     ("_j_kg", "J/kg"),
     ("_pa_s", "Pa s"),

@@ -1,4 +1,4 @@
-# Synthetic study, milestone M1 version.
+# Synthetic study, milestone M2 version.
 #
 # Every value in this file is invented for software development and testing. Nothing here
 # describes Wuppertal, WSW assets or any real site. See definitions.md.
@@ -32,11 +32,11 @@ alternatives:
 
 datasets:
   - dataset_id: syn-definitions
-    version: "2"
+    version: "3"
     kind: definitions
     title: Definitions of the synthetic study
     source_uri: definitions.md
-    checksum: "sha256:4647771c15a08f63db6f22eea0611c0d99c86fd0311a62334cd7b7e7ce8cb925"
+    checksum: "sha256:4d778eecbdf88aa304a310923ae916cecbb92c373584b1ab97233c0bf6cdac92"
     owner: R3CHAIN development
     acquired_at: 2026-11-15T00:00:00Z
     allowed_use: public
@@ -47,8 +47,8 @@ datasets:
 
 policies:
   - policy_id: numerical-coupling-default
-    version: "1"
-    policy_hash: "sha256:174962dac027e208995864a3dbe24158f8ba8c87ac1b64748071815de4d91805"
+    version: "2"
+    policy_hash: "sha256:f87b399a39599ac6187997b32e0c0b6d9071afe23dd5c4f9472990edb7287427"
   - policy_id: screening-synthetic
     version: "1"
     policy_hash: "sha256:9a5c6a4409927cc7c109382e4a089371ff6354765c4873854ed398c92f60298c"
@@ -358,6 +358,185 @@ routes:
       - {chainage_m: 1500, elevation_m: 188}
       - {chainage_m: 3000, elevation_m: 195}
     linked_customer_ids: [potential-customer-1, potential-customer-2]
+
+# --- plants -----------------------------------------------------------------------------------
+#
+# Three integration concepts. The arrangement names an entry of the plant registry. Which
+# parameters an arrangement needs is declared there.
+
+plants:
+  - plant_id: plant-direct
+    arrangement: direct_exchanger
+    description: One counterflow exchanger between the geothermal circuit and the network
+    parameters:
+      exchanger_ua_w_k: {state: known, value: 450000, provenance: &plant {provenance_type: synthetic, source_id: syn-definitions, locator: "section 7"}}
+      exchanger_min_approach_delta_k: {state: known, value: 5, provenance: *plant}
+      exchanger_fouling_allowance_fraction: {state: known, value: 0.1, provenance: *plant}
+      geothermal_side_rated_pressure_loss_pa: {state: known, value: 60000, provenance: *plant}
+      geothermal_side_rated_mass_flow_kg_s: {state: known, value: 15, provenance: *plant}
+      max_geothermal_side_pressure_loss_pa: {state: known, value: 100000, provenance: *plant}
+      network_side_rated_pressure_loss_pa:
+        state: unknown
+        reason: No exchanger has been selected, so its network side pressure loss is not known
+        owner: Plant designer
+      network_side_rated_mass_flow_kg_s:
+        state: unknown
+        reason: No exchanger has been selected, so its network side rated flow is not known
+        owner: Plant designer
+
+  - plant_id: plant-heat-pump
+    arrangement: heat_pump_assisted
+    description: >-
+      A direct exchanger heats the network return. A heat pump lifts it to the supply
+      temperature, with its evaporator on the geothermal stream after the exchanger
+    parameters:
+      exchanger_ua_w_k: {state: known, value: 450000, provenance: *plant}
+      exchanger_min_approach_delta_k: {state: known, value: 5, provenance: *plant}
+      exchanger_fouling_allowance_fraction: {state: known, value: 0.1, provenance: *plant}
+      min_geothermal_outlet_temperature_k: {state: known, value: 303.15, provenance: *plant}
+      compressor_heat_loss_fraction: {state: known, value: 0.05, provenance: *plant}
+    heat_pump_map:
+      state: known
+      provenance: *plant
+      value:
+        map_id: synthetic-heat-pump
+        description: Invented performance map. Not a product and not manufacturer data
+        source_inlet_temperatures_k: [303.15, 318.15, 333.15, 348.15]
+        sink_outlet_temperatures_k: [333.15, 343.15, 353.15, 363.15]
+        heating_cop_ratio:
+          - [4.6, 3.9, 3.4, 3.0]
+          - [6.0, 4.9, 4.1, 3.5]
+          - [8.2, 6.2, 5.0, 4.2]
+          - [9.5, 8.0, 6.3, 5.1]
+        max_condenser_heat_w:
+          - [1000000, 950000, 900000, 850000]
+          - [1200000, 1150000, 1100000, 1050000]
+          - [1400000, 1350000, 1300000, 1250000]
+          - [1500000, 1450000, 1400000, 1350000]
+
+  - plant_id: plant-separated
+    arrangement: pressure_separation_exchanger
+    description: >-
+      Two exchangers in series through an intermediate loop. The second one separates the
+      pressure zone of the network from the plant
+    parameters:
+      exchanger_ua_w_k: {state: known, value: 450000, provenance: *plant}
+      exchanger_min_approach_delta_k: {state: known, value: 5, provenance: *plant}
+      exchanger_fouling_allowance_fraction: {state: known, value: 0.1, provenance: *plant}
+      separation_exchanger_ua_w_k: {state: known, value: 600000, provenance: *plant}
+      separation_exchanger_min_approach_delta_k: {state: known, value: 3, provenance: *plant}
+
+# --- operating cases --------------------------------------------------------------------------
+
+operating_cases:
+  - operating_case_id: winter-design
+    network_id: syn-network
+    description: Every consumer takes its design heat
+    ground_temperature_k: {state: known, value: 278.15, provenance: &operation {provenance_type: synthetic, source_id: syn-definitions, locator: "section 8"}}
+    loads:
+      state: known
+      provenance: *operation
+      value:
+        - {consumer_id: consumer-1, heat_w: 800000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-2, heat_w: 1200000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-3, heat_w: 600000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-4, heat_w: 400000, return_temperature_k: 323.15}
+
+  - operating_case_id: shoulder-season
+    network_id: syn-network
+    description: Every consumer takes 40 percent of its design heat
+    ground_temperature_k: {state: known, value: 283.15, provenance: *operation}
+    loads:
+      state: known
+      provenance: *operation
+      value:
+        - {consumer_id: consumer-1, heat_w: 320000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-2, heat_w: 480000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-3, heat_w: 240000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-4, heat_w: 160000, return_temperature_k: 323.15}
+
+  - operating_case_id: summer-minimum
+    network_id: syn-network
+    description: Every consumer takes 20 percent of its design heat
+    ground_temperature_k: {state: known, value: 288.15, provenance: *operation}
+    loads:
+      state: known
+      provenance: *operation
+      value:
+        - {consumer_id: consumer-1, heat_w: 160000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-2, heat_w: 240000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-3, heat_w: 120000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-4, heat_w: 80000, return_temperature_k: 323.15}
+
+# --- coupling cases ---------------------------------------------------------------------------
+#
+# Each case names one source, one plant, one connection and one operating case. From milestone
+# M3 these are generated from the candidates.
+
+coupling_cases:
+  - coupling_case_id: alpha-direct-shoulder
+    description: Direct heat from Alpha in the shoulder season
+    source_scenario_id: source-alpha
+    plant_id: plant-direct
+    connection_id: conn-west
+    route_id: route-alpha-west
+    operating_case_id: shoulder-season
+    flow_control: follow_demand
+    network_pressure_lift_pa: {state: known, value: 150000, provenance: *operation}
+
+  - coupling_case_id: alpha-direct-winter
+    description: Direct heat from Alpha at design load, without any other source
+    source_scenario_id: source-alpha
+    plant_id: plant-direct
+    connection_id: conn-west
+    route_id: route-alpha-west
+    operating_case_id: winter-design
+    flow_control: follow_demand
+    network_pressure_lift_pa: {state: known, value: 150000, provenance: *operation}
+
+  - coupling_case_id: alpha-direct-winter-backup
+    description: Direct heat from Alpha at design load, topped up by a declared backup boiler
+    source_scenario_id: source-alpha
+    plant_id: plant-direct
+    connection_id: conn-west
+    route_id: route-alpha-west
+    operating_case_id: winter-design
+    flow_control: follow_demand
+    network_pressure_lift_pa: {state: known, value: 150000, provenance: *operation}
+    backup:
+      backup_id: boiler-west
+      description: Existing boiler at the western connection
+      max_heat_w: {state: known, value: 1500000, provenance: *operation}
+
+  - coupling_case_id: beta-direct-summer
+    description: Direct heat from Beta, whose reservoir is colder than the required supply
+    source_scenario_id: source-beta
+    plant_id: plant-direct
+    connection_id: conn-west
+    route_id: route-beta-west
+    operating_case_id: summer-minimum
+    flow_control: follow_demand
+    network_pressure_lift_pa: {state: known, value: 150000, provenance: *operation}
+
+  - coupling_case_id: beta-heat-pump-shoulder
+    description: Heat from Beta lifted by a heat pump
+    source_scenario_id: source-beta
+    plant_id: plant-heat-pump
+    connection_id: conn-west
+    route_id: route-beta-west
+    operating_case_id: shoulder-season
+    flow_control: follow_demand
+    network_pressure_lift_pa: {state: known, value: 150000, provenance: *operation}
+
+  - coupling_case_id: alpha-separated-shoulder
+    description: Heat from Alpha through a pressure separation exchanger
+    source_scenario_id: source-alpha
+    plant_id: plant-separated
+    connection_id: conn-west
+    route_id: route-alpha-west
+    operating_case_id: shoulder-season
+    flow_control: follow_demand
+    network_pressure_lift_pa: {state: known, value: 150000, provenance: *operation}
 
 # --- economics --------------------------------------------------------------------------------
 

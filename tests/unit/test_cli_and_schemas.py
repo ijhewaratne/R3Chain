@@ -53,12 +53,12 @@ def test_validate_reports_gaps_and_succeeds(cli: Cli) -> None:
     code, output = cli("validate", str(SYNTHETIC_SCENARIO))
     assert code == 0
     assert "Status    executable" in output
-    assert "Inputs not established (13)" in output
+    assert "Inputs not established (15)" in output
     assert "sites[delta].usable_pad_area_m2" in output
 
     code, output = cli("validate", str(SYNTHETIC_SCENARIO), "--json")
     report = json.loads(output)
-    assert code == 0 and len(report["missing_inputs"]) == 13
+    assert code == 0 and len(report["missing_inputs"]) == 15
 
 
 def test_validate_fails_on_an_invalid_file(cli: Cli, tmp_path: Path) -> None:
@@ -77,11 +77,11 @@ def test_validate_fails_on_an_invalid_file(cli: Cli, tmp_path: Path) -> None:
 def test_assumptions_are_listed_without_being_asked_for_one_by_one(cli: Cli) -> None:
     code, output = cli("assumptions", str(SYNTHETIC_SCENARIO))
     assert code == 0
-    assert "83 inputs: 70 active, 1 conflict, 12 unknown" in output
+    assert "115 inputs: 100 active, 1 conflict, 14 unknown" in output
     assert "[synthetic from syn-definitions]" in output
     code, output = cli("assumptions", str(SYNTHETIC_SCENARIO), "--status", "unknown", "--json")
     rows = json.loads(output)
-    assert code == 0 and len(rows) == 12
+    assert code == 0 and len(rows) == 14
     assert all(row["status"] == "unknown" and row["owner"] for row in rows)
 
 

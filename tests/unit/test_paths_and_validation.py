@@ -44,7 +44,7 @@ def _count_inputs(node: Any) -> int:
 @pytest.mark.requirement("W24")
 def test_register_lists_every_input(scenario: Scenario, scenario_data: dict[str, Any]) -> None:
     rows = assumption_register(scenario)
-    assert len(rows) == _count_inputs(scenario_data) == 83
+    assert len(rows) == _count_inputs(scenario_data) == 115
     assert len({row.field_path for row in rows}) == len(rows)
     assert len({row.assumption_id for row in rows}) == len(rows)
     by_path = {row.field_path: row for row in rows}
@@ -178,7 +178,7 @@ def test_synthetic_scenario_is_executable_and_lists_its_gaps() -> None:
     assert report.revision_id == scenario.revision_id()
     assert report.contains_synthetic_values
     missing = {item.field_path: item.state for item in report.missing_inputs}
-    assert len(missing) == 13
+    assert len(missing) == 15
     assert missing["sites[delta].access"] == "conflict"
     assert missing["connections[conn-east].limits.max_pressure"] == "unknown"
     assert missing["uncertainty_models[uncertainty-base].success_definition"] == "unknown"

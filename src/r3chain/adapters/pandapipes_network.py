@@ -43,13 +43,13 @@ from r3chain.domain.records.network import (
     HeatCarrier,
     Network,
 )
+from r3chain.domain.records.plant import ConsumerLoad
 from r3chain.domain.records.runs import Check, CheckOutcome
 from r3chain.domain.status import AdapterState
 from r3chain.domain.topology import TopologySeverity, check_topology
 from r3chain.domain.units import PASCALS_PER_BAR, Pressure, PressureReference
 from r3chain.ports.network import (
     CalculationMode,
-    ConsumerLoad,
     ConsumerResult,
     EnergyBalance,
     FrictionModel,

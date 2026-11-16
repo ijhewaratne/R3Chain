@@ -2,6 +2,7 @@
 
 from r3chain.domain.base import VersionedRecord
 from r3chain.domain.records.network import Connection, Network, Route
+from r3chain.domain.records.plant import CouplingCase, OperatingCase, Plant
 from r3chain.domain.records.runs import Assumption, Policy, Result, Run
 from r3chain.domain.records.scenario import Scenario, ScenarioRevision
 from r3chain.domain.records.scenarios import EconomicScenario, OperatingScenario, UncertaintyModel
@@ -28,6 +29,9 @@ CORE_RECORDS: tuple[type[VersionedRecord], ...] = (
 # Every record whose schema is exported and version checked.
 VERSIONED_RECORDS: tuple[type[VersionedRecord], ...] = (
     *CORE_RECORDS,
+    Plant,
+    OperatingCase,
+    CouplingCase,
     Policy,
     Scenario,
     ScenarioRevision,
@@ -38,10 +42,13 @@ __all__ = [
     "VERSIONED_RECORDS",
     "Assumption",
     "Connection",
+    "CouplingCase",
     "Dataset",
     "EconomicScenario",
     "Network",
+    "OperatingCase",
     "OperatingScenario",
+    "Plant",
     "Policy",
     "Result",
     "Route",
