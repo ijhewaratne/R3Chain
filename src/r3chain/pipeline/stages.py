@@ -4,29 +4,30 @@ A placeholder declares the inputs its future calculation depends on and always e
 ``not_established``. It never produces a number. Each milestone replaces placeholders with real
 calculations.
 
-    site_evidence   real          how well each site is documented            milestone M0
+    site_evidence   real          how well each site is documented             milestone M0
     source          real          source performance envelope per well concept milestone M1
-    screen          placeholder   site and route screening                     milestone M3
-    couple          real          plant and network coupling                   milestone M2
+    screen          real          site screening against the screening policy  milestone M3
+    routes          real          route alternatives per site and connection   milestone M3
+    candidates      real          candidate enumeration and rejection table    milestone M3
+    couple          real          coupled operating point of every candidate   milestones M2, M3
+    assess          real          statuses, KPIs and the provisional ranking   milestone M3
     operate         placeholder   dispatch and annual operation                milestone M4
     cost            placeholder   cost ledger and discounted cost              milestone M4
     compare         placeholder   uncertainty, eligibility, ranking            milestone M5
 
-The coupling stage evaluates the coupling cases that the scenario writes out. It needs the
-source stage only. From milestone M3 the cases come from the screened candidates, and the
-coupling stage will then also need the screening stage.
+The stages of milestone M3 live in ``r3chain.pipeline.evaluation``. The coupling cases that a
+scenario writes out are reference cases for ``r3chain couple``. The pipeline couples the
+candidates.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from typing import Any
 
 from r3chain.adapters.pandapipes_network import PandapipesNetworkModel
 from r3chain.adapters.source_synthetic import SyntheticSourceModel
-from r3chain.coupling.cases import CaseOutcome, MemoNetworkModel, evaluate_case
 from r3chain.coupling.envelope import build_envelope
-from r3chain.coupling.plant import arrangements
 from r3chain.domain.assumptions import missing_inputs
 from r3chain.domain.base import Record
 from r3chain.domain.evidence import MissingInput, NotEstablished
@@ -34,6 +35,14 @@ from r3chain.domain.paths import identity_of
 from r3chain.domain.records.runs import Policy, PolicyKind, StageOutput
 from r3chain.domain.records.scenario import Scenario
 from r3chain.domain.status import AdapterState, StageStatus
+from r3chain.pipeline.evaluation import (
+    AssessStage,
+    CandidateStage,
+    CouplingStage,
+    RouteStage,
+    ScreeningStage,
+    single_policy,
+)
 from r3chain.pipeline.runner import Stage, StageContext
 from r3chain.ports.network import NetworkModel
 from r3chain.ports.source import (
@@ -80,12 +89,6 @@ class SiteEvidenceStage:
             status=StageStatus.COMPLETED,
             payload={"sites": summary},
         )
-
-
-def single_policy(policies: Mapping[str, Policy], kind: PolicyKind) -> Policy | None:
-    """The one policy of a kind that a scenario references, or None if there is not exactly one."""
-    found = [policy for policy in policies.values() if policy.kind is kind]
-    return found[0] if len(found) == 1 else None
 
 
 def _grid(low: float, high: float, count: int) -> list[float]:
@@ -239,180 +242,6 @@ class SourceEnvelopeStage:
         return self._output(StageStatus.COMPLETED, payload=payload, synthetic=synthetic)
 
 
-# Outcomes of a coupling case that are valid evaluations. A physical limit that was exceeded is
-# a result, not a failure of the calculation.
-_EVALUATED = frozenset({StageStatus.COMPLETED, StageStatus.PHYSICAL_LIMIT_EXCEEDED})
-# When cases could not be evaluated, the first of these that occurs is the status of the stage.
-_UNRESOLVED_PRECEDENCE = (
-    StageStatus.TOOL_FAILURE,
-    StageStatus.CANCELLED,
-    StageStatus.INVALID_INPUT,
-    StageStatus.NON_CONVERGED,
-    StageStatus.UNSUPPORTED_MODEL,
-    StageStatus.NOT_ESTABLISHED,
-)
-
-
-def coupling_case_summary(outcome: CaseOutcome) -> dict[str, Any]:
-    """The few numbers of a coupling case that a reader needs first."""
-    summary: dict[str, Any] = {"state": outcome.status.value, "reason": outcome.reason}
-    result = outcome.result
-    if result is None:
-        summary["inputs_not_established"] = [item.field_path for item in outcome.missing_inputs]
-        return summary
-    summary |= {
-        "arrangement": result.arrangement,
-        "performance_basis": result.performance_basis,
-        "synthetic": result.synthetic,
-        "failure_origin": result.failure_origin.value if result.failure_origin else None,
-        "converged": result.converged,
-        "iterations_count": len(result.iterations),
-        "limiting_conditions": list(result.limiting_conditions),
-        "shortfall_causes": [cause.value for cause in result.shortfall_causes],
-        "failed_checks": [
-            check.check_id for check in result.checks if check.outcome.value == "fail"
-        ],
-        "checks_not_evaluated": [
-            check.check_id for check in result.checks if check.outcome.value == "not_evaluated"
-        ],
-        "operating_point": (
-            result.operating_point.to_json_dict() if result.operating_point else None
-        ),
-    }
-    return summary
-
-
-class CouplingStage:
-    """Evaluate every coupling case of the scenario (specification section 10).
-
-    A case that fails physically is a valid evaluation, so it does not change the status of the
-    stage. A case that could not be evaluated does: the stage then ends with the state of that
-    case, and the other cases keep their results.
-    """
-
-    name = "couple"
-    version = "1.0.0"
-    requires: tuple[str, ...] = ("source",)
-    stochastic = False
-
-    def __init__(self, source_models: Sequence[SourceModel], network_model: NetworkModel) -> None:
-        self._source_models = tuple(source_models)
-        self._network_model = network_model
-
-    def _network_engine(self) -> list[str] | None:
-        try:
-            capabilities = self._network_model.capabilities()
-        except Exception:
-            return None
-        return [capabilities.engine, capabilities.engine_version]
-
-    def input_fingerprint(self, context: StageContext) -> Any:
-        scenario = context.scenario
-        numerical = single_policy(context.policies, PolicyKind.NUMERICAL)
-        source = single_policy(context.policies, PolicyKind.SOURCE)
-        return {
-            "study_id": scenario.study.study_id,
-            "coupling_cases": [item.to_json_dict() for item in scenario.coupling_cases],
-            "plants": [item.to_json_dict() for item in scenario.plants],
-            "operating_cases": [item.to_json_dict() for item in scenario.operating_cases],
-            "well_scenarios": [item.to_json_dict() for item in scenario.well_scenarios],
-            "connections": [item.to_json_dict() for item in scenario.connections],
-            "networks": [item.to_json_dict() for item in scenario.networks],
-            "routes": [item.to_json_dict() for item in scenario.routes],
-            "policies": [
-                policy.to_json_dict() if policy else None for policy in (numerical, source)
-            ],
-            "source_engines": [
-                [capabilities.engine, capabilities.engine_version]
-                for capabilities in (model.capabilities() for model in self._source_models)
-            ],
-            "network_engine": self._network_engine(),
-            "arrangements": [item.name for item in arrangements()],
-        }
-
-    def _output(self, status: StageStatus, **fields: Any) -> StageOutput:
-        return StageOutput(stage=self.name, stage_version=self.version, status=status, **fields)
-
-    def run(self, context: StageContext) -> StageOutput:
-        scenario = context.scenario
-        if not scenario.coupling_cases:
-            return self._output(
-                StageStatus.NOT_ESTABLISHED, reason="the scenario defines no coupling cases"
-            )
-        numerical = single_policy(context.policies, PolicyKind.NUMERICAL)
-        source = single_policy(context.policies, PolicyKind.SOURCE)
-        if numerical is None or source is None:
-            return self._output(
-                StageStatus.NOT_ESTABLISHED,
-                reason=(
-                    "the scenario must reference exactly one policy of kind 'numerical' and "
-                    "exactly one of kind 'source'"
-                ),
-            )
-        if self._network_engine() is None:
-            return self._output(
-                StageStatus.UNSUPPORTED_MODEL,
-                reason="no network engine is installed. Install r3chain[network]",
-            )
-
-        network_model = MemoNetworkModel(self._network_model)
-        source_states = context.upstream["source"].payload.get("sources", {})
-        cases: dict[str, Any] = {}
-        statuses: list[StageStatus] = []
-        missing: list[MissingInput] = []
-        synthetic = False
-        for case in scenario.coupling_cases:
-            upstream = source_states.get(case.source_scenario_id, {}).get("state")
-            if upstream is not None and upstream != AdapterState.COMPLETED.value:
-                outcome = CaseOutcome(
-                    case.coupling_case_id,
-                    StageStatus(upstream),
-                    f"the source stage ended as {upstream} for {case.source_scenario_id}",
-                )
-            else:
-                outcome = evaluate_case(
-                    scenario,
-                    case,
-                    source_models=self._source_models,
-                    network_model=network_model,
-                    source_policy=source,
-                    numerical_policy=numerical,
-                )
-            statuses.append(outcome.status)
-            missing.extend(outcome.missing_inputs)
-            synthetic = synthetic or (outcome.result is not None and outcome.result.synthetic)
-            cases[case.coupling_case_id] = {
-                "summary": coupling_case_summary(outcome),
-                "result": outcome.result.to_json_dict() if outcome.result else None,
-            }
-
-        counts: dict[str, int] = {}
-        for status in statuses:
-            counts[status.value] = counts.get(status.value, 0) + 1
-        payload = {
-            "cases": cases,
-            "counts": counts,
-            "numerical_policy_id": numerical.policy_id,
-            "source_policy_id": source.policy_id,
-        }
-        unresolved = [status for status in statuses if status not in _EVALUATED]
-        if not unresolved:
-            return self._output(StageStatus.COMPLETED, payload=payload, synthetic=synthetic)
-        status = next(item for item in _UNRESOLVED_PRECEDENCE if item in unresolved)
-        names = [
-            case.coupling_case_id
-            for case, case_status in zip(scenario.coupling_cases, statuses, strict=True)
-            if case_status not in _EVALUATED
-        ]
-        return self._output(
-            status,
-            reason=f"coupling cases that could not be evaluated: {', '.join(names)}",
-            payload=payload,
-            missing_inputs=tuple(missing),
-            synthetic=synthetic,
-        )
-
-
 Selection = Sequence[tuple[str, Sequence[Record]]]
 
 
@@ -463,26 +292,25 @@ def default_source_models() -> tuple[SourceModel, ...]:
     return (SyntheticSourceModel(),)
 
 
+def default_network_model() -> NetworkModel:
+    """The network engine that is available."""
+    return PandapipesNetworkModel()
+
+
 def default_stages(
     source_models: Sequence[SourceModel] | None = None,
     network_model: NetworkModel | None = None,
 ) -> tuple[Stage, ...]:
     models = default_source_models() if source_models is None else tuple(source_models)
-    network = PandapipesNetworkModel() if network_model is None else network_model
+    network = default_network_model() if network_model is None else network_model
     return (
         SiteEvidenceStage(),
         SourceEnvelopeStage(models),
-        PlaceholderStage(
-            "screen",
-            ("site_evidence",),
-            "M3",
-            lambda scenario: (
-                ("sites", scenario.sites),
-                ("routes", scenario.routes),
-                ("connections", scenario.connections),
-            ),
-        ),
+        ScreeningStage(),
+        RouteStage(),
+        CandidateStage(),
         CouplingStage(models, network),
+        AssessStage(),
         PlaceholderStage(
             "operate",
             ("couple",),

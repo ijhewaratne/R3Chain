@@ -1,0 +1,46 @@
+{
+ "type": "FeatureCollection",
+ "name": "barriers",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "ID": "stream-1",
+    "ART": "Gewaesser"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0,
+      51.4580159731
+     ],
+     [
+      9.0132417316,
+      51.4574757179
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "ID": "railway-1",
+    "ART": "Bahn"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0345388945,
+      51.4511771198
+     ],
+     [
+      9.0345660615,
+      51.4871442148
+     ]
+    ]
+   }
+  }
+ ]
+}

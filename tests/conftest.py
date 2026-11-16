@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -14,7 +15,7 @@ from r3chain.coupling.cases import CaseOutcome, MemoNetworkModel, evaluate_case
 from r3chain.domain.paths import PatchOperation, apply_patch
 from r3chain.domain.records.runs import Policy
 from r3chain.domain.records.scenario import Scenario
-from r3chain.domain.validation import read_data_file
+from r3chain.domain.validation import read_scenario_data
 from r3chain.ports.network import NetworkCase
 from r3chain.ports.source import (
     SourceNumericalSettings,
@@ -29,6 +30,13 @@ SYNTHETIC_SCENARIO = REPO_ROOT / "examples" / "synthetic" / "scenario.yaml"
 POLICY_DIRECTORY = REPO_ROOT / "policies"
 
 SYNTHETIC = {"provenance_type": "synthetic", "source_id": "syn-definitions"}
+
+
+# The two geometry defects that the synthetic study contains on purpose (definitions.md, 9).
+IMPORT_WARNINGS = (
+    ("geometry_repaired", "spatial_layers[restrictions].features[R1]"),
+    ("feature_rejected", "spatial_layers[restrictions].features[R4]"),
+)
 
 
 # An engineering input that is not available yet.
@@ -50,12 +58,19 @@ def repo_root() -> Path:
     return REPO_ROOT
 
 
-@pytest.fixture
-def scenario_data() -> dict[str, Any]:
-    """The synthetic scenario as plain data. Each test gets its own copy."""
-    data = read_data_file(SYNTHETIC_SCENARIO)
+@pytest.fixture(scope="session")
+def _synthetic_data() -> dict[str, Any]:
+    """The synthetic scenario with its GIS layers imported, read once per session."""
+    data, problems = read_scenario_data(SYNTHETIC_SCENARIO)
+    assert problems == [], problems
     assert isinstance(data, dict)
     return data
+
+
+@pytest.fixture
+def scenario_data(_synthetic_data: dict[str, Any]) -> dict[str, Any]:
+    """The synthetic scenario as plain data. Each test gets its own copy."""
+    return copy.deepcopy(_synthetic_data)
 
 
 @pytest.fixture
@@ -182,6 +197,18 @@ def network_model() -> MemoNetworkModel:
     from r3chain.adapters.pandapipes_network import PandapipesNetworkModel
 
     return MemoNetworkModel(PandapipesNetworkModel())
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _shared_network_solutions(network_model: MemoNetworkModel) -> Iterator[None]:
+    """Let every pipeline in the session share network solutions.
+
+    The engine is deterministic and a solution is keyed by its complete input, so sharing it
+    changes no result. It only keeps the test suite fast.
+    """
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr("r3chain.pipeline.stages.default_network_model", lambda: network_model)
+        yield
 
 
 def repository_policies() -> dict[str, Policy]:

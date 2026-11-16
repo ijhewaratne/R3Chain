@@ -135,6 +135,8 @@ class Depth(Record):
 # Suffix, canonical unit. Matching always prefers the longest suffix.
 _SUFFIX_UNITS: tuple[tuple[str, str], ...] = (
     ("_delta_k", "delta_K"),
+    ("_currency_per_m", "currency/m"),
+    ("_currency", "currency"),
     ("_w_m2_k", "W/(m2 K)"),
     ("_j_kg_k", "J/(kg K)"),
     ("_w_m_k", "W/(m K)"),

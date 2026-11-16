@@ -27,7 +27,15 @@ from typing import ClassVar, Literal
 
 from pydantic import Field, model_validator
 
-from r3chain.domain.base import Identifier, NonEmptyStr, Real, Record, VersionedRecord
+from r3chain.domain.base import (
+    Identifier,
+    JsonDict,
+    NonEmptyStr,
+    Real,
+    Record,
+    VersionedRecord,
+    register_migration,
+)
 from r3chain.domain.evidence import Evidence
 from r3chain.domain.records.common import require_unique, value_or_none
 from r3chain.domain.units import require_unit_suffix
@@ -172,11 +180,34 @@ class BackupSource(Record):
         return self
 
 
+class TransmissionDesign(Record):
+    """The pipe pair of a route between the plant at the site and the connection.
+
+    With a design, the route is modelled in the network: its heat loss, its pressure loss and its
+    elevation profile. Without one, the plant sits at the connection.
+    """
+
+    inner_diameter_m: Evidence[Real]
+    roughness_m: Evidence[Real]
+    heat_transfer_coefficient_w_m2_k: Evidence[Real]
+
+    @model_validator(mode="after")
+    def _values_are_physical(self) -> TransmissionDesign:
+        for name in ("inner_diameter_m", "heat_transfer_coefficient_w_m2_k"):
+            value = value_or_none(getattr(self, name))
+            if value is not None and value <= 0.0:
+                raise ValueError(f"{name} must be positive")
+        roughness = value_or_none(self.roughness_m)
+        if roughness is not None and roughness < 0.0:
+            raise ValueError("roughness_m must not be negative")
+        return self
+
+
 class CouplingCase(VersionedRecord):
     """One coupled operating point: a source, a plant, a connection and an operating case."""
 
     SCHEMA_NAME: ClassVar[str] = "coupling_case"
-    schema_version: Literal["0.1.0"] = "0.1.0"
+    schema_version: Literal["0.2.0"] = "0.2.0"
 
     coupling_case_id: Identifier
     description: str = ""
@@ -191,9 +222,13 @@ class CouplingCase(VersionedRecord):
     # node of the connection.
     network_pressure_lift_pa: Evidence[Real]
     backup: BackupSource | None = None
+    # The route between site and connection, modelled in the network. Needs a route.
+    transmission: TransmissionDesign | None = None
 
     @model_validator(mode="after")
     def _control_is_complete(self) -> CouplingCase:
+        if self.transmission is not None and self.route_id is None:
+            raise ValueError("a transmission design needs the route it belongs to")
         fixed = self.flow_control is FlowControl.FIXED
         if fixed and self.fixed_geothermal_mass_flow_kg_s is None:
             raise ValueError("flow_control 'fixed' needs fixed_geothermal_mass_flow_kg_s")
@@ -207,3 +242,9 @@ class CouplingCase(VersionedRecord):
             if value is not None and value <= 0.0:
                 raise ValueError(f"{name} must be positive")
         return self
+
+
+@register_migration("coupling_case", "0.1.0", "0.2.0")
+def _coupling_case_gains_a_transmission(data: JsonDict) -> JsonDict:
+    """0.2.0 adds an optional transmission design. Older cases have none."""
+    return data

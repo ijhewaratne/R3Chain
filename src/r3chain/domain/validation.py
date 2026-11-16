@@ -207,6 +207,7 @@ def _check_references(scenario: Scenario, found: _Collector) -> None:
             )
 
     _check_coupling_references(scenario, found)
+    _check_layers(scenario, found)
 
     document = scenario.to_json_dict()
     for model in scenario.uncertainty_models:
@@ -333,6 +334,44 @@ def _check_coupling_references(scenario: Scenario, found: _Collector) -> None:
                 f"{route.to_connection_id!r}. It cannot be combined with a source at another "
                 "site or with another connection",
             )
+
+
+def _check_layers(scenario: Scenario, found: _Collector) -> None:
+    """Imported layers must be in the study's reference system and come from a registered
+    dataset. Every repair and every rejected feature is reported."""
+    datasets = {item.dataset_id for item in scenario.datasets}
+    study_crs = scenario.study.study_area.crs
+    for layer in scenario.spatial_layers:
+        base = f"spatial_layers[{layer.layer_id}]"
+        if layer.crs != study_crs:
+            found.error(
+                "wrong_reference_system",
+                f"{base}.crs",
+                f"the layer is in {layer.crs}, the study uses {study_crs}. Import it again",
+            )
+        if layer.dataset_id not in datasets:
+            found.error(
+                "unknown_reference",
+                f"{base}.dataset_id",
+                f"dataset {layer.dataset_id!r} is not registered in this scenario",
+            )
+        for repair in layer.repairs:
+            found.add(
+                Severity.WARNING,
+                "geometry_repaired",
+                f"{base}.features[{repair.feature_id}]",
+                f"repaired at import: {repair.defect}. Size changed by "
+                f"{repair.size_change_fraction:.3%}",
+            )
+        for item in layer.rejected:
+            found.add(
+                Severity.WARNING,
+                "feature_rejected",
+                f"{base}.features[{item.feature_id}]",
+                f"rejected at import and not used: {item.reason}",
+            )
+        for message in layer.import_warnings:
+            found.add(Severity.WARNING, "import_note", base, message)
 
 
 def _check_sources(scenario: Scenario, found: _Collector) -> bool:
@@ -522,5 +561,27 @@ def parse_scenario(data: Any) -> tuple[Scenario | None, ValidationReport]:
     return scenario, validate_scenario(scenario)
 
 
+def read_scenario_data(path: Path) -> tuple[Any, list[tuple[str, str]]]:
+    """Read a scenario file and import the GIS layers it names.
+
+    Returns the scenario data and the problems of the layer import as pairs of field path and
+    message.
+    """
+    data = read_data_file(path)
+    if isinstance(data, dict) and "layer_sources" in data:
+        from r3chain.geospatial.sources import resolve_layer_sources
+
+        return resolve_layer_sources(data, path.parent)
+    return data, []
+
+
 def load_scenario_file(path: Path) -> tuple[Scenario | None, ValidationReport]:
-    return parse_scenario(read_data_file(path))
+    data, problems = read_scenario_data(path)
+    scenario, report = parse_scenario(data)
+    if problems:
+        imported = tuple(
+            Issue(severity=Severity.ERROR, code="layer_import", field_path=where, message=message)
+            for where, message in problems
+        )
+        report = report.model_copy(update={"issues": (*report.issues, *imported)})
+    return scenario, report

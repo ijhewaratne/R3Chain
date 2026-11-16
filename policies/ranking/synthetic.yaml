@@ -1,0 +1,16 @@
+# Provisional ranking for the synthetic study (milestone M3).
+policy_id: ranking-synthetic
+kind: ranking
+version: "1"
+title: Provisional ranking by indicative route cost
+origin: >-
+  Invented for the synthetic study. Until the economics of milestone M4 exist, the only cost
+  that candidates can be compared on is the indicative cost of their route. The ranking metric,
+  the tie tolerance and the risk policy are open decision O14.
+status: unreviewed
+parameters:
+  primary_metric: indicative_route_cost_currency
+  tie_tolerance_fraction: 0.01
+  # Site evidence statuses that may be ranked, separated by commas.
+  rankable_site_evidence: documented
+  rank_conditional_screening: false

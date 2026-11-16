@@ -1,0 +1,159 @@
+{
+  "$defs": {
+    "LayerKind": {
+      "enum": [
+        "geological_target",
+        "restriction",
+        "jurisdiction",
+        "corridor",
+        "crossing_barrier",
+        "demand_point",
+        "network_pipe"
+      ],
+      "title": "LayerKind",
+      "type": "string"
+    },
+    "PropertyMapping": {
+      "additionalProperties": false,
+      "description": "One raw column that becomes one canonical property.",
+      "properties": {
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "values": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Values"
+        }
+      },
+      "required": [
+        "source",
+        "target"
+      ],
+      "title": "PropertyMapping",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "How one raw GIS file becomes one canonical layer.",
+  "properties": {
+    "coordinate_precision_m": {
+      "exclusiveMinimum": 0.0,
+      "title": "Coordinate Precision M",
+      "type": "number"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "id_column": {
+      "minLength": 1,
+      "title": "Id Column",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/LayerKind"
+    },
+    "mapping_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Mapping Id",
+      "type": "string"
+    },
+    "max_repair_size_change_fraction": {
+      "minimum": 0.0,
+      "title": "Max Repair Size Change Fraction",
+      "type": "number"
+    },
+    "properties": {
+      "items": {
+        "$ref": "#/$defs/PropertyMapping"
+      },
+      "title": "Properties",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_crs": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Crs"
+    },
+    "source_layer": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Layer"
+    },
+    "vertical_datum": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Vertical Datum"
+    }
+  },
+  "required": [
+    "mapping_id",
+    "kind",
+    "id_column",
+    "coordinate_precision_m",
+    "max_repair_size_change_fraction",
+    "properties"
+  ],
+  "title": "LayerMapping",
+  "type": "object"
+}

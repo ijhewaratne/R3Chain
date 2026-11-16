@@ -476,8 +476,11 @@ def test_synthetic_values_label_the_result(
     assert statuses == {
         "site_evidence": "completed",
         "source": "completed",
-        "screen": "not_established",
+        "screen": "completed",
+        "routes": "completed",
+        "candidates": "completed",
         "couple": "completed",
+        "assess": "completed",
         "operate": "not_established",
         "cost": "not_run",
         "compare": "not_run",
@@ -491,12 +494,30 @@ def test_synthetic_values_label_the_result(
     }
     assert "sites[delta].access" in sites["delta"]["inputs_not_established"]
     # A placeholder never produces a number and never passes a check.
-    screen = next(output for output in result.stage_outputs if output.stage == "screen")
-    assert screen.payload == {} and "milestone M3" in screen.reason
+    operate = next(output for output in result.stage_outputs if output.stage == "operate")
+    assert operate.payload == {} and "milestone M4" in operate.reason
     assert result.technical_status is TechnicalStatus.NOT_ESTABLISHED
     assert result.kpis == () and result.checks == ()
-    assert set(run.input_hashes) == {"site_evidence", "source", "screen", "couple", "operate"}
-    assert store.get_results(run.run_id) == (result,)
+    assert set(run.input_hashes) == {
+        "site_evidence",
+        "source",
+        "screen",
+        "routes",
+        "candidates",
+        "couple",
+        "assess",
+        "operate",
+    }
+    # One result for the study and one for each candidate.
+    stored = store.get_results(run.run_id)
+    assert stored[0] == result
+    assert len(stored) == 1 + 27
+    assert {item.subject for item in stored[1:]} == {
+        item["candidate_id"]
+        for item in next(
+            output for output in result.stage_outputs if output.stage == "assess"
+        ).payload["assessments"]
+    }
 
     # Synthetic values inside a study that is not marked synthetic still label the result.
     pilot = Scenario.model_validate(changed(scenario_data, "study.synthetic", False))

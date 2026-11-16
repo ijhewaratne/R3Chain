@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from tests.conftest import FakeClock, changed, known
+from tests.conftest import IMPORT_WARNINGS, FakeClock, changed, known
 
 from r3chain.domain.records.network import Network
 from r3chain.domain.records.runs import Policy, Result
@@ -93,7 +93,8 @@ def test_duplicates_dead_ends_and_unpaired_pipes_are_warnings(network: Network) 
 
 def test_topology_is_part_of_scenario_validation(scenario_data: dict[str, Any]) -> None:
     scenario, report = parse_scenario(scenario_data)
-    assert scenario is not None and report.issues == ()
+    assert scenario is not None
+    assert [(issue.code, issue.field_path) for issue in report.issues] == list(IMPORT_WARNINGS)
 
     pipes = without(scenario_data["networks"][0]["pipes"], "pipe_id", "supply-1-2", "return-2-1")
     broken = changed(scenario_data, "networks[syn-network].pipes", pipes)
@@ -111,9 +112,11 @@ def test_topology_is_part_of_scenario_validation(scenario_data: dict[str, Any]) 
     )
     scenario, report = parse_scenario(doubled)
     assert scenario is not None and report.executable
-    assert [(issue.severity, issue.code) for issue in report.issues] == [
-        (Severity.WARNING, "topology_duplicate_pipe")
-    ]
+    assert [
+        (issue.severity, issue.code)
+        for issue in report.issues
+        if (issue.code, issue.field_path) not in IMPORT_WARNINGS
+    ] == [(Severity.WARNING, "topology_duplicate_pipe")]
 
 
 # --- the source stage -----------------------------------------------------------------------
@@ -175,9 +178,9 @@ def test_a_test_engine_labels_the_result_synthetic(
     assert stage(result, "source").synthetic
     assert not stage(result, "site_evidence").synthetic
     assert result.synthetic
-    # Screening, operation and cost do not exist yet, so the study has no technical result.
-    assert stage(result, "screen").status is StageStatus.NOT_ESTABLISHED
-    assert stage(result, "couple").synthetic
+    # Operation and cost do not exist yet, so the study has no technical result.
+    assert stage(result, "screen").status is StageStatus.COMPLETED
+    assert stage(result, "couple").synthetic and stage(result, "assess").synthetic
     assert stage(result, "operate").status is StageStatus.NOT_ESTABLISHED
     assert result.evaluation_status is EvaluationStatus.NOT_EVALUATED
     assert result.kpis == ()
@@ -284,7 +287,10 @@ def test_a_new_engine_version_recomputes_the_source_stage(
         "site_evidence": True,
         "source": False,
         "screen": True,
+        "routes": True,
+        "candidates": False,
         "couple": False,
+        "assess": False,
         "operate": False,
         "cost": False,
         "compare": False,
@@ -316,7 +322,7 @@ def test_records_written_before_this_milestone_still_load() -> None:
         "parameters": {"min_usable_pad_area_m2": 5000.0},
     }
     policy = Policy.model_validate(old_policy)
-    assert policy.schema_version == "0.2.0" and policy.kind.value == "screening"
+    assert policy.schema_version == "0.3.0" and policy.kind.value == "screening"
 
     old_result = {
         "schema_version": "0.1.0",

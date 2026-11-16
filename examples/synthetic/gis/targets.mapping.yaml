@@ -1,0 +1,10 @@
+# Raw to canonical mapping for the synthetic geological target layer.
+mapping_id: syn-targets
+kind: geological_target
+description: Target areas of the synthetic reservoir. Invented.
+id_column: ZIEL_ID
+coordinate_precision_m: 0.0001
+max_repair_size_change_fraction: 0.001
+properties:
+  - {source: ZIEL_ID, target: target_id}
+  - {source: HORIZONT, target: horizon}

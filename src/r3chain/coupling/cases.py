@@ -12,7 +12,7 @@ Inputs that are not established
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from r3chain.coupling.loop import (
@@ -20,11 +20,20 @@ from r3chain.coupling.loop import (
     CouplingProblem,
     CouplingResult,
     CouplingSettings,
+    TransmissionModel,
     solve_coupled,
 )
 from r3chain.coupling.plant import PlantInputError, resolve_plant
 from r3chain.domain.evidence import InputReader, Known, MissingInput, NotEstablished, missing_input
-from r3chain.domain.records.network import BoundaryKind, Network
+from r3chain.domain.records.network import (
+    BoundaryKind,
+    Circuit,
+    Connection,
+    Network,
+    NetworkNode,
+    NetworkPipe,
+    Route,
+)
 from r3chain.domain.records.plant import CouplingCase, FlowControl
 from r3chain.domain.records.runs import Policy
 from r3chain.domain.records.scenario import Scenario
@@ -70,23 +79,121 @@ def _policy_number(policy: Policy, name: str) -> float:
     return float(value)
 
 
-def _return_pressure(network: Network, return_node: str) -> Pressure:
-    """The pressure the circulation holds at the return node of the connection."""
+def _return_pressure(network: Network, return_node: str) -> Pressure | None:
+    """The pressure the supply point holds at its return node.
+
+    A pressure reference of the network at that node is held by the supply point. A reference
+    at another node stays with the network, and the supply point then holds no pressure of its
+    own.
+    """
     references = [
         boundary
         for boundary in network.boundary_conditions
         if boundary.kind is BoundaryKind.PRESSURE_REFERENCE and boundary.pressure is not None
     ]
-    at_connection = [item for item in references if item.node_id == return_node]
-    chosen = at_connection or references
-    if len(chosen) != 1 or chosen[0].pressure is None:
+    if len(references) != 1:
         raise _invalid(
-            f"network {network.network_id} needs exactly one pressure reference, at the return "
-            f"node of the connection. It defines {len(references)}"
+            f"network {network.network_id} needs exactly one pressure reference. It defines "
+            f"{len(references)}"
         )
-    # A reference at another node is passed on unchanged. The network engine then reports that
-    # it does not support a pressure reference away from the supply point.
-    return chosen[0].pressure
+    return references[0].pressure if references[0].node_id == return_node else None
+
+
+@dataclass(frozen=True)
+class _Transmission:
+    network: Network
+    supply_node: str
+    return_node: str
+    pipe_ids: tuple[str, ...]
+    node_ids: tuple[str, ...]
+
+
+def _transmission_network(
+    network: Network,
+    connection: Connection,
+    route: Route,
+    *,
+    inner_diameter_m: float,
+    roughness_m: float,
+    heat_transfer_coefficient_w_m2_k: float,
+) -> _Transmission:
+    """The network with the route added as a supply and a return pipe from the site.
+
+    The pipes follow the elevation profile of the route. Their lengths are the supply and return
+    pipe lengths of the route, shared out over the profile by chainage. The plant sits at the
+    start of the route.
+    """
+    length = route.corridor_length_m
+    heights = {node.node_id: node.elevation_m for node in network.nodes}
+    points: list[tuple[float, float]] = []
+    for point in route.elevation_profile:
+        if not points or point.chainage_m > points[-1][0]:
+            points.append((point.chainage_m, point.elevation_m))
+    if not points:
+        raise _invalid(
+            f"route {route.route_id} has no elevation profile, so it cannot be modelled in the "
+            "network"
+        )
+    if points[0][0] > 0.0:
+        points.insert(0, (0.0, points[0][1]))
+    if points[-1][0] < length:
+        points.append((length, heights[connection.supply_node]))
+    if len(points) < 2:
+        raise _invalid(f"route {route.route_id} needs at least two profile points")
+
+    count = len(points) - 1
+    supply_ids = [f"{route.route_id}-s{index}" for index in range(count)]
+    return_ids = [f"{route.route_id}-r{index}" for index in range(count)]
+    clash = sorted(set(supply_ids + return_ids) & set(heights))
+    if clash:
+        raise _invalid(f"route node names already exist in the network: {', '.join(clash)}")
+    supply_chain = [*supply_ids, connection.supply_node]
+    return_chain = [*return_ids, connection.return_node]
+    nodes = [
+        NetworkNode(
+            node_id=node_id,
+            circuit=circuit,
+            elevation_m=points[index][1],
+            zone_id=connection.zone_id,
+        )
+        for index in range(count)
+        for node_id, circuit in (
+            (supply_ids[index], Circuit.SUPPLY),
+            (return_ids[index], Circuit.RETURN),
+        )
+    ]
+    pipes: list[NetworkPipe] = []
+    for index in range(count):
+        share = (points[index + 1][0] - points[index][0]) / length
+        for name, start, end, total in (
+            ("supply", supply_chain[index], supply_chain[index + 1], route.supply_pipe_length_m),
+            ("return", return_chain[index + 1], return_chain[index], route.return_pipe_length_m),
+        ):
+            pipes.append(
+                NetworkPipe(
+                    pipe_id=f"{route.route_id}-{name}-{index}",
+                    from_node=start,
+                    to_node=end,
+                    length_m=share * total,
+                    inner_diameter_m=inner_diameter_m,
+                    roughness_m=roughness_m,
+                    heat_transfer_coefficient_w_m2_k=heat_transfer_coefficient_w_m2_k,
+                )
+            )
+    extended = Network.model_validate(
+        {
+            **network.to_json_dict(),
+            "nodes": [*network.to_json_dict()["nodes"], *(node.to_json_dict() for node in nodes)],
+            "pipes": [*network.to_json_dict()["pipes"], *(pipe.to_json_dict() for pipe in pipes)],
+        }
+    )
+    return _Transmission(
+        network=extended,
+        supply_node=supply_ids[0],
+        return_node=return_ids[0],
+        pipe_ids=tuple(pipe.pipe_id for pipe in pipes),
+        node_ids=tuple(supply_ids + return_ids),
+    )
 
 
 def network_numerical_settings(policy: Policy) -> NetworkNumericalSettings:
@@ -111,8 +218,11 @@ def prepare_coupling(
     capabilities: SourceCapabilities,
     source_policy: Policy,
     numerical_policy: Policy,
+    routes: Mapping[str, Route] | None = None,
 ) -> CouplingProblem:
     """Resolve one coupling case of a scenario into a coupling problem.
+
+    ``routes`` adds routes that are not part of the scenario, for example generated ones.
 
     Raises ``NotEstablished`` when required inputs are unknown or in conflict, and
     ``CouplingInputError`` when the case does not fit the scenario or the engines.
@@ -139,8 +249,10 @@ def prepare_coupling(
             f"{base}: operating case {operating_case.operating_case_id} is for network "
             f"{operating_case.network_id!r}, the connection is on {network.network_id!r}"
         )
+    route: Route | None = None
     if case.route_id is not None:
-        route = lookup(scenario.routes, "route_id", case.route_id, "route")
+        known_routes = (*scenario.routes, *(routes or {}).values())
+        route = lookup(known_routes, "route_id", case.route_id, "route")
         if route.from_site_id != well_scenario.site_id or (
             route.to_connection_id != connection.connection_id
         ):
@@ -174,6 +286,12 @@ def prepare_coupling(
     backup_heat: float | None = None
     if case.backup is not None:
         backup_heat = reader.get(case.backup.max_heat_w, f"{base}.backup.max_heat_w")
+    design: dict[str, float | None] = {}
+    if case.transmission is not None:
+        for name in ("inner_diameter_m", "roughness_m", "heat_transfer_coefficient_w_m2_k"):
+            design[name] = reader.get(
+                getattr(case.transmission, name), f"{base}.transmission.{name}"
+            )
     missing.extend(reader.missing)
 
     try:
@@ -216,8 +334,26 @@ def prepare_coupling(
         or ground is None
         or loads is None
         or lift is None
+        or any(value is None for value in design.values())
     ):
         raise NotEstablished(tuple(missing))
+
+    modelled = network
+    supply_node, return_node = connection.supply_node, connection.return_node
+    transmission: _Transmission | None = None
+    if case.transmission is not None and route is not None:
+        transmission = _transmission_network(
+            network,
+            connection,
+            route,
+            inner_diameter_m=float(design["inner_diameter_m"] or 0.0),
+            roughness_m=float(design["roughness_m"] or 0.0),
+            heat_transfer_coefficient_w_m2_k=float(
+                design["heat_transfer_coefficient_w_m2_k"] or 0.0
+            ),
+        )
+        modelled = transmission.network
+        supply_node, return_node = transmission.supply_node, transmission.return_node
 
     # Limits of the connection that are not established stay visible as unevaluated checks.
     optional: list[MissingInput] = list(left_out)
@@ -244,17 +380,21 @@ def prepare_coupling(
         raise _invalid(str(error)) from error
     network_case = NetworkCase(
         # Named after the network inputs, so coupling cases that share them share one solve.
-        case_id=f"{operating_case.operating_case_id}-at-{connection.connection_id}",
+        case_id=(
+            f"{operating_case.operating_case_id}-via-{route.route_id}"
+            if transmission is not None and route is not None
+            else f"{operating_case.operating_case_id}-at-{connection.connection_id}"
+        ),
         network_id=network.network_id,
         calculation=CalculationMode.THERMAL,
         loads=loads,
         supply_points=(
             SupplyPoint(
                 supply_point_id=connection.connection_id,
-                supply_node=connection.supply_node,
-                return_node=connection.return_node,
+                supply_node=supply_node,
+                return_node=return_node,
                 supply_temperature_k=required_supply,
-                return_pressure=_return_pressure(network, connection.return_node),
+                return_pressure=_return_pressure(modelled, return_node),
                 pressure_lift_pa=lift,
             ),
         ),
@@ -270,7 +410,7 @@ def prepare_coupling(
         flow_control=case.flow_control,
         fixed_geothermal_mass_flow_kg_s=fixed_flow,
         plant=spec,
-        network=network,
+        network=modelled,
         network_case=network_case,
         limits=ConnectionLimitValues(
             connection_id=connection.connection_id,
@@ -286,6 +426,15 @@ def prepare_coupling(
         settings=settings,
         settings_origin=(f"policy {numerical_policy.policy_id} version {numerical_policy.version}"),
         inputs_not_established=tuple(optional),
+        transmission=(
+            TransmissionModel(
+                route_id=route.route_id,
+                pipe_ids=transmission.pipe_ids,
+                node_ids=transmission.node_ids,
+            )
+            if transmission is not None and route is not None
+            else None
+        ),
     )
 
 
@@ -333,6 +482,7 @@ def evaluate_case(
     network_model: NetworkModel,
     source_policy: Policy,
     numerical_policy: Policy,
+    routes: Mapping[str, Route] | None = None,
 ) -> CaseOutcome:
     """Evaluate one coupling case and say what became of it.
 
@@ -375,6 +525,7 @@ def evaluate_case(
             capabilities=model.capabilities(),
             source_policy=source_policy,
             numerical_policy=numerical_policy,
+            routes=routes,
         )
     except NotEstablished as error:
         return CaseOutcome(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 from pathlib import Path
 
 import pytest
@@ -63,6 +64,8 @@ def test_validate_reports_gaps_and_succeeds(cli: Cli) -> None:
 
 def test_validate_fails_on_an_invalid_file(cli: Cli, tmp_path: Path) -> None:
     text = SYNTHETIC_SCENARIO.read_text(encoding="utf-8")
+    # The GIS layers are named relative to the scenario file, so they travel with the copy.
+    shutil.copytree(SYNTHETIC_SCENARIO.parent / "gis", tmp_path / "gis")
     broken = tmp_path / "broken.yaml"
     broken.write_text(text.replace("baseline_id: baseline-existing", "baseline_id: nothing"))
     code, output = cli("validate", str(broken))
@@ -89,8 +92,10 @@ def test_run_show_and_replay(cli: Cli) -> None:
     output = cli.run_synthetic()
     run_id, revision_id = _field(output, "Run"), _field(output, "Revision")
     assert "site_evidence  completed        computed" in output
-    assert "screen         not_established  computed" in output
+    assert "screen         completed        computed" in output
+    assert "assess         completed        computed" in output
     assert "technical not_established, evaluation not_evaluated, synthetic" in output
+    assert "Candidates (27)" in output and "among the 11 eligible of the 27" in output
 
     # The same scenario again is the same revision, and its stages are reused.
     second = cli.run_synthetic()
@@ -209,7 +214,7 @@ def test_policies_are_listed_with_their_hashes(cli: Cli) -> None:
     code, output = cli("policies", str(POLICY_DIRECTORY))
     assert code == 0
     assert "numerical-coupling-default" in output and "screening-synthetic" in output
-    assert output.count("sha256:") == 3
+    assert output.count("sha256:") == len(list(POLICY_DIRECTORY.rglob("*.yaml"))) == 6
 
 
 # --- schemas --------------------------------------------------------------------------------

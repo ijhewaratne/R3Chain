@@ -122,7 +122,7 @@ def test_requirement_markers_point_at_register_entries(
 
 
 # The milestone the repository has reached. Raise it when a milestone gate passes.
-CURRENT_MILESTONE = 2
+CURRENT_MILESTONE = 3
 
 
 def test_no_acceptance_test_is_claimed_complete_before_its_milestone(
@@ -139,13 +139,14 @@ def test_no_acceptance_test_is_claimed_complete_before_its_milestone(
     assert early == []
     # Milestone M1 completes elevation and pressure, and zero or reversed flow. Milestone M2
     # completes the heat balance, the exchanger terminal limit, the heat pump balance, the
-    # finite source capacity and the failure categories.
+    # finite source capacity and the failure categories. Milestone M3 completes connection
+    # alternatives and data gaps (gate R1).
     built = sorted(
         entry["id"]
         for entry in entries
         if entry["kind"] == "acceptance" and entry["status"] in {"built", "verified"}
     )
-    assert built == ["A01", "A02", "A03", "A04", "A05", "A06", "A13"]
+    assert built == ["A01", "A02", "A03", "A04", "A05", "A06", "A11", "A12", "A13"]
 
 
 def test_register_file_is_where_the_plan_says(repo_root: Path) -> None:

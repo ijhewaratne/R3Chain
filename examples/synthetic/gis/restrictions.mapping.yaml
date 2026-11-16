@@ -1,0 +1,18 @@
+# Raw to canonical mapping for the synthetic restriction layer.
+#
+# The restriction kinds are translated, so that the screening policy can give each kind its own
+# setback. A kind that is not in the value map is reported and left out.
+mapping_id: syn-restrictions
+kind: restriction
+description: Areas that limit where a drilling pad may lie. Invented.
+id_column: SCHUTZ_ID
+coordinate_precision_m: 0.0001
+max_repair_size_change_fraction: 0.001
+properties:
+  - source: ART
+    target: restriction_kind
+    values:
+      Wohnbebauung: housing
+      Wasserschutzgebiet: water_protection
+      Freileitung: power_line
+      Biotop: protected_biotope

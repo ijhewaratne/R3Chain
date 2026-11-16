@@ -1,10 +1,11 @@
 # Convergence targets and numerical settings for the plant and network coupling (milestone M2).
 #
-# Version 2 adds the absolute tolerances, the damping and the settings of the network engine.
-# Version 1 held the first four values only and was never used by a calculation.
+# Version 3 adds the tolerance of the pressure difference at a connection that a plant at the
+# end of a route must hold (milestone M3). Version 2 added the absolute tolerances, the damping
+# and the settings of the network engine. Version 1 was never used by a calculation.
 policy_id: numerical-coupling-default
 kind: numerical
-version: "2"
+version: "3"
 title: Convergence targets for the plant and network coupling loop
 origin: >-
   Specification section 10.4. The temperature, heat and flow tolerances are proposed software
@@ -19,6 +20,8 @@ parameters:
   # Used instead of the relative tolerances near zero heat and zero flow.
   absolute_heat_mismatch_tolerance_w: 1.0
   absolute_flow_mismatch_tolerance_kg_s: 0.0001
+  # How closely a plant at the end of a route holds the pressure difference at the connection.
+  pressure_difference_tolerance_pa: 100.0
   # Share of each update that is applied. 1 applies it in full.
   damping_fraction: 1.0
   network_max_iterations_count: 30

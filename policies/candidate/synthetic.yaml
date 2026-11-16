@@ -1,0 +1,20 @@
+# Candidate enumeration for the synthetic study (milestone M3).
+policy_id: candidate-synthetic
+kind: candidate
+version: "1"
+title: Candidate enumeration for the synthetic study
+origin: >-
+  Invented for the synthetic study. The transmission sizing rule picks the smallest diameter in
+  steps that keeps the velocity at the connection's largest mass flow below the limit. It is an
+  indicative sizing rule, not a pipe design.
+status: unreviewed
+parameters:
+  # Operating cases every candidate is coupled for, separated by commas.
+  operating_case_ids: shoulder-season
+  include_conditional_sites: true
+  network_pressure_lift_pa: 150000
+  transmission_max_velocity_m_s: 1.5
+  transmission_sizing_density_kg_m3: 975
+  transmission_diameter_step_m: 0.025
+  transmission_roughness_m: 0.0001
+  transmission_heat_transfer_coefficient_w_m2_k: 0.4

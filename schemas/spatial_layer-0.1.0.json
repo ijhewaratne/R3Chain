@@ -1,0 +1,229 @@
+{
+  "$defs": {
+    "Feature": {
+      "additionalProperties": false,
+      "description": "One feature. Its geometry is GeoJSON in the coordinate reference system of the layer.",
+      "properties": {
+        "feature_id": {
+          "minLength": 1,
+          "title": "Feature Id",
+          "type": "string"
+        },
+        "geometry": {
+          "additionalProperties": true,
+          "title": "Geometry",
+          "type": "object"
+        },
+        "properties": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "title": "Properties",
+          "type": "object"
+        }
+      },
+      "required": [
+        "feature_id",
+        "geometry"
+      ],
+      "title": "Feature",
+      "type": "object"
+    },
+    "GeometryRepair": {
+      "additionalProperties": false,
+      "properties": {
+        "defect": {
+          "minLength": 1,
+          "title": "Defect",
+          "type": "string"
+        },
+        "feature_id": {
+          "minLength": 1,
+          "title": "Feature Id",
+          "type": "string"
+        },
+        "size_change_fraction": {
+          "title": "Size Change Fraction",
+          "type": "number"
+        }
+      },
+      "required": [
+        "feature_id",
+        "defect",
+        "size_change_fraction"
+      ],
+      "title": "GeometryRepair",
+      "type": "object"
+    },
+    "LayerKind": {
+      "enum": [
+        "geological_target",
+        "restriction",
+        "jurisdiction",
+        "corridor",
+        "crossing_barrier",
+        "demand_point",
+        "network_pipe"
+      ],
+      "title": "LayerKind",
+      "type": "string"
+    },
+    "RejectedFeature": {
+      "additionalProperties": false,
+      "properties": {
+        "bounds": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bounds",
+          "unit": "unit of the layer reference system"
+        },
+        "feature_id": {
+          "minLength": 1,
+          "title": "Feature Id",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "feature_id",
+        "reason"
+      ],
+      "title": "RejectedFeature",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "crs": {
+      "pattern": "^[A-Za-z]+:\\d+$",
+      "title": "Crs",
+      "type": "string"
+    },
+    "dataset_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "features": {
+      "items": {
+        "$ref": "#/$defs/Feature"
+      },
+      "title": "Features",
+      "type": "array"
+    },
+    "import_warnings": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Import Warnings",
+      "type": "array"
+    },
+    "kind": {
+      "$ref": "#/$defs/LayerKind"
+    },
+    "layer_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Layer Id",
+      "type": "string"
+    },
+    "mapping_hash": {
+      "title": "Mapping Hash",
+      "type": "string"
+    },
+    "mapping_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Mapping Id",
+      "type": "string"
+    },
+    "rejected": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/RejectedFeature"
+      },
+      "title": "Rejected",
+      "type": "array"
+    },
+    "repairs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/GeometryRepair"
+      },
+      "title": "Repairs",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_crs": {
+      "minLength": 1,
+      "title": "Source Crs",
+      "type": "string"
+    },
+    "vertical_datum": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Vertical Datum"
+    }
+  },
+  "required": [
+    "layer_id",
+    "kind",
+    "dataset_id",
+    "mapping_id",
+    "mapping_hash",
+    "source_crs",
+    "crs",
+    "features"
+  ],
+  "title": "SpatialLayer",
+  "type": "object"
+}

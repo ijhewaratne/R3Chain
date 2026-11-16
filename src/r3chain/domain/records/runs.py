@@ -75,6 +75,7 @@ class PolicyKind(StrEnum):
     UNCERTAINTY = "uncertainty"
     CANDIDATE = "candidate"
     SOURCE = "source"
+    ROUTE = "route"
 
 
 class ReviewStatus(StrEnum):
@@ -89,7 +90,7 @@ class Policy(VersionedRecord):
     """
 
     SCHEMA_NAME: ClassVar[str] = "policy"
-    schema_version: Literal["0.2.0"] = "0.2.0"
+    schema_version: Literal["0.3.0"] = "0.3.0"
 
     policy_id: Identifier
     kind: PolicyKind
@@ -264,6 +265,12 @@ class Result(VersionedRecord):
 @register_migration("policy", "0.1.0", "0.2.0")
 def _policy_gains_the_source_kind(data: JsonDict) -> JsonDict:
     """0.2.0 adds the policy kind 'source'. Existing policies are unchanged."""
+    return data
+
+
+@register_migration("policy", "0.2.0", "0.3.0")
+def _policy_gains_the_route_kind(data: JsonDict) -> JsonDict:
+    """0.3.0 adds the policy kind 'route'. Existing policies are unchanged."""
     return data
 
 

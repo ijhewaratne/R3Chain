@@ -1,0 +1,13 @@
+# Raw to canonical mapping for the synthetic crossing barriers.
+mapping_id: syn-barriers
+kind: crossing_barrier
+description: A stream and a railway. Invented.
+id_column: ID
+coordinate_precision_m: 0.0001
+max_repair_size_change_fraction: 0.001
+properties:
+  - source: ART
+    target: barrier_kind
+    values:
+      Gewaesser: watercourse
+      Bahn: railway

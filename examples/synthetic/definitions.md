@@ -10,9 +10,8 @@ a change to this file requires a new dataset version.
 ## 1. Purpose
 
 A small public study that exercises every part of the evaluation chain, so that development and
-tests never depend on restricted data. This is the milestone M2 version, registered as dataset
-version 3. Milestone M3 extends it with full screening inputs, and milestone M4 adds demand,
-availability and price series.
+tests never depend on restricted data. This is the milestone M3 version, registered as dataset
+version 4. Milestone M4 adds demand, availability and price series.
 
 ## 2. Sites
 
@@ -110,3 +109,33 @@ They are chosen so that every outcome of the coupling occurs once.
 | beta-direct-summer | The source is colder than the required supply, so direct heat fails at the hot end |
 | beta-heat-pump-shoulder | The same source covers the demand with a heat pump |
 | alpha-separated-shoulder | Direct heat through a pressure separation exchanger |
+
+## 9. GIS layers
+
+Six invented layers in `gis/`, written as GeoJSON in WGS84 by `gis/make_layers.py` from designs
+in metres in EPSG:25832. Each is registered as its own dataset and imported through a mapping
+file that translates the raw columns, which imitate a municipal dataset. Heights are in DHHN2016.
+
+| Layer | Contents | Role in the study |
+|---|---|---|
+| targets | One target area per well concept | Every concept reaches its target |
+| restrictions | Housing, a water protection zone, a power line, a biotope | Alpha loses 2000 m2 to the housing setback. Gamma loses 1050 m2 to the water protection zone, and the power line has no documented setback, so Gamma is conditional |
+| jurisdictions | Two municipalities | Gamma lies in the neighbouring one, which is recorded and does not exclude it |
+| corridors | Streets and field paths | The graph that routes follow |
+| barriers | A stream and a railway | Crossings with a cost |
+| demand | Three buildings along the eastern street | Customers that a longer route from Gamma passes |
+
+Two defects are included on purpose. Restriction R1 has a self touching ring, which the import
+repairs and reports. Restriction R4 is a bow tie whose intended shape is ambiguous, which the
+import rejects and reports. R4 lies far from every site.
+
+The routes are designed so that, from Alpha to the western connection, the shortest route by
+length runs along streets and crosses the stream, while a route 107 m longer follows field
+paths and is cheaper.
+
+## 10. Candidates
+
+The candidate policy couples every candidate in the shoulder season. Route pipes are sized for
+the largest mass flow of their connection at 1.5 m/s. The ranking policy ranks by indicative
+route cost only, because no other cost exists before milestone M4. Delta is excluded by the
+screening, so it appears in the rejection table and not among the candidates.

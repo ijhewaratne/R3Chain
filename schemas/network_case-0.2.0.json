@@ -1,0 +1,269 @@
+{
+  "$defs": {
+    "CalculationMode": {
+      "enum": [
+        "hydraulic",
+        "thermal"
+      ],
+      "title": "CalculationMode",
+      "type": "string"
+    },
+    "ConsumerLoad": {
+      "additionalProperties": false,
+      "description": "The demand of one consumer in one operating case.\n\nExactly one control is given: a fixed mass flow, or a return temperature that the consumer\nreaches by adjusting its flow.",
+      "properties": {
+        "consumer_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Consumer Id",
+          "type": "string"
+        },
+        "heat_w": {
+          "title": "Heat W",
+          "type": "number"
+        },
+        "mass_flow_kg_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mass Flow Kg S"
+        },
+        "return_temperature_k": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Return Temperature K"
+        }
+      },
+      "required": [
+        "consumer_id",
+        "heat_w"
+      ],
+      "title": "ConsumerLoad",
+      "type": "object"
+    },
+    "FrictionModel": {
+      "enum": [
+        "swamee_jain",
+        "nikuradse",
+        "colebrook"
+      ],
+      "title": "FrictionModel",
+      "type": "string"
+    },
+    "NetworkNumericalSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "friction_model": {
+          "$ref": "#/$defs/FrictionModel"
+        },
+        "max_iterations_count": {
+          "minimum": 1,
+          "title": "Max Iterations Count",
+          "type": "integer"
+        },
+        "pipe_sections_count": {
+          "minimum": 1,
+          "title": "Pipe Sections Count",
+          "type": "integer"
+        },
+        "zero_flow_tolerance_kg_s": {
+          "minimum": 0.0,
+          "title": "Zero Flow Tolerance Kg S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "max_iterations_count",
+        "pipe_sections_count",
+        "friction_model",
+        "zero_flow_tolerance_kg_s"
+      ],
+      "title": "NetworkNumericalSettings",
+      "type": "object"
+    },
+    "Pressure": {
+      "additionalProperties": false,
+      "description": "A pressure together with its reference.",
+      "properties": {
+        "reference": {
+          "$ref": "#/$defs/PressureReference"
+        },
+        "value_pa": {
+          "title": "Value Pa",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value_pa",
+        "reference"
+      ],
+      "title": "Pressure",
+      "type": "object"
+    },
+    "PressureReference": {
+      "enum": [
+        "absolute",
+        "gauge"
+      ],
+      "title": "PressureReference",
+      "type": "string"
+    },
+    "SupplyPoint": {
+      "additionalProperties": false,
+      "description": "A circulating heat source.\n\nIt raises the pressure by ``pressure_lift_pa`` and feeds the supply side at\n``supply_temperature_k``. The mass flow and the heat it has to provide follow from the\nnetwork.\n\nThe pressure level comes from exactly one pressure reference: ``return_pressure`` held at the\nreturn node of the supply point, or the pressure reference boundary of the network, which may\nlie at any node.",
+      "properties": {
+        "pressure_lift_pa": {
+          "title": "Pressure Lift Pa",
+          "type": "number"
+        },
+        "return_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Return Node",
+          "type": "string"
+        },
+        "return_pressure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pressure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "supply_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Supply Node",
+          "type": "string"
+        },
+        "supply_point_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Supply Point Id",
+          "type": "string"
+        },
+        "supply_temperature_k": {
+          "title": "Supply Temperature K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "supply_point_id",
+        "supply_node",
+        "return_node",
+        "supply_temperature_k",
+        "pressure_lift_pa"
+      ],
+      "title": "SupplyPoint",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One steady operating case of one network.",
+  "properties": {
+    "calculation": {
+      "$ref": "#/$defs/CalculationMode"
+    },
+    "case_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "ground_temperature_k": {
+      "title": "Ground Temperature K",
+      "type": "number"
+    },
+    "loads": {
+      "items": {
+        "$ref": "#/$defs/ConsumerLoad"
+      },
+      "title": "Loads",
+      "type": "array"
+    },
+    "max_node_pressure": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Pressure"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "min_node_pressure": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Pressure"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "network_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Network Id",
+      "type": "string"
+    },
+    "numerical": {
+      "$ref": "#/$defs/NetworkNumericalSettings"
+    },
+    "pressure_limit_origin": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pressure Limit Origin"
+    },
+    "schema_version": {
+      "const": "0.2.0",
+      "default": "0.2.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "supply_points": {
+      "items": {
+        "$ref": "#/$defs/SupplyPoint"
+      },
+      "title": "Supply Points",
+      "type": "array"
+    }
+  },
+  "required": [
+    "case_id",
+    "network_id",
+    "calculation",
+    "loads",
+    "supply_points",
+    "ground_temperature_k",
+    "numerical"
+  ],
+  "title": "NetworkCase",
+  "type": "object"
+}

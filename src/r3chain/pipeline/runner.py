@@ -313,8 +313,35 @@ class PipelineRunner:
             }
         )
         self._store.add_result(result)
+        for subject_result in self._subject_results(outputs, result):
+            self._store.add_result(subject_result)
         self._store.finalize_run(finished)
         return finished, result
+
+    @staticmethod
+    def _subject_results(outputs: Mapping[str, StageOutput], study: Result) -> list[Result]:
+        """Results for the subjects a stage reports on, for example one per candidate.
+
+        A stage reports them in its payload under ``subject_results``. Each becomes a result
+        record of the run with its own four statuses.
+        """
+        found: list[Result] = []
+        for output in outputs.values():
+            if output.status is not StageStatus.COMPLETED:
+                continue
+            for item in output.payload.get("subject_results", []):
+                found.append(
+                    Result.model_validate(
+                        {
+                            **item,
+                            "result_id": f"{study.result_id}-{item['subject']}",
+                            "run_id": study.run_id,
+                            "scenario_revision": study.scenario_revision,
+                            "synthetic": study.synthetic or bool(item.get("synthetic")),
+                        }
+                    )
+                )
+        return found
 
     def replay(self, run_id: str) -> ReplayOutcome:
         """Execute a stored run again from its frozen revision, without the cache."""

@@ -11,6 +11,10 @@ requires-python = ">=3.12"
 dependencies = [
   "pydantic>=2.8,<3",
   "PyYAML>=6.0",
+  # Geometry, coordinate reference systems and route graphs (milestone M3).
+  "shapely>=2.0",
+  "pyproj>=3.6",
+  "networkx>=3.2",
 ]
 
 [project.optional-dependencies]
@@ -19,13 +23,24 @@ dependencies = [
 network = [
   "pandapipes==0.17.0",
 ]
+# Readers for GIS files: GeoPackage, GeoParquet and GeoJSON.
+gis = [
+  "geopandas>=1.0",
+  "pyogrio>=0.9",
+  "pyarrow>=15",
+]
 dev = [
   "pandapipes==0.17.0",
+  "geopandas>=1.0",
+  "pyogrio>=0.9",
+  "pyarrow>=15",
   "pytest>=8.0",
   "hypothesis>=6.100",
   "ruff>=0.6",
   "mypy>=1.11",
   "types-PyYAML",
+  "types-shapely",
+  "types-networkx",
 ]
 
 [project.scripts]
@@ -56,6 +71,6 @@ plugins = ["pydantic.mypy"]
 files = ["src/r3chain"]
 
 [[tool.mypy.overrides]]
-module = ["pandapipes", "pandapipes.*"]
+module = ["pandapipes", "pandapipes.*", "geopandas", "geopandas.*", "pyogrio", "pyogrio.*"]
 ignore_missing_imports = true
 follow_imports = "skip"

@@ -1,0 +1,51 @@
+{
+ "type": "FeatureCollection",
+ "name": "demand",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "KUNDE_ID": "potential-customer-1",
+    "LEISTUNG_KW": 300,
+    "STATUS": "geplant"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     9.057582122,
+     51.4649255118
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "KUNDE_ID": "committed-customer-1",
+    "LEISTUNG_KW": 200,
+    "STATUS": "zugesagt"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     9.0619006569,
+     51.4648333939
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "KUNDE_ID": "potential-customer-2",
+    "LEISTUNG_KW": 250,
+    "STATUS": "geplant"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     9.0662186537,
+     51.4643814459
+    ]
+   }
+  }
+ ]
+}

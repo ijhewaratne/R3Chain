@@ -1,0 +1,14 @@
+# Raw to canonical mapping for the synthetic demand points. The raw demand is in kW.
+mapping_id: syn-demand
+kind: demand_point
+description: Buildings that might connect along a route. Invented.
+id_column: KUNDE_ID
+coordinate_precision_m: 0.0001
+max_repair_size_change_fraction: 0.001
+properties:
+  - {source: LEISTUNG_KW, target: design_heat_w, unit: kW}
+  - source: STATUS
+    target: customer_status
+    values:
+      zugesagt: committed
+      geplant: potential

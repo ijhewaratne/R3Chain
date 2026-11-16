@@ -1,0 +1,343 @@
+{
+ "type": "FeatureCollection",
+ "name": "corridors",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c01",
+    "TYP": "Strasse",
+    "BREITE_M": 6.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0064773158,
+      51.4601738241,
+      164
+     ],
+     [
+      9.006476934,
+      51.4574762867,
+      161
+     ],
+     [
+      9.0064765522,
+      51.4547787481,
+      160
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c02",
+    "TYP": "Strasse",
+    "BREITE_M": 8.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0064765522,
+      51.4547787481,
+      160
+     ],
+     [
+      9.015111955,
+      51.4547779531,
+      160
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c03",
+    "TYP": "Strasse",
+    "BREITE_M": 8.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.015111955,
+      51.4547779531,
+      160
+     ],
+     [
+      9.0165511887,
+      51.4547777588,
+      158
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c04",
+    "TYP": "Strasse",
+    "BREITE_M": 8.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0165511887,
+      51.4547777588,
+      158
+     ],
+     [
+      9.0179184608,
+      51.4547775578,
+      158
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c05",
+    "TYP": "Strasse",
+    "BREITE_M": 5.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0179184608,
+      51.4547775578,
+      158
+     ],
+     [
+      9.0179191649,
+      51.456575917,
+      158
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c06",
+    "TYP": "Strasse",
+    "BREITE_M": 8.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0179184608,
+      51.4547775578,
+      158
+     ],
+     [
+      9.0287846747,
+      51.4547753938,
+      170
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c07",
+    "TYP": "Strasse",
+    "BREITE_M": 7.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0287846747,
+      51.4547753938,
+      170
+     ],
+     [
+      9.0287908971,
+      51.4646663615,
+      185
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c08",
+    "TYP": "Strasse",
+    "BREITE_M": 7.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0287908971,
+      51.4646663615,
+      185
+     ],
+     [
+      9.038867709,
+      51.4646634545,
+      178
+     ],
+     [
+      9.0511038349,
+      51.4646587604,
+      195
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c09",
+    "TYP": "Strasse",
+    "BREITE_M": 7.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0511038349,
+      51.4646587604,
+      195
+     ],
+     [
+      9.0726969887,
+      51.4646473622,
+      188
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c10",
+    "TYP": "Strasse",
+    "BREITE_M": 6.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0726969887,
+      51.4646473622,
+      188
+     ],
+     [
+      9.072718428,
+      51.4781350092,
+      205
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c11",
+    "TYP": "Feldweg",
+    "BREITE_M": 3.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0064773158,
+      51.4601738241,
+      164
+     ],
+     [
+      9.0165528148,
+      51.4592736557,
+      163
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c12",
+    "TYP": "Feldweg",
+    "BREITE_M": 3.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.0165528148,
+      51.4592736557,
+      163
+     ],
+     [
+      9.0165511887,
+      51.4547777588,
+      158
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c13",
+    "TYP": "Feldweg",
+    "BREITE_M": 3.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.072718428,
+      51.4781350092,
+      205
+     ],
+     [
+      9.061916234,
+      51.4763428568,
+      210
+     ],
+     [
+      9.051114886,
+      51.4745497087,
+      198
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "WEG_ID": "c14",
+    "TYP": "Feldweg",
+    "BREITE_M": 3.0
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      9.051114886,
+      51.4745497087,
+      198
+     ],
+     [
+      9.0511038349,
+      51.4646587604,
+      195
+     ]
+    ]
+   }
+  }
+ ]
+}

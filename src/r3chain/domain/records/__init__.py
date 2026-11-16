@@ -7,6 +7,7 @@ from r3chain.domain.records.runs import Assumption, Policy, Result, Run
 from r3chain.domain.records.scenario import Scenario, ScenarioRevision
 from r3chain.domain.records.scenarios import EconomicScenario, OperatingScenario, UncertaintyModel
 from r3chain.domain.records.site import Site, WellScenario
+from r3chain.domain.records.spatial import SpatialLayer
 from r3chain.domain.records.study import Dataset, Study
 
 # The thirteen records of specification 7.2, in the order of that table.
@@ -32,6 +33,7 @@ VERSIONED_RECORDS: tuple[type[VersionedRecord], ...] = (
     Plant,
     OperatingCase,
     CouplingCase,
+    SpatialLayer,
     Policy,
     Scenario,
     ScenarioRevision,
@@ -56,6 +58,7 @@ __all__ = [
     "Scenario",
     "ScenarioRevision",
     "Site",
+    "SpatialLayer",
     "Study",
     "UncertaintyModel",
     "WellScenario",

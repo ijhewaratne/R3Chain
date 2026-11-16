@@ -1,0 +1,15 @@
+# Raw to canonical mapping for the synthetic corridor layer. Heights are in DHHN2016.
+mapping_id: syn-corridors
+kind: corridor
+description: Streets and field paths where pipes may be laid. Invented.
+id_column: WEG_ID
+vertical_datum: DHHN2016
+coordinate_precision_m: 0.0001
+max_repair_size_change_fraction: 0.001
+properties:
+  - source: TYP
+    target: corridor_kind
+    values:
+      Strasse: street
+      Feldweg: field_path
+  - {source: BREITE_M, target: width_m, unit: m}

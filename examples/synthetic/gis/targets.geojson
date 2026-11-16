@@ -1,0 +1,108 @@
+{
+ "type": "FeatureCollection",
+ "name": "targets",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "ZIEL_ID": "target-alpha",
+    "HORIZONT": "Synthetischer Kalkstein"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       9.0043184651,
+       51.4628714596
+      ],
+      [
+       9.0129553952,
+       51.4628708235
+      ],
+      [
+       9.012956923,
+       51.4682658919
+      ],
+      [
+       9.0043189744,
+       51.4682665281
+      ],
+      [
+       9.0043184651,
+       51.4628714596
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "ZIEL_ID": "target-beta",
+    "HORIZONT": "Synthetischer Kalkstein"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       9.0215902034,
+       51.4583736572
+      ],
+      [
+       9.0302262837,
+       51.4583717491
+      ],
+      [
+       9.0302298477,
+       51.4637668211
+      ],
+      [
+       9.0215927491,
+       51.4637687296
+      ],
+      [
+       9.0215902034,
+       51.4583736572
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "ZIEL_ID": "target-gamma",
+    "HORIZONT": "Synthetischer Kalkstein"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       9.0633499179,
+       51.4718462066
+      ],
+      [
+       9.0719885362,
+       51.4718412219
+      ],
+      [
+       9.0719970285,
+       51.4772362779
+      ],
+      [
+       9.0633573912,
+       51.4772412636
+      ],
+      [
+       9.0633499179,
+       51.4718462066
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

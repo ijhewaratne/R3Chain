@@ -21,6 +21,12 @@ Zero flow
     For a branch without flow the engine returns a default temperature instead of an undefined
     one. The adapter marks such branches as stagnant and reports no temperature for them.
 
+Pressure reference
+    The pressure level is held at one node: the return node of the supply point, or the node of
+    the network's pressure reference. The engine treats water as incompressible, so the pressure
+    level changes no flow and no temperature. A reference elsewhere is therefore met by shifting
+    every solved pressure by the same amount.
+
 Not modelled here
     Steam, pumps and valves inside the network, more than one supply point, and transient heat
     transport. Each returns ``unsupported_model``.
@@ -68,6 +74,9 @@ TESTED_VERSIONS = ("0.17.0",)
 # a network whose flow directions do not depend on the orientation. More than three means the
 # directions are not settling.
 MAX_ORIENTATION_PASSES = 3
+# A pressure reference away from the supply point is first estimated with this density. The
+# solved pressures are then shifted so that the reference node has its pressure exactly.
+_WATER_DENSITY_ESTIMATE_KG_M3 = 1000.0
 FLUID_MODEL = "pandapipes fluid library: water"
 
 
@@ -113,12 +122,6 @@ def ambient_pressure_pa(height_m: float) -> float:
     from pandapipes.component_models.component_toolbox import p_correction_height_air
 
     return float(p_correction_height_air(height_m)) * PASCALS_PER_BAR
-
-
-def _to_engine_bar(pressure: Pressure, height_m: float) -> float:
-    if pressure.reference is PressureReference.ABSOLUTE:
-        return (pressure.value_pa - ambient_pressure_pa(height_m)) / PASCALS_PER_BAR
-    return pressure.value_pa / PASCALS_PER_BAR
 
 
 def _absolute_pa(pressure: Pressure, height_m: float) -> float:
@@ -205,15 +208,42 @@ class PandapipesNetworkModel:
                 return f"boundary condition {boundary.kind.value} is not modelled yet"
         return None
 
-    def _unsupported_boundary(self, network: Network, case: NetworkCase) -> str | None:
-        """A pressure reference away from the supply point. Checked once the case is valid."""
-        for boundary in network.boundary_conditions:
-            if boundary.node_id != case.supply_points[0].return_node:
-                return (
-                    f"the pressure reference at node {boundary.node_id} is not at the return "
-                    "node of the supply point"
-                )
-        return None
+    def _pressure_reference(
+        self, network: Network, case: NetworkCase
+    ) -> tuple[str, Pressure] | str:
+        """The one node whose pressure is held, with its pressure. A text when there is not one.
+
+        The supply point may hold the pressure at its return node, or the network's pressure
+        reference may hold it at any node. Two references, or none, are an invalid case.
+        """
+        point = case.supply_points[0]
+        held = [
+            (boundary.node_id, boundary.pressure)
+            for boundary in network.boundary_conditions
+            if boundary.pressure is not None
+        ]
+        if point.return_pressure is not None:
+            for node_id, pressure in held:
+                if node_id != point.return_node:
+                    return (
+                        f"two pressure references: the case holds the pressure at "
+                        f"{point.return_node} and the network at {node_id}. Give one"
+                    )
+                if (
+                    pressure.reference is not point.return_pressure.reference
+                    or abs(pressure.value_pa - point.return_pressure.value_pa) > 1.0
+                ):
+                    return (
+                        "the case return pressure contradicts the network pressure reference at "
+                        f"node {node_id}"
+                    )
+            return point.return_node, point.return_pressure
+        if len(held) != 1:
+            return (
+                "exactly one pressure reference is needed: the supply point gives none and the "
+                f"network gives {len(held)}"
+            )
+        return held[0]
 
     def _invalid(self, network: Network, case: NetworkCase) -> list[str]:
         problems: list[str] = []
@@ -235,24 +265,16 @@ class PandapipesNetworkModel:
             problems.append("temperatures must be absolute temperatures above 0 K")
         if point.pressure_lift_pa <= 0.0:
             problems.append("the pressure lift of the supply point must be positive")
-        for limit in (case.min_node_pressure, case.max_node_pressure):
-            if limit is not None and limit.reference is not point.return_pressure.reference:
-                problems.append(
-                    "inconsistent pressure references: the node pressure limits and the supply "
-                    "point pressure must share one reference"
-                )
-        for boundary in network.boundary_conditions:
-            given = boundary.pressure
-            if boundary.node_id != point.return_node:
-                continue
-            if given is not None and (
-                given.reference is not point.return_pressure.reference
-                or abs(given.value_pa - point.return_pressure.value_pa) > 1.0
-            ):
-                problems.append(
-                    f"the case return pressure contradicts the network pressure reference "
-                    f"{boundary.boundary_id}"
-                )
+        reference = self._pressure_reference(network, case)
+        if isinstance(reference, str):
+            problems.append(reference)
+        else:
+            for limit in (case.min_node_pressure, case.max_node_pressure):
+                if limit is not None and limit.reference is not reference[1].reference:
+                    problems.append(
+                        "inconsistent pressure references: the node pressure limits and the "
+                        "pressure reference must share one reference"
+                    )
 
         consumers = {consumer.consumer_id for consumer in network.consumers}
         loads = {load.consumer_id: load for load in case.loads}
@@ -302,9 +324,10 @@ class PandapipesNetworkModel:
         problems = self._invalid(network, case)
         if problems:
             return self._failure(network, case, AdapterState.INVALID_INPUT, "; ".join(problems))
-        unsupported = self._unsupported_boundary(network, case)
-        if unsupported is not None:
-            return self._failure(network, case, AdapterState.UNSUPPORTED_MODEL, unsupported)
+        found = self._pressure_reference(network, case)
+        if isinstance(found, str):
+            return self._failure(network, case, AdapterState.INVALID_INPUT, found)
+        reference_node, reference_pressure = found
 
         import pandapipes as pp
         from pandapipes.constants import GRAVITATION_CONSTANT
@@ -316,13 +339,13 @@ class PandapipesNetworkModel:
         heights = {node.node_id: node.elevation_m for node in network.nodes}
         loads = {load.consumer_id: load for load in case.loads}
 
-        return_bar = _to_engine_bar(point.return_pressure, heights[point.return_node])
-        flow_absolute = (
-            _absolute_pa(point.return_pressure, heights[point.return_node]) + point.pressure_lift_pa
+        reference_absolute = _absolute_pa(reference_pressure, heights[reference_node])
+        # The supply point holds its return node. When the pressure reference lies elsewhere, the
+        # return pressure is estimated from the height difference, and the solved pressures are
+        # shifted afterwards so that the reference node has its pressure.
+        return_absolute = reference_absolute - _WATER_DENSITY_ESTIMATE_KG_M3 * 9.81 * (
+            heights[point.return_node] - heights[reference_node]
         )
-        flow_bar = (
-            flow_absolute - ambient_pressure_pa(heights[point.supply_node])
-        ) / PASCALS_PER_BAR
         return_guess = min(
             (load.return_temperature_k for load in case.loads if load.return_temperature_k),
             default=point.supply_temperature_k - 30.0,
@@ -334,7 +357,9 @@ class PandapipesNetworkModel:
         }[case.numerical.friction_model]
         limit = case.numerical.max_iterations_count
 
-        def run_engine(flipped: frozenset[str]) -> _EngineRun | NetworkResult:
+        def run_engine(
+            flipped: frozenset[str], return_bar: float, flow_bar: float
+        ) -> _EngineRun | NetworkResult:
             """Build the engine network and solve it. Nothing of it survives this call.
 
             A pipe named in ``flipped`` is built against its definition, so that the engine
@@ -429,32 +454,54 @@ class PandapipesNetworkModel:
                 )
             return _EngineRun(net, junction, pipe_index, consumer_index, messages)
 
-        # The engine reports the outlet temperature of a pipe at the end it was defined to. A
-        # pipe that flows against its definition is therefore rebuilt along its flow and the
-        # case is solved again, before any temperature is read.
-        flipped: frozenset[str] = frozenset()
-        for _ in range(MAX_ORIENTATION_PASSES):
-            outcome = run_engine(flipped)
-            if isinstance(outcome, NetworkResult):
-                return outcome
-            against = frozenset(
-                pipe.pipe_id
-                for pipe in network.pipes
-                if float(
-                    outcome.net.res_pipe.loc[outcome.pipe_index[pipe.pipe_id]]["mdot_from_kg_per_s"]
-                )
-                < -tolerance
+        def oriented(return_pa: float) -> tuple[_EngineRun, frozenset[str]] | NetworkResult:
+            """Solve with the return node held at an absolute pressure.
+
+            The engine reports the outlet temperature of a pipe at the end it was defined to. A
+            pipe that flows against its definition is therefore rebuilt along its flow and the
+            case is solved again, before any temperature is read.
+            """
+            return_bar = (return_pa - ambient_pressure_pa(heights[point.return_node])) / (
+                PASCALS_PER_BAR
             )
-            if not thermal or not against:
-                break
-            flipped = flipped ^ against
-        else:
+            flow_bar = (
+                return_pa + point.pressure_lift_pa - ambient_pressure_pa(heights[point.supply_node])
+            ) / PASCALS_PER_BAR
+            flipped: frozenset[str] = frozenset()
+            for _ in range(MAX_ORIENTATION_PASSES):
+                outcome = run_engine(flipped, return_bar, flow_bar)
+                if isinstance(outcome, NetworkResult):
+                    return outcome
+                against = frozenset(
+                    pipe.pipe_id
+                    for pipe in network.pipes
+                    if float(
+                        outcome.net.res_pipe.loc[outcome.pipe_index[pipe.pipe_id]][
+                            "mdot_from_kg_per_s"
+                        ]
+                    )
+                    < -tolerance
+                )
+                if not thermal or not against:
+                    return outcome, flipped
+                flipped = flipped ^ against
             return self._failure(
                 network,
                 case,
                 AdapterState.NON_CONVERGED,
                 "the flow directions did not settle while the pipes were oriented along their flow",
             )
+
+        solved = oriented(return_absolute)
+        if isinstance(solved, NetworkResult):
+            return solved
+        outcome, flipped = solved
+        row = outcome.net.res_junction.loc[outcome.junction[reference_node]]
+        held = float(row["p_bar"]) * PASCALS_PER_BAR + ambient_pressure_pa(heights[reference_node])
+        # The engine treats water as incompressible, so the pressure level changes no flow and
+        # no temperature. Shifting every pressure by the same amount is then the solution with
+        # the reference node held exactly. A test compares it with a second engine run.
+        shift = reference_absolute - held if math.isfinite(held) else 0.0
         net, junction = outcome.net, outcome.junction
         pipe_index, consumer_index, messages = (
             outcome.pipe_index,
@@ -464,7 +511,7 @@ class PandapipesNetworkModel:
 
         # --- read the engine results --------------------------------------------------------
         fluid = net.fluid
-        reference = point.return_pressure.reference
+        reference = reference_pressure.reference
         junction_results = net.res_junction
         pipe_results = net.res_pipe
         used: list[float] = [float(value) for value in junction_results["p_bar"]]
@@ -483,8 +530,10 @@ class PandapipesNetworkModel:
         node_temperature: dict[str, float] = {}
         for node in network.nodes:
             row = junction_results.loc[junction[node.node_id]]
-            absolute[node.node_id] = float(row["p_bar"]) * PASCALS_PER_BAR + ambient_pressure_pa(
-                node.elevation_m
+            absolute[node.node_id] = (
+                float(row["p_bar"]) * PASCALS_PER_BAR
+                + ambient_pressure_pa(node.elevation_m)
+                + shift
             )
             node_temperature[node.node_id] = float(row["t_k"])
 

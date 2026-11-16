@@ -1,10 +1,12 @@
 annotated-types==0.8.0
 ast_serialize==0.13.1
+certifi==2026.10.23
 contourpy==1.4.0
 cycler==0.12.1
 deepdiff==8.6.2
 fonttools==4.68.0
 geojson==3.3.0
+geopandas==1.2.0
 hypothesis==6.170.15
 iniconfig==2.3.1
 kiwisolver==1.5.1
@@ -23,10 +25,13 @@ pandera==0.26.1
 pathspec==1.1.1
 pillow==13.0.0
 pluggy==1.7.0
+pyarrow==26.0.1
 pydantic==2.14.3
 pydantic_core==2.50.4
 Pygments==2.21.0
+pyogrio==0.13.0
 pyparsing==3.3.3
+pyproj==3.8.0
 pytest==9.2.0
 python-dateutil==4.0.0
 pytz==2026.6
@@ -37,7 +42,9 @@ shapely==2.2.0
 sortedcontainers==2.4.0
 tqdm==4.70.1
 typeguard==4.6.0
+types-networkx==3.6.1.20261114
 types-PyYAML==6.0.12.20261113
+types-shapely==2.1.0.20261030
 typing-inspect==0.9.0
 typing-inspection==0.4.5
 typing_extensions==4.16.0

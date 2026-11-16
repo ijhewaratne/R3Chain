@@ -1,12 +1,25 @@
-# Site screening criteria for the synthetic study (used from milestone M3).
+# Site screening criteria for the synthetic study (milestone M3).
+#
+# Version 2 adds the criteria of the GIS screening. Version 1 held the pad area only.
 policy_id: screening-synthetic
 kind: screening
-version: "1"
+version: "2"
 title: Site screening criteria for the synthetic study
 origin: >-
   Workshop point W32 mentions a drilling pad of 5000 to 6000 square metres. The lower value is
-  used here as a configurable preliminary criterion for the synthetic study only. Pad needs by
-  drilling and operating phase are open decision O09.
+  used here as a configurable preliminary criterion for the synthetic study only. Every other
+  value, including the setbacks, is invented for the synthetic study. Real criteria, setbacks
+  and pad needs by drilling and operating phase are open decision O09.
 status: unreviewed
 parameters:
   min_usable_pad_area_m2: 5000
+  # Restrictions further from the parcel than this are not considered.
+  restriction_search_distance_m: 200
+  max_access_distance_m: 50
+  min_access_width_m: 4
+  access_corridor_kind: street
+  max_horizontal_reach_m: 1500
+  allow_restricted_land: false
+  # Setback per restriction kind. A kind without a setback here makes the pad area unknown.
+  setback_housing_m: 40
+  setback_water_protection_m: 0

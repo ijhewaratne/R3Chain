@@ -59,6 +59,7 @@ def fixed_flow(mass_flow_kg_s: float) -> tuple[tuple[str, Any], ...]:
 # --- the passing case -----------------------------------------------------------------------
 
 
+@pytest.mark.requirement("W07")
 def test_direct_heat_covers_the_shoulder_season(
     network_model: MemoNetworkModel, scenario_data: dict[str, Any]
 ) -> None:
@@ -144,7 +145,7 @@ def test_residuals_are_within_the_numerical_policy_and_recorded(
     result = completed(couple(network_model, scenario_data, "alpha-direct-shoulder"))
     settings, residuals = result.settings, result.residuals
     assert residuals is not None
-    assert result.settings_origin == "policy numerical-coupling-default version 2"
+    assert result.settings_origin == "policy numerical-coupling-default version 3"
     assert settings == CouplingSettings.from_policy(
         repository_policies()["numerical-coupling-default"]
     )
@@ -465,16 +466,20 @@ def test_failures_keep_their_origin_and_category(
     assert network.limiting_conditions == ("network:positive_absolute_pressure",)
     assert network.iterations == ()
 
-    # A connection that the network engine cannot model yet is unsupported, not infeasible.
+    # A heat carrier the network engine does not model is unsupported, not infeasible.
     unsupported = couple(
         network_model,
         scenario_data,
         "alpha-direct-shoulder",
-        patches=((f"{CASE}.connection_id", "conn-east"), (f"{CASE}.route_id", None)),
+        patches=(
+            ("networks[syn-network].heat_carrier", "steam"),
+            ("connections[conn-west].heat_carrier", "steam"),
+            ("connections[conn-east].heat_carrier", "steam"),
+        ),
     )
     assert unsupported.status is StageStatus.UNSUPPORTED_MODEL
     assert completed(unsupported).failure_origin is FailureOrigin.NETWORK
-    assert "pressure reference" in unsupported.reason
+    assert "steam" in unsupported.reason
 
     # An arrangement that is not registered is unsupported as well, before anything is solved.
     unknown = couple(
@@ -711,3 +716,26 @@ def test_pressure_separation_costs_temperature(
     assert second.geothermal_mass_flow_kg_s > first.geothermal_mass_flow_kg_s
     assert separated.plant is not None
     assert set(separated.plant.exchangers) == {"exchanger", "separation_exchanger"}
+
+
+@pytest.mark.requirement("W06")
+@pytest.mark.requirement("W12")
+def test_a_plant_at_a_connection_away_from_the_pressure_reference_is_evaluated(
+    network_model: MemoNetworkModel, scenario_data: dict[str, Any]
+) -> None:
+    """The network holds its pressure at r0. A plant at the eastern connection still works."""
+    result = completed(
+        couple(
+            network_model,
+            scenario_data,
+            "alpha-direct-shoulder",
+            patches=((f"{CASE}.connection_id", "conn-east"), (f"{CASE}.route_id", None)),
+        )
+    )
+    assert result.state is AdapterState.COMPLETED
+    network = result.network_result
+    assert network is not None
+    # The reference node keeps its pressure although the supply point is elsewhere.
+    assert network.node("r0").pressure.value_pa == pytest.approx(750_000.0, abs=1.0)
+    supply = network.supply_points[0]
+    assert supply.pressure_lift_pa == pytest.approx(150_000.0, abs=1.0)

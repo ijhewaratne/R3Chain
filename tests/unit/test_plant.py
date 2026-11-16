@@ -272,6 +272,7 @@ def test_plant_and_case_records_reject_inconsistent_content(scenario: Scenario) 
     )
 
 
+@pytest.mark.requirement("W07")
 def test_coupling_cases_must_fit_the_scenario(scenario_data: dict[str, Any]) -> None:
     def errors(path: str, value: Any) -> list[tuple[str, str]]:
         scenario, report = parse_scenario(changed(scenario_data, path, value))

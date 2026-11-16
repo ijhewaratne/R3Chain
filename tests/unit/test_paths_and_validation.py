@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from tests.conftest import SYNTHETIC_SCENARIO, changed, known
+from tests.conftest import IMPORT_WARNINGS, SYNTHETIC_SCENARIO, changed, known
 
 from r3chain.domain.assumptions import assumption_register
 from r3chain.domain.paths import (
@@ -174,7 +174,9 @@ def codes(data: dict[str, Any], severity: Severity = Severity.ERROR) -> list[tup
 def test_synthetic_scenario_is_executable_and_lists_its_gaps() -> None:
     scenario, report = load_scenario_file(SYNTHETIC_SCENARIO)
     assert scenario is not None
-    assert report.executable and report.issues == ()
+    # The only issues are the two geometry defects the study contains on purpose.
+    assert report.executable
+    assert [(issue.code, issue.field_path) for issue in report.issues] == list(IMPORT_WARNINGS)
     assert report.revision_id == scenario.revision_id()
     assert report.contains_synthetic_values
     missing = {item.field_path: item.state for item in report.missing_inputs}
@@ -266,7 +268,10 @@ def test_record_errors_are_reported_with_field_paths(scenario_data: dict[str, An
 def test_synthetic_values_in_a_pilot_study_are_flagged(scenario_data: dict[str, Any]) -> None:
     data = changed(scenario_data, "study.synthetic", False)
     assert codes(data) == []
-    assert codes(data, Severity.WARNING) == [("synthetic_value_in_pilot", "study.synthetic")]
+    assert codes(data, Severity.WARNING) == [
+        *IMPORT_WARNINGS,
+        ("synthetic_value_in_pilot", "study.synthetic"),
+    ]
 
 
 def _with_operating_scenario(data: dict[str, Any]) -> dict[str, Any]:
@@ -308,12 +313,13 @@ def test_time_coverage_is_checked_against_the_series(scenario_data: dict[str, An
     # Without the series the check cannot run. That is reported and is not a pass.
     report = validate_scenario(scenario)
     assert report.executable
-    assert [(i.severity, i.code) for i in report.issues] == [
+    assert [(i.severity, i.code) for i in report.issues if i.severity is not Severity.WARNING] == [
         (Severity.UNVERIFIED, "time_coverage_not_checked")
     ]
 
     complete = {name: _hourly(name) for name in ("demand", "waste-heat", "electricity-price")}
-    assert validate_scenario(scenario, complete).issues == ()
+    found = validate_scenario(scenario, complete).issues
+    assert [(i.code, i.field_path) for i in found] == list(IMPORT_WARNINGS)
 
     def error_codes(series: dict[str, IntervalSeries]) -> list[tuple[str, str]]:
         return [(i.code, i.field_path) for i in validate_scenario(scenario, series).errors]

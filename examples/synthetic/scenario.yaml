@@ -1,4 +1,4 @@
-# Synthetic study, milestone M2 version.
+# Synthetic study, milestone M3 version.
 #
 # Every value in this file is invented for software development and testing. Nothing here
 # describes Wuppertal, WSW assets or any real site. See definitions.md.
@@ -32,11 +32,11 @@ alternatives:
 
 datasets:
   - dataset_id: syn-definitions
-    version: "3"
+    version: "4"
     kind: definitions
     title: Definitions of the synthetic study
     source_uri: definitions.md
-    checksum: "sha256:4d778eecbdf88aa304a310923ae916cecbb92c373584b1ab97233c0bf6cdac92"
+    checksum: "sha256:fed2c815fee1b765b6f9d748e630104f5766e00b42fd0ce89e526c7b45fae053"
     owner: R3CHAIN development
     acquired_at: 2026-11-15T00:00:00Z
     allowed_use: public
@@ -44,17 +44,113 @@ datasets:
     quality: unreviewed
     quality_note: Invented values. Not evidence about any real site.
     synthetic: true
+  - dataset_id: syn-gis-targets
+    version: "1"
+    kind: gis
+    title: Geological target areas of the synthetic study
+    source_uri: gis/targets.geojson
+    checksum: "sha256:bb4a7ac433a80adca9265ca09c10225ccb4131576834c9dbe41fa28bed2e150c"
+    owner: R3CHAIN development
+    acquired_at: 2026-11-16T00:00:00Z
+    allowed_use: public
+    access_group: public
+    quality: unreviewed
+    quality_note: Invented geometry. Not evidence about any real place.
+    synthetic: true
+  - dataset_id: syn-gis-restrictions
+    version: "1"
+    kind: gis
+    title: Restrictions for drilling pads in the synthetic study
+    source_uri: gis/restrictions.geojson
+    checksum: "sha256:28e40942099a38e799782cdf9127552c7e687ec258382c933f99ec5205982851"
+    owner: R3CHAIN development
+    acquired_at: 2026-11-16T00:00:00Z
+    allowed_use: public
+    access_group: public
+    quality: unreviewed
+    quality_note: Invented geometry. Not evidence about any real place.
+    synthetic: true
+  - dataset_id: syn-gis-jurisdictions
+    version: "1"
+    kind: gis
+    title: Municipal boundaries of the synthetic study
+    source_uri: gis/jurisdictions.geojson
+    checksum: "sha256:234aa7f3632735c27635fd6ab65ce025d6411a333f4d37e092784cea4e0c0000"
+    owner: R3CHAIN development
+    acquired_at: 2026-11-16T00:00:00Z
+    allowed_use: public
+    access_group: public
+    quality: unreviewed
+    quality_note: Invented geometry. Not evidence about any real place.
+    synthetic: true
+  - dataset_id: syn-gis-corridors
+    version: "1"
+    kind: gis
+    title: Pipe corridors of the synthetic study
+    source_uri: gis/corridors.geojson
+    checksum: "sha256:9185d7f40c2e1b25baa23fc9af48d5fa1e3ec606ddaa1491cc23e0be55b099cb"
+    owner: R3CHAIN development
+    acquired_at: 2026-11-16T00:00:00Z
+    allowed_use: public
+    access_group: public
+    quality: unreviewed
+    quality_note: Invented geometry. Not evidence about any real place.
+    synthetic: true
+  - dataset_id: syn-gis-barriers
+    version: "1"
+    kind: gis
+    title: Crossing barriers of the synthetic study
+    source_uri: gis/barriers.geojson
+    checksum: "sha256:9c16b973fa8cbb288a13685d0b6667c3c86eb1e722e17168b6c8e61aa8447b5e"
+    owner: R3CHAIN development
+    acquired_at: 2026-11-16T00:00:00Z
+    allowed_use: public
+    access_group: public
+    quality: unreviewed
+    quality_note: Invented geometry. Not evidence about any real place.
+    synthetic: true
+  - dataset_id: syn-gis-demand
+    version: "1"
+    kind: gis
+    title: Potential customers of the synthetic study
+    source_uri: gis/demand.geojson
+    checksum: "sha256:6a274dcce16ba525e7dc75dbb106e7ad5c64aae5a325fdcd3f5c5c77d11917a0"
+    owner: R3CHAIN development
+    acquired_at: 2026-11-16T00:00:00Z
+    allowed_use: public
+    access_group: public
+    quality: unreviewed
+    quality_note: Invented geometry. Not evidence about any real place.
+    synthetic: true
+
+# Imported when the file is loaded. Each layer becomes part of the frozen scenario revision.
+layer_sources:
+  - {layer_id: targets, dataset_id: syn-gis-targets, mapping: gis/targets.mapping.yaml}
+  - {layer_id: restrictions, dataset_id: syn-gis-restrictions, mapping: gis/restrictions.mapping.yaml}
+  - {layer_id: jurisdictions, dataset_id: syn-gis-jurisdictions, mapping: gis/jurisdictions.mapping.yaml}
+  - {layer_id: corridors, dataset_id: syn-gis-corridors, mapping: gis/corridors.mapping.yaml}
+  - {layer_id: barriers, dataset_id: syn-gis-barriers, mapping: gis/barriers.mapping.yaml}
+  - {layer_id: demand, dataset_id: syn-gis-demand, mapping: gis/demand.mapping.yaml}
 
 policies:
-  - policy_id: numerical-coupling-default
-    version: "2"
-    policy_hash: "sha256:f87b399a39599ac6187997b32e0c0b6d9071afe23dd5c4f9472990edb7287427"
-  - policy_id: screening-synthetic
+  - policy_id: candidate-synthetic
     version: "1"
-    policy_hash: "sha256:9a5c6a4409927cc7c109382e4a089371ff6354765c4873854ed398c92f60298c"
+    policy_hash: "sha256:54777478d20f9c2efe5d84646bc825b86865f167532d50acdb2375b07e4b460c"
+  - policy_id: numerical-coupling-default
+    version: "3"
+    policy_hash: "sha256:c68ceea9b4dc67dafd4211b388ad56479231ae4cdc0c98397eefdb96d6a3044f"
+  - policy_id: ranking-synthetic
+    version: "1"
+    policy_hash: "sha256:71b860741cfd08ea8f4774627b866d99e934337506e5765f18beab23f556126f"
+  - policy_id: route-synthetic
+    version: "1"
+    policy_hash: "sha256:22e62c1175576e23c2b698676a1f8e70b6a3a1b3d6dd5da1b8cc9415aed3f63c"
+  - policy_id: screening-synthetic
+    version: "2"
+    policy_hash: "sha256:c070c950e964177dabe23bb026284d7c032a9c4395958c4f6b6c7bf6586a36c9"
   - policy_id: source-envelope-synthetic
     version: "1"
-    policy_hash: "sha256:6f93e93761aa3d605d2e41c326c94a576c36f8f4cecc2a0cb3af4a2426faed1b"
+    policy_hash: "sha256:3f4a0f5f0bcbc199d5f94b4a26095352d3eae2e41bc2b278048dcd8d27dc93db"
 
 # --- sites ------------------------------------------------------------------------------------
 
@@ -286,6 +382,7 @@ networks:
 connections:
   - connection_id: conn-west
     network_id: syn-network
+    location: {crs: "EPSG:25832", geojson: {type: Point, coordinates: [501050, 5700400]}}
     zone_id: zone-main
     supply_node: s0
     return_node: r0
@@ -301,6 +398,7 @@ connections:
 
   - connection_id: conn-east
     network_id: syn-network
+    location: {crs: "EPSG:25832", geojson: {type: Point, coordinates: [503550, 5701500]}}
     zone_id: zone-main
     supply_node: s3
     return_node: r3

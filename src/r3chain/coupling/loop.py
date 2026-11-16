@@ -74,12 +74,14 @@ from r3chain.coupling.plant import (
 )
 from r3chain.domain.base import (
     Identifier,
+    JsonDict,
     NonEmptyStr,
     NonNegativeReal,
     PositiveReal,
     Real,
     Record,
     VersionedRecord,
+    register_migration,
 )
 from r3chain.domain.evidence import MissingInput
 from r3chain.domain.hashing import content_hash
@@ -104,6 +106,8 @@ class CouplingSettings(Record):
     # Used instead of the relative tolerances near zero heat and zero flow.
     absolute_heat_mismatch_tolerance_w: NonNegativeReal
     absolute_flow_mismatch_tolerance_kg_s: NonNegativeReal
+    # How closely the circulation holds the pressure difference at the connection.
+    pressure_difference_tolerance_pa: PositiveReal
     # Share of each update that is applied. 1 applies it in full.
     damping_fraction: PositiveReal = Field(le=1.0)
 
@@ -155,6 +159,15 @@ class ConnectionLimitValues:
 
 
 @dataclass(frozen=True)
+class TransmissionModel:
+    """The route between the plant at the site and the connection, as pipes of the network."""
+
+    route_id: str
+    pipe_ids: tuple[str, ...]
+    node_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class CouplingProblem:
     """Everything one coupled evaluation depends on, with every value resolved."""
 
@@ -179,6 +192,9 @@ class CouplingProblem:
     # Optional inputs that are unknown or in conflict. Their checks stay unevaluated.
     inputs_not_established: tuple[MissingInput, ...] = ()
     not_modelled: tuple[str, ...] = ()
+    # With a transmission, the plant sits at the start of the route and the network is solved so
+    # that the connection receives its required supply temperature and pressure difference.
+    transmission: TransmissionModel | None = None
 
     def fingerprint(self) -> dict[str, Any]:
         return {
@@ -205,6 +221,7 @@ class CouplingProblem:
             },
             "backup": [self.backup_id, self.backup_max_heat_w],
             "settings": self.settings.to_json_dict(),
+            "transmission": self.transmission.route_id if self.transmission else None,
         }
 
     def input_hash(self) -> str:
@@ -278,6 +295,13 @@ class OperatingPoint(Record):
     deficit_heat_w: NonNegativeReal
     compressor_electricity_w: NonNegativeReal
     network_pump_hydraulic_power_w: Real | None = None
+    # Temperature the plant must deliver so that the connection receives its required supply
+    # temperature. Equal to it when no route is modelled.
+    plant_supply_temperature_k: PositiveReal | None = None
+    # Present when the route between site and connection is modelled.
+    transmission_heat_loss_w: NonNegativeReal | None = None
+    transmission_pressure_loss_pa: Real | None = None
+    plant_pressure_lift_pa: Real | None = None
 
 
 _WITH_OPERATING_POINT = frozenset({AdapterState.COMPLETED, AdapterState.PHYSICAL_LIMIT_EXCEEDED})
@@ -285,7 +309,7 @@ _WITH_OPERATING_POINT = frozenset({AdapterState.COMPLETED, AdapterState.PHYSICAL
 
 class CouplingResult(VersionedRecord):
     SCHEMA_NAME: ClassVar[str] = "coupling_result"
-    schema_version: Literal["0.1.0"] = "0.1.0"
+    schema_version: Literal["0.2.0"] = "0.2.0"
 
     coupling_case_id: Identifier
     input_hash: str
@@ -320,6 +344,8 @@ class CouplingResult(VersionedRecord):
     inputs_not_established: tuple[MissingInput, ...] = ()
     not_modelled: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
+    # The route modelled as transmission pipes, if any.
+    transmission_route_id: Identifier | None = None
 
     @model_validator(mode="after")
     def _numbers_match_the_state(self) -> CouplingResult:
@@ -343,8 +369,8 @@ class CouplingResult(VersionedRecord):
 
 # --- helpers --------------------------------------------------------------------------------
 
+_ROUTE_NOT_MODELLED = "heat loss and pressure loss of the route between the site and the connection"
 _NOT_MODELLED = (
-    "heat loss and pressure loss of the route between the site and the connection",
     "electricity of the network circulation pump: only its hydraulic power is reported",
     "part load behaviour of pumps and of the heat pump",
 )
@@ -410,9 +436,13 @@ def _connection_checks(
             origin=limits.origin("max_mass_flow_kg_s"),
         ),
     ]
-    pressures = [
-        network.node(node_id).pressure for node_id in (limits.supply_node, limits.return_node)
-    ]
+    # The limits of the connection hold for its pressure zone, so also along a modelled route.
+    node_ids = (
+        limits.supply_node,
+        limits.return_node,
+        *(problem.transmission.node_ids if problem.transmission else ()),
+    )
+    pressures = [network.node(node_id).pressure for node_id in node_ids]
     for name, bound, observed, upper in (
         ("min_pressure", limits.min_pressure, min(p.value_pa for p in pressures), False),
         ("max_pressure", limits.max_pressure, max(p.value_pa for p in pressures), True),
@@ -433,7 +463,8 @@ def _connection_checks(
         checks.append(
             _limit_check(
                 f"connection_{name}",
-                f"{'highest' if upper else 'lowest'} pressure at the connection",
+                f"{'highest' if upper else 'lowest'} pressure at the connection"
+                + (" and along the route" if problem.transmission else ""),
                 observed,
                 bound.value_pa if bound is not None else None,
                 upper=upper,
@@ -513,7 +544,14 @@ class _Builder:
             "settings": problem.settings,
             "settings_origin": problem.settings_origin,
             "inputs_not_established": problem.inputs_not_established,
-            "not_modelled": (*_NOT_MODELLED, *problem.not_modelled),
+            "not_modelled": (
+                *(() if problem.transmission else (_ROUTE_NOT_MODELLED,)),
+                *_NOT_MODELLED,
+                *problem.not_modelled,
+            ),
+            "transmission_route_id": (
+                problem.transmission.route_id if problem.transmission else None
+            ),
         }
 
     def build(self, **fields: Any) -> CouplingResult:
@@ -538,19 +576,73 @@ def solve_coupled(
     )
 
     # --- the network states the demand ------------------------------------------------------
-    network = network_model.solve(problem.network, problem.network_case)
-    if network.state is not AdapterState.COMPLETED:
-        return builder.build(
-            state=network.state,
-            failure_origin=FailureOrigin.NETWORK,
-            reason=f"the network case fails: {network.reason}",
-            checks=_prefixed(network.checks, "network"),
-            limiting_conditions=tuple(f"network:{name}" for name in network.active_limits),
-            network_result=network,
-            warnings=network.warnings,
+    # Without a route the supply point sits at the connection and one solution is enough. With a
+    # route the plant sits at the site: its supply temperature and its pressure lift are raised
+    # until the connection receives its required temperature and pressure difference.
+    case = problem.network_case
+    trial_point = case.supply_points[0]
+    required_supply = trial_point.supply_temperature_k
+    required_difference = trial_point.pressure_lift_pa
+    network_passes = 0
+    while True:
+        network_passes += 1
+        network = network_model.solve(
+            problem.network, case.model_copy(update={"supply_points": (trial_point,)})
+        )
+        if network.state is not AdapterState.COMPLETED:
+            return builder.build(
+                state=network.state,
+                failure_origin=FailureOrigin.NETWORK,
+                reason=f"the network case fails: {network.reason}",
+                checks=_prefixed(network.checks, "network"),
+                limiting_conditions=tuple(f"network:{name}" for name in network.active_limits),
+                network_result=network,
+                warnings=network.warnings,
+            )
+        if problem.transmission is None:
+            break
+        reached = network.node(problem.limits.supply_node).temperature_k
+        if reached is None:
+            # No flow reaches the connection. The idle case below reports it.
+            break
+        difference = (
+            network.node(problem.limits.supply_node).pressure.value_pa
+            - network.node(problem.limits.return_node).pressure.value_pa
+        )
+        temperature_gap = required_supply - reached
+        pressure_gap = required_difference - difference
+        if (
+            abs(temperature_gap) <= settings.temperature_change_tolerance_delta_k
+            and abs(pressure_gap) <= settings.pressure_difference_tolerance_pa
+        ):
+            break
+        if network_passes >= settings.max_iterations_count:
+            return builder.build(
+                state=AdapterState.NON_CONVERGED,
+                failure_origin=FailureOrigin.COUPLING,
+                reason=(
+                    f"the supply temperature and pressure difference at connection "
+                    f"{problem.limits.connection_id} were not reached within "
+                    f"{settings.max_iterations_count} network solutions. The last gaps were "
+                    f"{temperature_gap:.3g} K and {pressure_gap:.3g} Pa. Nothing is concluded "
+                    "about feasibility"
+                ),
+                network_result=network,
+            )
+        trial_point = trial_point.model_copy(
+            update={
+                "supply_temperature_k": trial_point.supply_temperature_k + temperature_gap,
+                "pressure_lift_pa": trial_point.pressure_lift_pa + pressure_gap,
+            }
         )
     supply = network.supply_points[0]
-    required_supply = supply.supply_temperature_k
+    plant_supply = supply.supply_temperature_k
+    transmission_loss: float | None = None
+    if problem.transmission is not None:
+        route_pipes = set(problem.transmission.pipe_ids)
+        transmission_loss = sum(
+            pipe.heat_loss_w or 0.0 for pipe in network.pipes if pipe.pipe_id in route_pipes
+        )
     demand_heat = supply.heat_supplied_w
     return_temperature = supply.return_temperature_k
     if (
@@ -570,6 +662,7 @@ def solve_coupled(
                 source_pump_electricity_w=0.0,
                 network_mass_flow_kg_s=max(supply.mass_flow_kg_s, 0.0),
                 required_supply_temperature_k=required_supply,
+                plant_supply_temperature_k=plant_supply,
                 demand_heat_w=0.0,
                 plant_heat_w=0.0,
                 backup_heat_w=0.0,
@@ -586,11 +679,11 @@ def solve_coupled(
     demand = NetworkDemand(
         mass_flow_kg_s=supply.mass_flow_kg_s,
         return_temperature_k=return_temperature,
-        supply_temperature_k=required_supply,
+        supply_temperature_k=plant_supply,
         fluid=mean_heat_capacity_of_stream(
             heat_w=demand_heat,
             mass_flow_kg_s=supply.mass_flow_kg_s,
-            hot_temperature_k=required_supply,
+            hot_temperature_k=plant_supply,
             cold_temperature_k=return_temperature,
             reported_by=f"{network.engine} {network.engine_version}",
         ),
@@ -970,8 +1063,23 @@ def solve_coupled(
             quantity=LedgerQuantity.HEAT,
             from_boundary=NETWORK,
             to_boundary=GROUND,
-            power_w=balance.pipe_heat_loss_w if balance else 0.0,
+            power_w=(balance.pipe_heat_loss_w if balance else 0.0) - (transmission_loss or 0.0),
             basis=network_basis,
+        ),
+        *(
+            (
+                LedgerEntry(
+                    entry_id="transmission_heat_loss",
+                    description="heat lost from the route pipes between site and connection",
+                    quantity=LedgerQuantity.HEAT,
+                    from_boundary=NETWORK,
+                    to_boundary=GROUND,
+                    power_w=transmission_loss,
+                    basis=network_basis,
+                ),
+            )
+            if transmission_loss is not None
+            else ()
         ),
         LedgerEntry(
             entry_id="network_accounting_residual",
@@ -1076,6 +1184,7 @@ def solve_coupled(
             network_mass_flow_kg_s=supply.mass_flow_kg_s,
             network_return_temperature_k=return_temperature,
             required_supply_temperature_k=required_supply,
+            plant_supply_temperature_k=plant_supply,
             plant_outlet_temperature_k=point.network_outlet_temperature_k,
             demand_heat_w=demand_heat,
             plant_heat_w=point.heat_to_network_w,
@@ -1083,6 +1192,13 @@ def solve_coupled(
             deficit_heat_w=dispatch.deficit_heat_w,
             compressor_electricity_w=point.compressor_electricity_w,
             network_pump_hydraulic_power_w=supply.hydraulic_power_w,
+            transmission_heat_loss_w=transmission_loss,
+            transmission_pressure_loss_pa=(
+                supply.pressure_lift_pa - required_difference
+                if problem.transmission is not None
+                else None
+            ),
+            plant_pressure_lift_pa=supply.pressure_lift_pa,
         ),
         plant=point,
         shortfall_causes=causes,
@@ -1097,3 +1213,9 @@ def solve_coupled(
         network_result=network,
         warnings=tuple(dict.fromkeys(warnings)),
     )
+
+
+@register_migration("coupling_result", "0.1.0", "0.2.0")
+def _coupling_result_gains_the_route(data: JsonDict) -> JsonDict:
+    """0.2.0 adds the modelled route and the plant supply temperature. Older results have none."""
+    return data

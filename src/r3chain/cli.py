@@ -8,6 +8,8 @@
     r3chain replay RUN                 execute a stored run again and compare the result
     r3chain network SCENARIO CASE      solve one operating case of a network
     r3chain couple SCENARIO            evaluate the coupling cases of a scenario file
+    r3chain candidates RUN             candidate, ranking and rejection tables of a run
+    r3chain layers RUN DIRECTORY       write the map layers of a run as GeoJSON
     r3chain policies [DIRECTORY]       list policy files with their hashes
     r3chain schemas export|check       write or verify the committed JSON Schemas
 
@@ -28,7 +30,14 @@ from r3chain.coupling.cases import CaseOutcome, MemoNetworkModel, evaluate_case
 from r3chain.coupling.loop import CouplingResult
 from r3chain.domain.assumptions import assumption_register
 from r3chain.domain.paths import PatchOperation, apply_patch
-from r3chain.domain.records.runs import Assumption, CheckOutcome, PolicyKind, Result, Run
+from r3chain.domain.records.runs import (
+    Assumption,
+    CheckOutcome,
+    PolicyKind,
+    Result,
+    Run,
+    StageOutput,
+)
 from r3chain.domain.records.scenario import FieldChange, Scenario
 from r3chain.domain.status import AdapterState
 from r3chain.domain.units import kelvin_to_celsius, pa_to_bar
@@ -39,13 +48,9 @@ from r3chain.domain.validation import (
     parse_scenario,
     read_data_file,
 )
+from r3chain.pipeline.evaluation import coupling_case_summary, single_policy
 from r3chain.pipeline.runner import PipelineRunner, ScenarioNotExecutableError
-from r3chain.pipeline.stages import (
-    coupling_case_summary,
-    default_source_models,
-    default_stages,
-    single_policy,
-)
+from r3chain.pipeline.stages import default_source_models, default_stages
 from r3chain.ports.network import NetworkCase, NetworkResult
 from r3chain.schemas import (
     DEFAULT_SCHEMA_DIRECTORY,
@@ -356,23 +361,103 @@ def _print_run(run: Run, results: Sequence[Result], *, detail: bool) -> None:
         if output is not None and output.reason:
             print(f"      {output.reason}")
         if detail and output is not None:
-            for item in output.missing_inputs:
-                print(f"      needs {item.field_path} ({item.state})")
-            for site_id, summary in output.payload.get("sites", {}).items():
-                print(f"      site {site_id}: {summary['evidence_status']}")
-            for source_id, source in output.payload.get("sources", {}).items():
-                print(f"      source {source_id}: {_describe_source(source)}")
-            for case_id, case in output.payload.get("cases", {}).items():
-                print(f"      case {case_id}: {_describe_coupling_case(case['summary'])}")
-    for result in results:
-        label = "synthetic" if result.synthetic else "not synthetic"
+            _print_stage_detail(output)
+    study = next((result for result in results if result.subject == "study"), None)
+    if study is not None:
+        label = "synthetic" if study.synthetic else "not synthetic"
         print(
-            f"\nResult    {result.subject}: technical {result.technical_status.value}, "
-            f"evaluation {result.evaluation_status.value}, {label}"
+            f"\nResult    study: technical {study.technical_status.value}, "
+            f"evaluation {study.evaluation_status.value}, {label}"
         )
-        if not result.ranking_eligibility.eligible:
-            print(f"          not rankable: {'; '.join(result.ranking_eligibility.reasons)}")
+        if not study.ranking_eligibility.eligible:
+            print(f"          not rankable: {'; '.join(study.ranking_eligibility.reasons)}")
+    assess = outputs.get("assess")
+    if assess is not None and assess.payload.get("assessments"):
+        _print_candidate_summary(assess.payload)
     print(f"Result hash  {run.result_hash}")
+
+
+def _money(value: float | None) -> str:
+    return "unknown" if value is None else f"{value / 1e6:.2f} M"
+
+
+def _print_stage_detail(output: StageOutput) -> None:
+    for item in output.missing_inputs:
+        print(f"      needs {item.field_path} ({item.state})")
+    payload = output.payload
+    if output.stage == "site_evidence":
+        for site_id, summary in payload.get("sites", {}).items():
+            print(f"      site {site_id}: {summary['evidence_status']}")
+    elif output.stage == "source":
+        for source_id, source in payload.get("sources", {}).items():
+            print(f"      source {source_id}: {_describe_source(source)}")
+    elif output.stage == "screen":
+        for site_id, screening in payload.get("sites", {}).items():
+            area = screening.get("usable_pad_area_m2")
+            pad = f", usable pad {area:.0f} m2" if isinstance(area, int | float) else ""
+            print(f"      site {site_id}: {screening['status']}{pad}")
+            for item in screening["criteria"]:
+                if item["outcome"] != "pass":
+                    print(f"          {item['criterion_id']} {item['outcome']}: {item['reason']}")
+    elif output.stage == "routes":
+        for pair in payload.get("pairs", []):
+            head = f"      {pair['site_id']} to {pair['connection_id']}: {pair['status']}"
+            print(head + (f" ({pair['reason']})" if pair["reason"] else ""))
+            for generated in pair["routes"]:
+                route = generated["route"]
+                print(
+                    f"          {route['route_id']:<20}{route['corridor_length_m']:7.0f} m  "
+                    f"{_money(generated['cost']['total_currency']):>10}  "
+                    f"{', '.join(generated['bases'])}"
+                )
+        for site_id, reason in payload.get("skipped_sites", {}).items():
+            print(f"      site {site_id} skipped: {reason}")
+    elif output.stage == "candidates":
+        counts = payload.get("counts", {})
+        print(
+            f"      {counts.get('candidates', 0)} candidates, {counts.get('rejected', 0)} rejected"
+        )
+        for item in payload.get("rejected", []):
+            option = ", ".join(f"{key} {value}" for key, value in item["option"].items())
+            print(f"      rejected {option}: {item['reason']}")
+    elif output.stage == "couple":
+        counts = ", ".join(f"{value} {key}" for key, value in payload.get("counts", {}).items())
+        if counts:
+            print(f"      coupling cases: {counts}")
+
+
+def _candidate_line(item: dict[str, Any]) -> str:
+    rank = str(item["rank"]) if item.get("rank") is not None else "-"
+    cost = next(
+        (
+            kpi["value"]
+            for kpi in item["kpis"]
+            if kpi["definition"]["kpi_id"] == "indicative_route_cost_currency"
+        ),
+        None,
+    )
+    note = ", ".join(item["limiting_conditions"][:2])
+    if not note and not item["ranking_eligibility"]["eligible"]:
+        note = "; ".join(item["ranking_eligibility"]["reasons"][:1])
+    return (
+        f"  {rank:>4}  {item['label'][:49]:<50}{item['technical_status']:<25}"
+        f"{item['screening_status']:<12}{_money(cost):>10}  {note}"
+    )
+
+
+def _print_candidate_summary(payload: dict[str, Any]) -> None:
+    assessments = sorted(
+        payload["assessments"],
+        key=lambda item: (item.get("rank") is None, item.get("rank") or 0, item["label"]),
+    )
+    print(f"\nCandidates ({len(assessments)})")
+    header = f"  {'rank':>4}  {'candidate':<50}{'technical status':<25}{'screening':<12}"
+    print(header + f"{'route cost':>10}")
+    for item in assessments:
+        print(_candidate_line(item))
+    ranking = payload.get("ranking", {})
+    if ranking:
+        print(f"  {ranking['statement']}")
 
 
 # --- commands -------------------------------------------------------------------------------
@@ -627,6 +712,72 @@ def cmd_couple(arguments: argparse.Namespace) -> int:
     return 0 if all(outcome.status.value == "completed" for outcome in outcomes) else 1
 
 
+def _stage_payloads(store: Store, run_id: str) -> dict[str, dict[str, Any]]:
+    study = next(
+        (result for result in store.get_results(run_id) if result.subject == "study"), None
+    )
+    if study is None:
+        raise NotFoundError(f"run {run_id} has no study result")
+    return {output.stage: output.payload for output in study.stage_outputs}
+
+
+def cmd_candidates(arguments: argparse.Namespace) -> int:
+    store = _store(arguments)
+    payloads = _stage_payloads(store, arguments.run_id)
+    assess = payloads.get("assess", {})
+    if arguments.json:
+        print(
+            json.dumps(
+                {
+                    "assessments": assess.get("assessments", []),
+                    "ranking": assess.get("ranking"),
+                    "rejected": payloads.get("candidates", {}).get("rejected", []),
+                    "candidates": payloads.get("candidates", {}).get("candidates", []),
+                },
+                indent=2,
+            )
+        )
+        return 0
+    if not assess.get("assessments"):
+        print("this run has no assessed candidates")
+        return 1
+    _print_candidate_summary(assess)
+    candidates = {
+        item["candidate_id"]: item for item in payloads.get("candidates", {}).get("candidates", [])
+    }
+    print("\nExplanations")
+    for item in assess["assessments"]:
+        candidate = candidates.get(item["candidate_id"], {})
+        lines = [*item["explanation"], *item["ranking_eligibility"]["reasons"]]
+        print(
+            f"  {item['candidate_id']}  {item['label']}  route {candidate.get('route_id', '?')}  "
+            f"evaluation {item['evaluation_status']}"
+        )
+        for line in dict.fromkeys(lines):
+            print(f"      {line}")
+    rejected = payloads.get("candidates", {}).get("rejected", [])
+    print(f"\nRejected before evaluation ({len(rejected)})")
+    for entry in rejected:
+        option = ", ".join(f"{key} {value}" for key, value in entry["option"].items())
+        print(f"  {option}: {entry['reason']} [{entry['stage']}]")
+        for detail in entry.get("details", []):
+            print(f"      {detail}")
+    return 0
+
+
+def cmd_layers(arguments: argparse.Namespace) -> int:
+    from r3chain.geospatial.export import export_map_layers
+
+    store = _store(arguments)
+    run = store.get_run(arguments.run_id)
+    scenario = store.get_scenario(run.scenario_revision)
+    for path in export_map_layers(
+        scenario, _stage_payloads(store, arguments.run_id), Path(arguments.directory)
+    ):
+        print(f"wrote {path}")
+    return 0
+
+
 def cmd_policies(arguments: argparse.Namespace) -> int:
     policies = load_policies(Path(arguments.directory))
     if not policies:
@@ -715,6 +866,16 @@ def build_parser() -> argparse.ArgumentParser:
     network.add_argument("case", help="network case file")
     network.add_argument("--json", action="store_true")
     network.set_defaults(handler=cmd_network)
+
+    candidates = commands.add_parser("candidates", help="candidate and rejection tables of a run")
+    candidates.add_argument("run_id")
+    candidates.add_argument("--json", action="store_true")
+    candidates.set_defaults(handler=cmd_candidates)
+
+    layers = commands.add_parser("layers", help="write the map layers of a run as GeoJSON")
+    layers.add_argument("run_id")
+    layers.add_argument("directory")
+    layers.set_defaults(handler=cmd_layers)
 
     couple = commands.add_parser("couple", help="evaluate the coupling cases of a scenario")
     couple.add_argument("scenario", help="scenario file")

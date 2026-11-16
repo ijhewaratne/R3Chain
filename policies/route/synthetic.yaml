@@ -1,0 +1,28 @@
+# Route generation and indicative route cost for the synthetic study (milestone M3).
+policy_id: route-synthetic
+kind: route
+version: "1"
+title: Route generation and indicative route cost for the synthetic study
+origin: >-
+  Invented for the synthetic study. The unit rates give an indicative cost to compare routes.
+  They are not a cost estimate and not WSW rates. Real rates and the cost boundary are open
+  decision O10.
+status: unreviewed
+parameters:
+  snap_tolerance_m: 1.0
+  near_miss_distance_m: 10.0
+  max_site_link_m: 150
+  max_connection_link_m: 150
+  route_alternatives_count: 2
+  # Two routes are distinct when they share at most this part of the shorter one.
+  max_shared_length_fraction: 0.6
+  simple_paths_examined_count: 30
+  pipe_cost_currency_per_m: 250
+  pipe_length_allowance_fraction: 0.05
+  service_connection_max_distance_m: 60
+  # Trench rate of the links between a pad or a connection and the nearest corridor.
+  link_corridor_kind: field_path
+  trench_cost_street_currency_per_m: 900
+  trench_cost_field_path_currency_per_m: 350
+  crossing_cost_watercourse_currency: 150000
+  crossing_cost_railway_currency: 400000

@@ -26,6 +26,7 @@ from r3chain.domain.records.plant import CouplingCase, OperatingCase, Plant
 from r3chain.domain.records.runs import PolicyRef
 from r3chain.domain.records.scenarios import EconomicScenario, OperatingScenario, UncertaintyModel
 from r3chain.domain.records.site import Site, WellScenario
+from r3chain.domain.records.spatial import SpatialLayer
 from r3chain.domain.records.study import Dataset, Study
 from r3chain.domain.timeseries import UtcDatetime
 
@@ -40,7 +41,7 @@ class Alternative(Record):
 
 class Scenario(VersionedRecord):
     SCHEMA_NAME: ClassVar[str] = "scenario"
-    schema_version: Literal["0.2.0"] = "0.2.0"
+    schema_version: Literal["0.3.0"] = "0.3.0"
 
     scenario_id: Identifier
     study: Study
@@ -51,6 +52,8 @@ class Scenario(VersionedRecord):
     networks: tuple[Network, ...] = ()
     connections: tuple[Connection, ...] = ()
     routes: tuple[Route, ...] = ()
+    # Imported GIS layers in the study's reference system (milestone M3).
+    spatial_layers: tuple[SpatialLayer, ...] = ()
     plants: tuple[Plant, ...] = ()
     operating_cases: tuple[OperatingCase, ...] = ()
     coupling_cases: tuple[CouplingCase, ...] = ()
@@ -70,6 +73,7 @@ class Scenario(VersionedRecord):
         require_unique((item.network_id for item in self.networks), "network_id")
         require_unique((item.connection_id for item in self.connections), "connection_id")
         require_unique((item.route_id for item in self.routes), "route_id")
+        require_unique((item.layer_id for item in self.spatial_layers), "layer_id")
         require_unique((item.plant_id for item in self.plants), "plant_id")
         require_unique(
             (item.operating_case_id for item in self.operating_cases), "operating_case_id"
@@ -129,4 +133,10 @@ class ScenarioRevision(VersionedRecord):
 @register_migration("scenario", "0.1.0", "0.2.0")
 def _scenario_gains_plants_and_cases(data: JsonDict) -> JsonDict:
     """0.2.0 adds plants, operating cases and coupling cases. Older scenarios have none."""
+    return data
+
+
+@register_migration("scenario", "0.2.0", "0.3.0")
+def _scenario_gains_spatial_layers(data: JsonDict) -> JsonDict:
+    """0.3.0 adds imported spatial layers. Older scenarios have none."""
     return data

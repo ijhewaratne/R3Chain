@@ -1,0 +1,72 @@
+{
+ "type": "FeatureCollection",
+ "name": "jurisdictions",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "GEMEINDE": "Musterstadt (synthetisch)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       9.0,
+       51.4511822068
+      ],
+      [
+       9.0647604112,
+       51.4511643227
+      ],
+      [
+       9.0648113494,
+       51.4871314014
+      ],
+      [
+       9.0,
+       51.4871493083
+      ],
+      [
+       9.0,
+       51.4511822068
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "GEMEINDE": "Nachbarort (synthetisch)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       9.0647604112,
+       51.4511643227
+      ],
+      [
+       9.0863471919,
+       51.4511504129
+      ],
+      [
+       9.0864151094,
+       51.4871174737
+      ],
+      [
+       9.0648113494,
+       51.4871314014
+      ],
+      [
+       9.0647604112,
+       51.4511643227
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

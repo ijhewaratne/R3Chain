@@ -22,7 +22,7 @@ from typing import Any
 
 import yaml
 
-from r3chain.domain.hashing import bytes_checksum, file_checksum, short_hash
+from r3chain.domain.hashing import bytes_checksum, content_hash, file_checksum, short_hash
 from r3chain.domain.paths import canonical_path, diff_json
 from r3chain.domain.records.runs import (
     Policy,
@@ -176,6 +176,19 @@ class Store:
     # --- policies ---------------------------------------------------------------------------
 
     def register_policy(self, policy: Policy) -> PolicyRef:
+        """Store a policy version once. The same content under a newer schema version is the same
+        policy. Different content under the same version is refused."""
+        try:
+            stored = self.get_policy(policy.policy_id, policy.version)
+        except NotFoundError:
+            stored = None
+        if stored is not None:
+            if stored != policy:
+                raise ImmutabilityError(
+                    f"policy {policy.policy_id} version {policy.version} already exists with "
+                    "different content. Create a new version instead"
+                )
+            return policy_ref(policy)
         self._insert_once(
             "policies",
             {"policy_id": policy.policy_id, "version": policy.version},
@@ -351,8 +364,15 @@ class Store:
 
 
 def policy_ref(policy: Policy) -> PolicyRef:
+    """A reference to one policy version.
+
+    The hash covers what the policy says, not the schema version it is stored under, so a schema
+    upgrade does not change the identity of an unchanged policy.
+    """
+    content = policy.to_json_dict()
+    content.pop("schema_version", None)
     return PolicyRef(
-        policy_id=policy.policy_id, version=policy.version, policy_hash=policy.content_hash()
+        policy_id=policy.policy_id, version=policy.version, policy_hash=content_hash(content)
     )
 
 

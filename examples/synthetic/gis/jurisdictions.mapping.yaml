@@ -1,0 +1,9 @@
+# Raw to canonical mapping for the synthetic municipal boundaries.
+mapping_id: syn-jurisdictions
+kind: jurisdiction
+description: Two invented municipalities.
+id_column: GEMEINDE
+coordinate_precision_m: 0.0001
+max_repair_size_change_fraction: 0.001
+properties:
+  - {source: GEMEINDE, target: jurisdiction_name}

@@ -1,0 +1,2066 @@
+{
+  "$defs": {
+    "AdapterState": {
+      "description": "Outcome of one engine call (specification 7.4).",
+      "enum": [
+        "completed",
+        "invalid_input",
+        "unsupported_model",
+        "non_converged",
+        "physical_limit_exceeded",
+        "cancelled",
+        "tool_failure"
+      ],
+      "title": "AdapterState",
+      "type": "string"
+    },
+    "CalculationMode": {
+      "enum": [
+        "hydraulic",
+        "thermal"
+      ],
+      "title": "CalculationMode",
+      "type": "string"
+    },
+    "Check": {
+      "additionalProperties": false,
+      "description": "One engineering check with its threshold, origin, observed value and margin.",
+      "properties": {
+        "check_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Check Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit",
+          "unit": "see unit"
+        },
+        "margin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Margin",
+          "unit": "see unit"
+        },
+        "observed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observed",
+          "unit": "see unit"
+        },
+        "outcome": {
+          "$ref": "#/$defs/CheckOutcome"
+        },
+        "threshold_origin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threshold Origin"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "check_id",
+        "description",
+        "outcome"
+      ],
+      "title": "Check",
+      "type": "object"
+    },
+    "CheckOutcome": {
+      "enum": [
+        "pass",
+        "fail",
+        "not_evaluated"
+      ],
+      "title": "CheckOutcome",
+      "type": "string"
+    },
+    "ConsumerResult": {
+      "additionalProperties": false,
+      "properties": {
+        "closed": {
+          "title": "Closed",
+          "type": "boolean"
+        },
+        "consumer_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Consumer Id",
+          "type": "string"
+        },
+        "delivered_heat_w": {
+          "minimum": 0.0,
+          "title": "Delivered Heat W",
+          "type": "number"
+        },
+        "differential_pressure_pa": {
+          "title": "Differential Pressure Pa",
+          "type": "number"
+        },
+        "mass_flow_kg_s": {
+          "minimum": 0.0,
+          "title": "Mass Flow Kg S",
+          "type": "number"
+        },
+        "return_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Return Temperature K"
+        },
+        "supply_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Supply Temperature K"
+        }
+      },
+      "required": [
+        "consumer_id",
+        "closed",
+        "delivered_heat_w",
+        "mass_flow_kg_s",
+        "differential_pressure_pa"
+      ],
+      "title": "ConsumerResult",
+      "type": "object"
+    },
+    "CouplingSettings": {
+      "additionalProperties": false,
+      "description": "Iteration limit, tolerances and damping. They come from a numerical policy.",
+      "properties": {
+        "absolute_flow_mismatch_tolerance_kg_s": {
+          "minimum": 0.0,
+          "title": "Absolute Flow Mismatch Tolerance Kg S",
+          "type": "number"
+        },
+        "absolute_heat_mismatch_tolerance_w": {
+          "minimum": 0.0,
+          "title": "Absolute Heat Mismatch Tolerance W",
+          "type": "number"
+        },
+        "damping_fraction": {
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "title": "Damping Fraction",
+          "type": "number"
+        },
+        "max_iterations_count": {
+          "minimum": 1,
+          "title": "Max Iterations Count",
+          "type": "integer"
+        },
+        "pressure_difference_tolerance_pa": {
+          "exclusiveMinimum": 0.0,
+          "title": "Pressure Difference Tolerance Pa",
+          "type": "number"
+        },
+        "relative_flow_mismatch_tolerance_fraction": {
+          "exclusiveMinimum": 0.0,
+          "title": "Relative Flow Mismatch Tolerance Fraction",
+          "type": "number"
+        },
+        "relative_heat_mismatch_tolerance_fraction": {
+          "exclusiveMinimum": 0.0,
+          "title": "Relative Heat Mismatch Tolerance Fraction",
+          "type": "number"
+        },
+        "temperature_change_tolerance_delta_k": {
+          "exclusiveMinimum": 0.0,
+          "title": "Temperature Change Tolerance Delta K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "max_iterations_count",
+        "temperature_change_tolerance_delta_k",
+        "relative_heat_mismatch_tolerance_fraction",
+        "relative_flow_mismatch_tolerance_fraction",
+        "absolute_heat_mismatch_tolerance_w",
+        "absolute_flow_mismatch_tolerance_kg_s",
+        "pressure_difference_tolerance_pa",
+        "damping_fraction"
+      ],
+      "title": "CouplingSettings",
+      "type": "object"
+    },
+    "EnergyBalance": {
+      "additionalProperties": false,
+      "properties": {
+        "heat_delivered_w": {
+          "title": "Heat Delivered W",
+          "type": "number"
+        },
+        "heat_supplied_w": {
+          "title": "Heat Supplied W",
+          "type": "number"
+        },
+        "pipe_heat_loss_w": {
+          "title": "Pipe Heat Loss W",
+          "type": "number"
+        },
+        "residual_w": {
+          "title": "Residual W",
+          "type": "number"
+        }
+      },
+      "required": [
+        "heat_supplied_w",
+        "heat_delivered_w",
+        "pipe_heat_loss_w",
+        "residual_w"
+      ],
+      "title": "EnergyBalance",
+      "type": "object"
+    },
+    "EnergyLedger": {
+      "additionalProperties": false,
+      "properties": {
+        "balances": {
+          "items": {
+            "$ref": "#/$defs/LedgerBalance"
+          },
+          "title": "Balances",
+          "type": "array"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/LedgerEntry"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "slack_exchanges": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SlackExchange"
+          },
+          "title": "Slack Exchanges",
+          "type": "array"
+        }
+      },
+      "required": [
+        "entries",
+        "balances"
+      ],
+      "title": "EnergyLedger",
+      "type": "object"
+    },
+    "ExchangerLimit": {
+      "enum": [
+        "demand",
+        "hot_end_approach",
+        "cold_end_approach",
+        "min_hot_outlet_temperature",
+        "rating"
+      ],
+      "title": "ExchangerLimit",
+      "type": "string"
+    },
+    "ExchangerPoint": {
+      "additionalProperties": false,
+      "description": "One operating point of a counterflow exchanger.",
+      "properties": {
+        "balance_residual_w": {
+          "title": "Balance Residual W",
+          "type": "number"
+        },
+        "binding_limit": {
+          "$ref": "#/$defs/ExchangerLimit"
+        },
+        "cold_end_approach_delta_k": {
+          "title": "Cold End Approach Delta K",
+          "type": "number"
+        },
+        "cold_inlet_temperature_k": {
+          "title": "Cold Inlet Temperature K",
+          "type": "number"
+        },
+        "cold_mass_flow_kg_s": {
+          "exclusiveMinimum": 0.0,
+          "title": "Cold Mass Flow Kg S",
+          "type": "number"
+        },
+        "cold_outlet_temperature_k": {
+          "title": "Cold Outlet Temperature K",
+          "type": "number"
+        },
+        "effectiveness_fraction": {
+          "minimum": 0.0,
+          "title": "Effectiveness Fraction",
+          "type": "number"
+        },
+        "heat_w": {
+          "minimum": 0.0,
+          "title": "Heat W",
+          "type": "number"
+        },
+        "hot_end_approach_delta_k": {
+          "title": "Hot End Approach Delta K",
+          "type": "number"
+        },
+        "hot_inlet_temperature_k": {
+          "title": "Hot Inlet Temperature K",
+          "type": "number"
+        },
+        "hot_mass_flow_kg_s": {
+          "exclusiveMinimum": 0.0,
+          "title": "Hot Mass Flow Kg S",
+          "type": "number"
+        },
+        "hot_outlet_temperature_k": {
+          "title": "Hot Outlet Temperature K",
+          "type": "number"
+        },
+        "min_approach_delta_k": {
+          "minimum": 0.0,
+          "title": "Min Approach Delta K",
+          "type": "number"
+        },
+        "rating_heat_w": {
+          "minimum": 0.0,
+          "title": "Rating Heat W",
+          "type": "number"
+        },
+        "ua_w_k": {
+          "exclusiveMinimum": 0.0,
+          "title": "Ua W K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "heat_w",
+        "binding_limit",
+        "hot_mass_flow_kg_s",
+        "hot_inlet_temperature_k",
+        "hot_outlet_temperature_k",
+        "cold_mass_flow_kg_s",
+        "cold_inlet_temperature_k",
+        "cold_outlet_temperature_k",
+        "hot_end_approach_delta_k",
+        "cold_end_approach_delta_k",
+        "min_approach_delta_k",
+        "ua_w_k",
+        "rating_heat_w",
+        "effectiveness_fraction",
+        "balance_residual_w"
+      ],
+      "title": "ExchangerPoint",
+      "type": "object"
+    },
+    "FailureOrigin": {
+      "enum": [
+        "source",
+        "plant",
+        "network",
+        "coupling"
+      ],
+      "title": "FailureOrigin",
+      "type": "string"
+    },
+    "HeatPumpLimit": {
+      "enum": [
+        "demand",
+        "heat_pump_capacity",
+        "heat_pump_source_heat"
+      ],
+      "title": "HeatPumpLimit",
+      "type": "string"
+    },
+    "HeatPumpPoint": {
+      "additionalProperties": false,
+      "description": "One operating point of a heat pump, with its energy balance.",
+      "properties": {
+        "balance_residual_w": {
+          "title": "Balance Residual W",
+          "type": "number"
+        },
+        "basis": {
+          "title": "Basis",
+          "type": "string"
+        },
+        "binding_limit": {
+          "$ref": "#/$defs/HeatPumpLimit"
+        },
+        "compressor_electricity_w": {
+          "minimum": 0.0,
+          "title": "Compressor Electricity W",
+          "type": "number"
+        },
+        "compressor_heat_loss_fraction": {
+          "minimum": 0.0,
+          "title": "Compressor Heat Loss Fraction",
+          "type": "number"
+        },
+        "compressor_heat_loss_w": {
+          "minimum": 0.0,
+          "title": "Compressor Heat Loss W",
+          "type": "number"
+        },
+        "condenser_heat_w": {
+          "minimum": 0.0,
+          "title": "Condenser Heat W",
+          "type": "number"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "evaporator_heat_w": {
+          "minimum": 0.0,
+          "title": "Evaporator Heat W",
+          "type": "number"
+        },
+        "heating_cop_ratio": {
+          "exclusiveMinimum": 0.0,
+          "title": "Heating Cop Ratio",
+          "type": "number"
+        },
+        "max_condenser_heat_w": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Max Condenser Heat W"
+        },
+        "required_condenser_heat_w": {
+          "minimum": 0.0,
+          "title": "Required Condenser Heat W",
+          "type": "number"
+        },
+        "sink_outlet_temperature_k": {
+          "title": "Sink Outlet Temperature K",
+          "type": "number"
+        },
+        "source_inlet_temperature_k": {
+          "title": "Source Inlet Temperature K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "basis",
+        "description",
+        "binding_limit",
+        "source_inlet_temperature_k",
+        "sink_outlet_temperature_k",
+        "heating_cop_ratio",
+        "max_condenser_heat_w",
+        "required_condenser_heat_w",
+        "condenser_heat_w",
+        "evaporator_heat_w",
+        "compressor_electricity_w",
+        "compressor_heat_loss_w",
+        "compressor_heat_loss_fraction",
+        "balance_residual_w"
+      ],
+      "title": "HeatPumpPoint",
+      "type": "object"
+    },
+    "IterationRecord": {
+      "additionalProperties": false,
+      "description": "One pass of the coupling iteration.",
+      "properties": {
+        "geothermal_mass_flow_kg_s": {
+          "title": "Geothermal Mass Flow Kg S",
+          "type": "number"
+        },
+        "injection_temperature_k": {
+          "title": "Injection Temperature K",
+          "type": "number"
+        },
+        "iteration": {
+          "title": "Iteration",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "plant_geothermal_outlet_temperature_k": {
+          "title": "Plant Geothermal Outlet Temperature K",
+          "type": "number"
+        },
+        "plant_heat_to_network_w": {
+          "title": "Plant Heat To Network W",
+          "type": "number"
+        },
+        "plant_mass_flow_kg_s": {
+          "title": "Plant Mass Flow Kg S",
+          "type": "number"
+        },
+        "residuals": {
+          "$ref": "#/$defs/Residuals"
+        },
+        "source_evaluations_count": {
+          "title": "Source Evaluations Count",
+          "type": "integer"
+        },
+        "wellhead_temperature_k": {
+          "title": "Wellhead Temperature K",
+          "type": "number"
+        },
+        "within_tolerance": {
+          "title": "Within Tolerance",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "iteration",
+        "geothermal_mass_flow_kg_s",
+        "injection_temperature_k",
+        "wellhead_temperature_k",
+        "plant_mass_flow_kg_s",
+        "plant_geothermal_outlet_temperature_k",
+        "plant_heat_to_network_w",
+        "residuals",
+        "within_tolerance",
+        "source_evaluations_count"
+      ],
+      "title": "IterationRecord",
+      "type": "object"
+    },
+    "LedgerBalance": {
+      "additionalProperties": false,
+      "properties": {
+        "boundary": {
+          "minLength": 1,
+          "title": "Boundary",
+          "type": "string"
+        },
+        "closed": {
+          "title": "Closed",
+          "type": "boolean"
+        },
+        "inflow_w": {
+          "title": "Inflow W",
+          "type": "number"
+        },
+        "outflow_w": {
+          "title": "Outflow W",
+          "type": "number"
+        },
+        "residual_w": {
+          "title": "Residual W",
+          "type": "number"
+        },
+        "tolerance_w": {
+          "minimum": 0.0,
+          "title": "Tolerance W",
+          "type": "number"
+        }
+      },
+      "required": [
+        "boundary",
+        "inflow_w",
+        "outflow_w",
+        "residual_w",
+        "tolerance_w",
+        "closed"
+      ],
+      "title": "LedgerBalance",
+      "type": "object"
+    },
+    "LedgerEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "minLength": 1,
+          "title": "Basis",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "entry_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "from_boundary": {
+          "minLength": 1,
+          "title": "From Boundary",
+          "type": "string"
+        },
+        "power_w": {
+          "title": "Power W",
+          "type": "number"
+        },
+        "quantity": {
+          "$ref": "#/$defs/LedgerQuantity"
+        },
+        "to_boundary": {
+          "minLength": 1,
+          "title": "To Boundary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entry_id",
+        "description",
+        "quantity",
+        "from_boundary",
+        "to_boundary",
+        "power_w",
+        "basis"
+      ],
+      "title": "LedgerEntry",
+      "type": "object"
+    },
+    "LedgerQuantity": {
+      "enum": [
+        "heat",
+        "electricity",
+        "hydraulic_power"
+      ],
+      "title": "LedgerQuantity",
+      "type": "string"
+    },
+    "MissingInput": {
+      "additionalProperties": false,
+      "description": "An input that a calculation needed and that was not established.",
+      "properties": {
+        "field_path": {
+          "title": "Field Path",
+          "type": "string"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owner"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "unknown",
+            "conflict"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field_path",
+        "state",
+        "reason"
+      ],
+      "title": "MissingInput",
+      "type": "object"
+    },
+    "NetworkResult": {
+      "additionalProperties": false,
+      "properties": {
+        "active_limits": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Active Limits",
+          "type": "array"
+        },
+        "calculation": {
+          "$ref": "#/$defs/CalculationMode"
+        },
+        "case_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "checks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Check"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "consumers": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ConsumerResult"
+          },
+          "title": "Consumers",
+          "type": "array"
+        },
+        "energy_balance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EnergyBalance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "engine": {
+          "minLength": 1,
+          "title": "Engine",
+          "type": "string"
+        },
+        "engine_version": {
+          "minLength": 1,
+          "title": "Engine Version",
+          "type": "string"
+        },
+        "fluid_model": {
+          "minLength": 1,
+          "title": "Fluid Model",
+          "type": "string"
+        },
+        "input_hash": {
+          "title": "Input Hash",
+          "type": "string"
+        },
+        "mass_balance_residual_kg_s": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mass Balance Residual Kg S"
+        },
+        "network_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Network Id",
+          "type": "string"
+        },
+        "nodes": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/NodeResult"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "pipes": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PipeResult"
+          },
+          "title": "Pipes",
+          "type": "array"
+        },
+        "pressure_reference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PressureReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/AdapterState"
+        },
+        "supply_points": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SupplyPointResult"
+          },
+          "title": "Supply Points",
+          "type": "array"
+        },
+        "warnings": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "engine",
+        "engine_version",
+        "fluid_model",
+        "network_id",
+        "case_id",
+        "input_hash",
+        "calculation",
+        "state"
+      ],
+      "title": "NetworkResult",
+      "type": "object"
+    },
+    "NodeResult": {
+      "additionalProperties": false,
+      "properties": {
+        "node_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "pressure": {
+          "$ref": "#/$defs/Pressure"
+        },
+        "temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temperature K"
+        }
+      },
+      "required": [
+        "node_id",
+        "pressure"
+      ],
+      "title": "NodeResult",
+      "type": "object"
+    },
+    "OperatingPoint": {
+      "additionalProperties": false,
+      "description": "The coupled operating point. Heat and power in W, at one moment.",
+      "properties": {
+        "backup_heat_w": {
+          "minimum": 0.0,
+          "title": "Backup Heat W",
+          "type": "number"
+        },
+        "compressor_electricity_w": {
+          "minimum": 0.0,
+          "title": "Compressor Electricity W",
+          "type": "number"
+        },
+        "deficit_heat_w": {
+          "minimum": 0.0,
+          "title": "Deficit Heat W",
+          "type": "number"
+        },
+        "demand_heat_w": {
+          "minimum": 0.0,
+          "title": "Demand Heat W",
+          "type": "number"
+        },
+        "geothermal_extracted_heat_w": {
+          "minimum": 0.0,
+          "title": "Geothermal Extracted Heat W",
+          "type": "number"
+        },
+        "geothermal_mass_flow_kg_s": {
+          "minimum": 0.0,
+          "title": "Geothermal Mass Flow Kg S",
+          "type": "number"
+        },
+        "injection_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Injection Temperature K"
+        },
+        "network_mass_flow_kg_s": {
+          "minimum": 0.0,
+          "title": "Network Mass Flow Kg S",
+          "type": "number"
+        },
+        "network_pump_hydraulic_power_w": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Network Pump Hydraulic Power W"
+        },
+        "network_return_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Network Return Temperature K"
+        },
+        "plant_heat_w": {
+          "minimum": 0.0,
+          "title": "Plant Heat W",
+          "type": "number"
+        },
+        "plant_outlet_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Plant Outlet Temperature K"
+        },
+        "plant_pressure_lift_pa": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Plant Pressure Lift Pa"
+        },
+        "plant_supply_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Plant Supply Temperature K"
+        },
+        "required_supply_temperature_k": {
+          "exclusiveMinimum": 0.0,
+          "title": "Required Supply Temperature K",
+          "type": "number"
+        },
+        "source_operated": {
+          "title": "Source Operated",
+          "type": "boolean"
+        },
+        "source_pump_electricity_w": {
+          "minimum": 0.0,
+          "title": "Source Pump Electricity W",
+          "type": "number"
+        },
+        "transmission_heat_loss_w": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Transmission Heat Loss W"
+        },
+        "transmission_pressure_loss_pa": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Transmission Pressure Loss Pa"
+        },
+        "wellhead_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Wellhead Temperature K"
+        }
+      },
+      "required": [
+        "source_operated",
+        "geothermal_mass_flow_kg_s",
+        "geothermal_extracted_heat_w",
+        "source_pump_electricity_w",
+        "network_mass_flow_kg_s",
+        "required_supply_temperature_k",
+        "demand_heat_w",
+        "plant_heat_w",
+        "backup_heat_w",
+        "deficit_heat_w",
+        "compressor_electricity_w"
+      ],
+      "title": "OperatingPoint",
+      "type": "object"
+    },
+    "OutputSemantics": {
+      "description": "What a reported output means (specification 7.4).",
+      "enum": [
+        "available_capacity",
+        "dispatched_output",
+        "requested_value_achieved"
+      ],
+      "title": "OutputSemantics",
+      "type": "string"
+    },
+    "PipeResult": {
+      "additionalProperties": false,
+      "description": "Signed quantities are positive in the direction from ``from_node`` to ``to_node``.",
+      "properties": {
+        "friction_pressure_drop_pa": {
+          "title": "Friction Pressure Drop Pa",
+          "type": "number"
+        },
+        "heat_loss_w": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heat Loss W"
+        },
+        "inlet_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Inlet Temperature K"
+        },
+        "mass_flow_kg_s": {
+          "title": "Mass Flow Kg S",
+          "type": "number"
+        },
+        "outlet_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Outlet Temperature K"
+        },
+        "pipe_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Pipe Id",
+          "type": "string"
+        },
+        "pressure_drop_pa": {
+          "title": "Pressure Drop Pa",
+          "type": "number"
+        },
+        "stagnant": {
+          "title": "Stagnant",
+          "type": "boolean"
+        },
+        "velocity_m_s": {
+          "title": "Velocity M S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "pipe_id",
+        "mass_flow_kg_s",
+        "velocity_m_s",
+        "pressure_drop_pa",
+        "friction_pressure_drop_pa",
+        "stagnant"
+      ],
+      "title": "PipeResult",
+      "type": "object"
+    },
+    "PlantPoint": {
+      "additionalProperties": false,
+      "description": "The operating point of a plant for one geothermal inlet and one network demand.",
+      "properties": {
+        "arrangement": {
+          "title": "Arrangement",
+          "type": "string"
+        },
+        "balance_residual_w": {
+          "title": "Balance Residual W",
+          "type": "number"
+        },
+        "binding_limit": {
+          "title": "Binding Limit",
+          "type": "string"
+        },
+        "checks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Check"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "compressor_electricity_w": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Compressor Electricity W",
+          "type": "number"
+        },
+        "exchangers": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ExchangerPoint"
+          },
+          "title": "Exchangers",
+          "type": "object"
+        },
+        "geothermal_inlet_temperature_k": {
+          "title": "Geothermal Inlet Temperature K",
+          "type": "number"
+        },
+        "geothermal_mass_flow_kg_s": {
+          "exclusiveMinimum": 0.0,
+          "title": "Geothermal Mass Flow Kg S",
+          "type": "number"
+        },
+        "geothermal_outlet_temperature_k": {
+          "title": "Geothermal Outlet Temperature K",
+          "type": "number"
+        },
+        "geothermal_side_pressure_loss_pa": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geothermal Side Pressure Loss Pa"
+        },
+        "heat_from_geothermal_w": {
+          "minimum": 0.0,
+          "title": "Heat From Geothermal W",
+          "type": "number"
+        },
+        "heat_loss_to_surroundings_w": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Heat Loss To Surroundings W",
+          "type": "number"
+        },
+        "heat_pump": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HeatPumpPoint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "heat_to_network_w": {
+          "minimum": 0.0,
+          "title": "Heat To Network W",
+          "type": "number"
+        },
+        "network_inlet_temperature_k": {
+          "title": "Network Inlet Temperature K",
+          "type": "number"
+        },
+        "network_mass_flow_kg_s": {
+          "exclusiveMinimum": 0.0,
+          "title": "Network Mass Flow Kg S",
+          "type": "number"
+        },
+        "network_outlet_temperature_k": {
+          "title": "Network Outlet Temperature K",
+          "type": "number"
+        },
+        "network_side_pressure_loss_pa": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Network Side Pressure Loss Pa"
+        },
+        "performance_basis": {
+          "title": "Performance Basis",
+          "type": "string"
+        },
+        "plant_id": {
+          "title": "Plant Id",
+          "type": "string"
+        },
+        "required_heat_w": {
+          "minimum": 0.0,
+          "title": "Required Heat W",
+          "type": "number"
+        },
+        "required_outlet_temperature_k": {
+          "title": "Required Outlet Temperature K",
+          "type": "number"
+        },
+        "warnings": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "plant_id",
+        "arrangement",
+        "performance_basis",
+        "binding_limit",
+        "geothermal_mass_flow_kg_s",
+        "geothermal_inlet_temperature_k",
+        "geothermal_outlet_temperature_k",
+        "network_mass_flow_kg_s",
+        "network_inlet_temperature_k",
+        "network_outlet_temperature_k",
+        "required_outlet_temperature_k",
+        "required_heat_w",
+        "heat_to_network_w",
+        "heat_from_geothermal_w",
+        "exchangers",
+        "balance_residual_w"
+      ],
+      "title": "PlantPoint",
+      "type": "object"
+    },
+    "Pressure": {
+      "additionalProperties": false,
+      "description": "A pressure together with its reference.",
+      "properties": {
+        "reference": {
+          "$ref": "#/$defs/PressureReference"
+        },
+        "value_pa": {
+          "title": "Value Pa",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value_pa",
+        "reference"
+      ],
+      "title": "Pressure",
+      "type": "object"
+    },
+    "PressureReference": {
+      "enum": [
+        "absolute",
+        "gauge"
+      ],
+      "title": "PressureReference",
+      "type": "string"
+    },
+    "Residuals": {
+      "additionalProperties": false,
+      "properties": {
+        "flow_fraction": {
+          "minimum": 0.0,
+          "title": "Flow Fraction",
+          "type": "number"
+        },
+        "flow_kg_s": {
+          "minimum": 0.0,
+          "title": "Flow Kg S",
+          "type": "number"
+        },
+        "heat_fraction": {
+          "minimum": 0.0,
+          "title": "Heat Fraction",
+          "type": "number"
+        },
+        "heat_w": {
+          "minimum": 0.0,
+          "title": "Heat W",
+          "type": "number"
+        },
+        "temperature_delta_k": {
+          "minimum": 0.0,
+          "title": "Temperature Delta K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "temperature_delta_k",
+        "heat_w",
+        "heat_fraction",
+        "flow_kg_s",
+        "flow_fraction"
+      ],
+      "title": "Residuals",
+      "type": "object"
+    },
+    "ShortfallCause": {
+      "enum": [
+        "insufficient_temperature",
+        "insufficient_power",
+        "outside_performance_map"
+      ],
+      "title": "ShortfallCause",
+      "type": "string"
+    },
+    "SlackExchange": {
+      "additionalProperties": false,
+      "description": "What one ideal boundary exchanged with the network, and who really delivers it.",
+      "properties": {
+        "assigned_heat_w": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Assigned Heat W",
+          "type": "object"
+        },
+        "boundary_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Boundary Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "heat_supplied_w": {
+          "title": "Heat Supplied W",
+          "type": "number"
+        },
+        "intended_dispatch": {
+          "minLength": 1,
+          "title": "Intended Dispatch",
+          "type": "string"
+        },
+        "net_mass_flow_kg_s": {
+          "title": "Net Mass Flow Kg S",
+          "type": "number"
+        },
+        "tolerance_w": {
+          "minimum": 0.0,
+          "title": "Tolerance W",
+          "type": "number"
+        },
+        "unassigned_heat_w": {
+          "title": "Unassigned Heat W",
+          "type": "number"
+        },
+        "within_intended_dispatch": {
+          "title": "Within Intended Dispatch",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "boundary_id",
+        "description",
+        "heat_supplied_w",
+        "assigned_heat_w",
+        "unassigned_heat_w",
+        "net_mass_flow_kg_s",
+        "intended_dispatch",
+        "tolerance_w",
+        "within_intended_dispatch"
+      ],
+      "title": "SlackExchange",
+      "type": "object"
+    },
+    "SourcePerformance": {
+      "additionalProperties": false,
+      "description": "Performance at the wellhead, the physical handover point.\n\nWellbore losses and pumping are already inside these numbers. Nothing downstream may deduct\nthem a second time.",
+      "properties": {
+        "electrical_pump_power_w": {
+          "minimum": 0.0,
+          "title": "Electrical Pump Power W",
+          "type": "number"
+        },
+        "geothermal_extracted_heat_w": {
+          "exclusiveMinimum": 0.0,
+          "title": "Geothermal Extracted Heat W",
+          "type": "number"
+        },
+        "heat_semantics": {
+          "$ref": "#/$defs/OutputSemantics"
+        },
+        "injection_pressure_rise_pa": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Injection Pressure Rise Pa"
+        },
+        "injection_temperature_k": {
+          "exclusiveMinimum": 0.0,
+          "title": "Injection Temperature K",
+          "type": "number"
+        },
+        "injection_wellhead_pressure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pressure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mass_flow_kg_s": {
+          "exclusiveMinimum": 0.0,
+          "title": "Mass Flow Kg S",
+          "type": "number"
+        },
+        "mass_flow_semantics": {
+          "$ref": "#/$defs/OutputSemantics"
+        },
+        "production_drawdown_pa": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Production Drawdown Pa"
+        },
+        "production_wellhead_pressure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pressure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "wellhead_production_temperature_k": {
+          "exclusiveMinimum": 0.0,
+          "title": "Wellhead Production Temperature K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "mass_flow_kg_s",
+        "mass_flow_semantics",
+        "wellhead_production_temperature_k",
+        "injection_temperature_k",
+        "geothermal_extracted_heat_w",
+        "heat_semantics",
+        "electrical_pump_power_w"
+      ],
+      "title": "SourcePerformance",
+      "type": "object"
+    },
+    "SourceResult": {
+      "additionalProperties": false,
+      "properties": {
+        "active_limits": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Active Limits",
+          "type": "array"
+        },
+        "artifact_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Artifact Refs",
+          "type": "array"
+        },
+        "checks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Check"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "economics_calculated": {
+          "default": false,
+          "title": "Economics Calculated",
+          "type": "boolean"
+        },
+        "engine": {
+          "minLength": 1,
+          "title": "Engine",
+          "type": "string"
+        },
+        "engine_version": {
+          "minLength": 1,
+          "title": "Engine Version",
+          "type": "string"
+        },
+        "fidelity": {
+          "minLength": 1,
+          "title": "Fidelity",
+          "type": "string"
+        },
+        "input_hash": {
+          "title": "Input Hash",
+          "type": "string"
+        },
+        "iterations_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Iterations Count"
+        },
+        "model_family": {
+          "minLength": 1,
+          "title": "Model Family",
+          "type": "string"
+        },
+        "not_calculated": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Not Calculated",
+          "type": "array"
+        },
+        "performance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourcePerformance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "raw_request": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Request"
+        },
+        "raw_result": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Result"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "sample_id": {
+          "minLength": 1,
+          "title": "Sample Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "0.1.0",
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_scenario_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Source Scenario Id",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/AdapterState"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "warnings": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "engine",
+        "engine_version",
+        "fidelity",
+        "model_family",
+        "source_scenario_id",
+        "input_hash",
+        "sample_id",
+        "state",
+        "synthetic"
+      ],
+      "title": "SourceResult",
+      "type": "object"
+    },
+    "SupplyPointResult": {
+      "additionalProperties": false,
+      "properties": {
+        "heat_supplied_w": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heat Supplied W"
+        },
+        "hydraulic_power_w": {
+          "title": "Hydraulic Power W",
+          "type": "number"
+        },
+        "mass_flow_kg_s": {
+          "title": "Mass Flow Kg S",
+          "type": "number"
+        },
+        "pressure_lift_pa": {
+          "title": "Pressure Lift Pa",
+          "type": "number"
+        },
+        "return_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Return Temperature K"
+        },
+        "supply_point_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Supply Point Id",
+          "type": "string"
+        },
+        "supply_temperature_k": {
+          "exclusiveMinimum": 0.0,
+          "title": "Supply Temperature K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "supply_point_id",
+        "mass_flow_kg_s",
+        "pressure_lift_pa",
+        "hydraulic_power_w",
+        "supply_temperature_k"
+      ],
+      "title": "SupplyPointResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "arrangement": {
+      "minLength": 1,
+      "title": "Arrangement",
+      "type": "string"
+    },
+    "backup_id": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Backup Id"
+    },
+    "checks": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Check"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "converged": {
+      "default": false,
+      "title": "Converged",
+      "type": "boolean"
+    },
+    "coupling_case_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Coupling Case Id",
+      "type": "string"
+    },
+    "engines": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Engines",
+      "type": "object"
+    },
+    "failure_origin": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FailureOrigin"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "idle": {
+      "default": false,
+      "title": "Idle",
+      "type": "boolean"
+    },
+    "input_hash": {
+      "title": "Input Hash",
+      "type": "string"
+    },
+    "inputs_not_established": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/MissingInput"
+      },
+      "title": "Inputs Not Established",
+      "type": "array"
+    },
+    "iterations": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/IterationRecord"
+      },
+      "title": "Iterations",
+      "type": "array"
+    },
+    "ledger": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EnergyLedger"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "limiting_conditions": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Limiting Conditions",
+      "type": "array"
+    },
+    "network_result": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/NetworkResult"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "not_modelled": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Not Modelled",
+      "type": "array"
+    },
+    "operating_point": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OperatingPoint"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "performance_basis": {
+      "minLength": 1,
+      "title": "Performance Basis",
+      "type": "string"
+    },
+    "plant": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PlantPoint"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reason": {
+      "default": "",
+      "title": "Reason",
+      "type": "string"
+    },
+    "residuals": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Residuals"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "const": "0.2.0",
+      "default": "0.2.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "settings": {
+      "$ref": "#/$defs/CouplingSettings"
+    },
+    "settings_origin": {
+      "minLength": 1,
+      "title": "Settings Origin",
+      "type": "string"
+    },
+    "shortfall_causes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ShortfallCause"
+      },
+      "title": "Shortfall Causes",
+      "type": "array"
+    },
+    "source_evaluations_count": {
+      "default": 0,
+      "title": "Source Evaluations Count",
+      "type": "integer"
+    },
+    "source_result": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SourceResult"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "state": {
+      "$ref": "#/$defs/AdapterState"
+    },
+    "synthetic": {
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "transmission_route_id": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Transmission Route Id"
+    },
+    "warnings": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "coupling_case_id",
+    "input_hash",
+    "state",
+    "arrangement",
+    "performance_basis",
+    "synthetic",
+    "engines",
+    "settings",
+    "settings_origin"
+  ],
+  "title": "CouplingResult",
+  "type": "object"
+}

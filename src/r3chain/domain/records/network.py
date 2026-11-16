@@ -9,12 +9,14 @@ from pydantic import Field, model_validator
 
 from r3chain.domain.base import (
     Identifier,
+    JsonDict,
     NonEmptyStr,
     NonNegativeReal,
     PositiveReal,
     Real,
     Record,
     VersionedRecord,
+    register_migration,
 )
 from r3chain.domain.evidence import Evidence
 from r3chain.domain.records.common import Geometry, require_unique, value_or_none
@@ -73,7 +75,7 @@ class Connection(VersionedRecord):
     """A supply and return node pair at which a plant can exchange heat with a network."""
 
     SCHEMA_NAME: ClassVar[str] = "connection"
-    schema_version: Literal["0.1.0"] = "0.1.0"
+    schema_version: Literal["0.2.0"] = "0.2.0"
 
     connection_id: Identifier
     network_id: Identifier
@@ -83,11 +85,15 @@ class Connection(VersionedRecord):
     interface_type: InterfaceType
     heat_carrier: HeatCarrier
     limits: ConnectionLimits
+    # Where routes from candidate sites end. Needed to generate routes (milestone M3).
+    location: Geometry | None = None
 
     @model_validator(mode="after")
     def _is_a_real_interface(self) -> Connection:
         if self.supply_node == self.return_node:
             raise ValueError("a connection needs distinct supply and return nodes")
+        if self.location is not None and self.location.geojson.get("type") != "Point":
+            raise ValueError("the location of a connection must be a Point")
         return self
 
 
@@ -300,3 +306,9 @@ class Network(VersionedRecord):
             for boundary in self.boundary_conditions
             if boundary.pressure is not None
         )
+
+
+@register_migration("connection", "0.1.0", "0.2.0")
+def _connection_gains_a_location(data: JsonDict) -> JsonDict:
+    """0.2.0 adds an optional location. Older connections have none."""
+    return data

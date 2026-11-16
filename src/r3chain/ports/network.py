@@ -26,12 +26,14 @@ from pydantic import Field, model_validator
 
 from r3chain.domain.base import (
     Identifier,
+    JsonDict,
     NonEmptyStr,
     NonNegativeReal,
     PositiveReal,
     Real,
     Record,
     VersionedRecord,
+    register_migration,
 )
 from r3chain.domain.hashing import content_hash
 from r3chain.domain.records.common import require_unique
@@ -58,18 +60,22 @@ class FrictionModel(StrEnum):
 
 
 class SupplyPoint(Record):
-    """A circulating heat source at a connection.
+    """A circulating heat source.
 
-    It holds the return side at ``return_pressure``, raises the pressure by ``pressure_lift_pa``
-    and feeds the supply side at ``supply_temperature_k``. The mass flow and the heat it has to
-    provide follow from the network.
+    It raises the pressure by ``pressure_lift_pa`` and feeds the supply side at
+    ``supply_temperature_k``. The mass flow and the heat it has to provide follow from the
+    network.
+
+    The pressure level comes from exactly one pressure reference: ``return_pressure`` held at the
+    return node of the supply point, or the pressure reference boundary of the network, which may
+    lie at any node.
     """
 
     supply_point_id: Identifier
     supply_node: Identifier
     return_node: Identifier
     supply_temperature_k: Real
-    return_pressure: Pressure
+    return_pressure: Pressure | None = None
     pressure_lift_pa: Real
 
 
@@ -85,7 +91,7 @@ class NetworkCase(VersionedRecord):
     """One steady operating case of one network."""
 
     SCHEMA_NAME: ClassVar[str] = "network_case"
-    schema_version: Literal["0.1.0"] = "0.1.0"
+    schema_version: Literal["0.2.0"] = "0.2.0"
 
     case_id: Identifier
     network_id: Identifier
@@ -243,3 +249,9 @@ class NetworkModel(Protocol):
     def capabilities(self) -> NetworkCapabilities: ...
 
     def solve(self, network: Network, case: NetworkCase) -> NetworkResult: ...
+
+
+@register_migration("network_case", "0.1.0", "0.2.0")
+def _return_pressure_becomes_optional(data: JsonDict) -> JsonDict:
+    """0.2.0 lets the network's pressure reference hold the pressure at any node."""
+    return data

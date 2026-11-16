@@ -64,17 +64,26 @@ entries:
     milestone: M3
     lands_in: [domain, adapters, geospatial]
     status: partial
-    tests: [test_the_synthetic_network_has_a_clean_topology, test_disconnected_parts_are_found]
+    tests:
+      - test_the_synthetic_network_has_a_clean_topology
+      - test_disconnected_parts_are_found
+      - test_near_misses_and_unsplit_junctions_are_reported_not_joined
+      - test_lines_that_cross_without_a_junction_are_reported
+      - test_the_synthetic_corridors_form_a_clean_graph
+      - test_a_plant_at_a_connection_away_from_the_pressure_reference_is_evaluated
   - id: W07
     kind: workshop
     source: "pp 9-10, 23:04-27:26"
     statement: Evaluate site and connection together with explicit plant coupling
     milestone: M3
     lands_in: [coupling, search]
-    status: partial
+    status: built
     tests:
       - test_direct_heat_covers_the_shoulder_season
       - test_coupling_cases_must_fit_the_scenario
+      - test_a_route_modelled_in_the_coupling_is_visible_in_the_result
+      - test_route_heat_loss_and_lift_are_modelled_for_each_candidate
+      - test_candidates_never_mix_a_source_with_a_route_from_another_site
   - id: W08
     kind: workshop
     source: "p 11, 30:02-31:26"
@@ -116,11 +125,14 @@ entries:
     statement: Keep demonstration fixtures separate from pilot data and support multiple connections
     milestone: M3
     lands_in: [domain, search]
-    status: partial
+    status: built
     tests:
       - test_synthetic_values_label_the_result
       - test_synthetic_values_in_a_pilot_study_are_flagged
       - test_a_test_engine_labels_the_result_synthetic
+      - test_site_evidence_and_synthetic_engines_limit_eligibility
+      - test_a_plant_at_a_connection_away_from_the_pressure_reference_is_evaluated
+      - test_candidates_are_ranked_jointly_by_site_and_connection
   - id: W13
     kind: workshop
     source: "pp 14-15, 40:47-44:05"
@@ -257,8 +269,10 @@ entries:
     statement: Track permitted uses and dataset origin before importing restricted evidence
     milestone: M3
     lands_in: [ingestion, domain]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_permitted_uses_and_origin_must_be_declared_before_import
+      - test_layer_sources_are_imported_when_a_scenario_file_is_loaded
   - id: W29
     kind: workshop
     source: "pp 44-45, 1:58:14-2:00:25"
@@ -281,16 +295,27 @@ entries:
     statement: Store the exact document and spatial boundary and do not infer site approval
     milestone: M3
     lands_in: [ingestion, geospatial]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_layers_are_reprojected_into_the_study_reference_system
+      - test_a_well_understood_defect_is_repaired_and_logged
+      - test_an_ambiguous_geometry_is_rejected_for_review
+      - test_geopackage_and_geoparquet_give_the_same_layer
+      - test_alpha_passes_with_the_pad_left_after_the_housing_setback
+      - test_a_rejected_restriction_near_a_parcel_makes_the_pad_unknown
+      - test_missing_evidence_never_becomes_a_pass
   - id: W32
     kind: workshop
     source: "p 46, 2:03:42-2:05:04"
     statement: Make screening criteria configurable and distinguish usable area from total parcel area
     milestone: M3
     lands_in: [geospatial, policies]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_alpha_passes_with_the_pad_left_after_the_housing_setback
+      - test_a_setback_that_is_not_documented_makes_the_pad_unknown
+      - test_policy_values_change_the_outcome_without_code
+      - test_a_policy_without_a_needed_value_is_refused
   - id: W33
     kind: workshop
     source: "pp 46-47, 2:05:55-2:06:49"
@@ -535,8 +560,12 @@ entries:
       shortest distance is not assumed cheapest
     milestone: M3
     lands_in: [search]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_the_shortest_route_is_not_assumed_to_be_the_cheapest
+      - test_trench_and_pipe_quantities_are_kept_apart
+      - test_only_eligible_candidates_are_ranked_and_ties_share_a_rank
+      - test_candidates_are_ranked_jointly_by_site_and_connection
   - id: A12
     kind: acceptance
     statement: >-
@@ -544,7 +573,7 @@ entries:
       positive check
     milestone: M3
     lands_in: [domain, geospatial]
-    status: partial
+    status: built
     tests:
       - test_unknown_input_is_never_defaulted
       - test_a_missing_input_gives_no_number
@@ -555,6 +584,10 @@ entries:
       - test_a_missing_required_input_stops_the_case_and_names_it
       - test_unknown_limit_stays_an_unevaluated_check
       - test_an_unknown_plant_input_is_reported_by_the_stage
+      - test_a_setback_that_is_not_documented_makes_the_pad_unknown
+      - test_missing_evidence_never_becomes_a_pass
+      - test_a_missing_rate_leaves_the_cost_unknown
+      - test_a_conditional_site_is_evaluated_but_not_ranked
   - id: A13
     kind: acceptance
     statement: >-
