@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "PolicyKind": {
+      "enum": [
+        "screening",
+        "numerical",
+        "dispatch",
+        "ranking",
+        "metric",
+        "uncertainty",
+        "candidate"
+      ],
+      "title": "PolicyKind",
+      "type": "string"
+    },
+    "ReviewStatus": {
+      "enum": [
+        "unreviewed",
+        "reviewed"
+      ],
+      "title": "ReviewStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A named, versioned set of thresholds or rules.\n\nThresholds live here and never in code, so a new limit is a new policy version.",
+  "properties": {
+    "kind": {
+      "$ref": "#/$defs/PolicyKind"
+    },
+    "origin": {
+      "minLength": 1,
+      "title": "Origin",
+      "type": "string"
+    },
+    "parameters": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "title": "Parameters",
+      "type": "object"
+    },
+    "policy_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Policy Id",
+      "type": "string"
+    },
+    "reviewer": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reviewer"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ReviewStatus"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "policy_id",
+    "kind",
+    "version",
+    "title",
+    "origin",
+    "status",
+    "parameters"
+  ],
+  "title": "Policy",
+  "type": "object"
+}

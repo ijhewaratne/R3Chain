@@ -1,0 +1,788 @@
+{
+  "$defs": {
+    "Conflict_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "Conflict_Annotated_str__StringConstraints__": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Annotated_str__StringConstraints__"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Annotated[str, StringConstraints]]",
+      "type": "object"
+    },
+    "Conflict_ConstraintOutcome_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_ConstraintOutcome_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[ConstraintOutcome]",
+      "type": "object"
+    },
+    "Conflict_Elevation_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Elevation_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Elevation]",
+      "type": "object"
+    },
+    "Conflict_Geometry_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Geometry_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Geometry]",
+      "type": "object"
+    },
+    "Conflict_LandStatus_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_LandStatus_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[LandStatus]",
+      "type": "object"
+    },
+    "ConstraintOutcome": {
+      "enum": [
+        "satisfied",
+        "violated"
+      ],
+      "title": "ConstraintOutcome",
+      "type": "string"
+    },
+    "Elevation": {
+      "additionalProperties": false,
+      "description": "A height together with its vertical datum.",
+      "properties": {
+        "value_m": {
+          "title": "Value M",
+          "type": "number"
+        },
+        "vertical_datum": {
+          "minLength": 1,
+          "title": "Vertical Datum",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value_m",
+        "vertical_datum"
+      ],
+      "title": "Elevation",
+      "type": "object"
+    },
+    "Evidence_Annotated_float__Strict_strict_True___": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Annotated_float__Strict_strict_True___",
+          "known": "#/$defs/Known_Annotated_float__Strict_strict_True___",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Annotated_float__Strict_strict_True___"
+        }
+      ]
+    },
+    "Evidence_Annotated_str__StringConstraints__": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Annotated_str__StringConstraints__",
+          "known": "#/$defs/Known_Annotated_str__StringConstraints__",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Annotated_str__StringConstraints__"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Annotated_str__StringConstraints__"
+        }
+      ]
+    },
+    "Evidence_ConstraintOutcome_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_ConstraintOutcome_",
+          "known": "#/$defs/Known_ConstraintOutcome_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_ConstraintOutcome_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_ConstraintOutcome_"
+        }
+      ]
+    },
+    "Evidence_Elevation_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Elevation_",
+          "known": "#/$defs/Known_Elevation_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Elevation_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Elevation_"
+        }
+      ]
+    },
+    "Evidence_Geometry_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Geometry_",
+          "known": "#/$defs/Known_Geometry_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Geometry_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Geometry_"
+        }
+      ]
+    },
+    "Evidence_LandStatus_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_LandStatus_",
+          "known": "#/$defs/Known_LandStatus_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_LandStatus_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_LandStatus_"
+        }
+      ]
+    },
+    "Geometry": {
+      "additionalProperties": false,
+      "description": "A GeoJSON geometry with its coordinate reference system, for example ``EPSG:25832``.",
+      "properties": {
+        "crs": {
+          "pattern": "^[A-Za-z]+:\\d+$",
+          "title": "Crs",
+          "type": "string"
+        },
+        "geojson": {
+          "additionalProperties": true,
+          "title": "Geojson",
+          "type": "object"
+        }
+      },
+      "required": [
+        "crs",
+        "geojson"
+      ],
+      "title": "Geometry",
+      "type": "object"
+    },
+    "Known_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "Known_Annotated_str__StringConstraints__": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Annotated[str, StringConstraints]]",
+      "type": "object"
+    },
+    "Known_ConstraintOutcome_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/ConstraintOutcome"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[ConstraintOutcome]",
+      "type": "object"
+    },
+    "Known_Elevation_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Elevation"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Elevation]",
+      "type": "object"
+    },
+    "Known_Geometry_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/Geometry"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Geometry]",
+      "type": "object"
+    },
+    "Known_LandStatus_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/LandStatus"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[LandStatus]",
+      "type": "object"
+    },
+    "LandStatus": {
+      "enum": [
+        "available",
+        "restricted",
+        "unavailable"
+      ],
+      "title": "LandStatus",
+      "type": "string"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Where a value came from.",
+      "properties": {
+        "author": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Author"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "provenance_type": {
+          "$ref": "#/$defs/ProvenanceType"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Id"
+        }
+      },
+      "required": [
+        "provenance_type"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "ProvenanceType": {
+      "enum": [
+        "measured",
+        "imported",
+        "guideline",
+        "user_supplied",
+        "estimated",
+        "inferred",
+        "synthetic"
+      ],
+      "title": "ProvenanceType",
+      "type": "string"
+    },
+    "SiteConstraint": {
+      "additionalProperties": false,
+      "description": "One documented site criterion, for example a permit or a setback.",
+      "properties": {
+        "constraint_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Constraint Id",
+          "type": "string"
+        },
+        "criterion": {
+          "minLength": 1,
+          "title": "Criterion",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Evidence_ConstraintOutcome_"
+        }
+      },
+      "required": [
+        "constraint_id",
+        "criterion",
+        "outcome"
+      ],
+      "title": "SiteConstraint",
+      "type": "object"
+    },
+    "Unknown": {
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "state": {
+          "const": "unknown",
+          "default": "unknown",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason",
+        "owner"
+      ],
+      "title": "Unknown",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "access": {
+      "$ref": "#/$defs/Evidence_Annotated_str__StringConstraints__"
+    },
+    "constraints": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SiteConstraint"
+      },
+      "title": "Constraints",
+      "type": "array"
+    },
+    "elevation": {
+      "$ref": "#/$defs/Evidence_Elevation_"
+    },
+    "land_status": {
+      "$ref": "#/$defs/Evidence_LandStatus_"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "parcel_geometry": {
+      "$ref": "#/$defs/Geometry"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "site_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Site Id",
+      "type": "string"
+    },
+    "usable_pad_area_m2": {
+      "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+    },
+    "usable_pad_geometry": {
+      "$ref": "#/$defs/Evidence_Geometry_"
+    }
+  },
+  "required": [
+    "site_id",
+    "name",
+    "parcel_geometry",
+    "usable_pad_geometry",
+    "usable_pad_area_m2",
+    "elevation",
+    "access",
+    "land_status"
+  ],
+  "title": "Site",
+  "type": "object"
+}

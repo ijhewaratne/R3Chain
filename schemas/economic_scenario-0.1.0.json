@@ -1,0 +1,377 @@
+{
+  "$defs": {
+    "AmountBasis": {
+      "enum": [
+        "total",
+        "per_year",
+        "per_joule_heat",
+        "per_joule_electricity"
+      ],
+      "title": "AmountBasis",
+      "type": "string"
+    },
+    "Conflict_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "CostCategory": {
+      "enum": [
+        "capex",
+        "fixed_opex",
+        "variable_cost",
+        "replacement",
+        "decommissioning",
+        "residual_value"
+      ],
+      "title": "CostCategory",
+      "type": "string"
+    },
+    "CostItem": {
+      "additionalProperties": false,
+      "description": "One line of the cost ledger.\n\n``asset_id`` and ``cost_owner`` exist so that a well, pump or exchanger already costed by\nthe source model is not added again downstream.",
+      "properties": {
+        "amount": {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___",
+          "unit": "currency"
+        },
+        "amount_basis": {
+          "$ref": "#/$defs/AmountBasis"
+        },
+        "asset_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/CostCategory"
+        },
+        "cost_owner": {
+          "minLength": 1,
+          "title": "Cost Owner",
+          "type": "string"
+        },
+        "currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "included": {
+          "title": "Included",
+          "type": "boolean"
+        },
+        "item_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "lifetime_years": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "location": {
+          "minLength": 1,
+          "title": "Location",
+          "type": "string"
+        },
+        "price_convention": {
+          "$ref": "#/$defs/PriceConvention"
+        },
+        "price_year": {
+          "title": "Price Year",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item_id",
+        "asset_id",
+        "category",
+        "cost_owner",
+        "location",
+        "included",
+        "amount",
+        "amount_basis",
+        "currency",
+        "price_year",
+        "price_convention"
+      ],
+      "title": "CostItem",
+      "type": "object"
+    },
+    "Evidence_Annotated_float__Strict_strict_True___": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Annotated_float__Strict_strict_True___",
+          "known": "#/$defs/Known_Annotated_float__Strict_strict_True___",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Annotated_float__Strict_strict_True___"
+        }
+      ]
+    },
+    "Known_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "PriceConvention": {
+      "enum": [
+        "real",
+        "nominal"
+      ],
+      "title": "PriceConvention",
+      "type": "string"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Where a value came from.",
+      "properties": {
+        "author": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Author"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "provenance_type": {
+          "$ref": "#/$defs/ProvenanceType"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Id"
+        }
+      },
+      "required": [
+        "provenance_type"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "ProvenanceType": {
+      "enum": [
+        "measured",
+        "imported",
+        "guideline",
+        "user_supplied",
+        "estimated",
+        "inferred",
+        "synthetic"
+      ],
+      "title": "ProvenanceType",
+      "type": "string"
+    },
+    "Unknown": {
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "state": {
+          "const": "unknown",
+          "default": "unknown",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason",
+        "owner"
+      ],
+      "title": "Unknown",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "cost_items": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CostItem"
+      },
+      "title": "Cost Items",
+      "type": "array"
+    },
+    "currency": {
+      "pattern": "^[A-Z]{3}$",
+      "title": "Currency",
+      "type": "string"
+    },
+    "discount_rate_per_year": {
+      "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+    },
+    "economic_scenario_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Economic Scenario Id",
+      "type": "string"
+    },
+    "horizon_years": {
+      "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+    },
+    "price_base_year": {
+      "title": "Price Base Year",
+      "type": "integer"
+    },
+    "price_convention": {
+      "$ref": "#/$defs/PriceConvention"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "vat_included": {
+      "title": "Vat Included",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "economic_scenario_id",
+    "price_base_year",
+    "currency",
+    "price_convention",
+    "vat_included",
+    "discount_rate_per_year",
+    "horizon_years"
+  ],
+  "title": "EconomicScenario",
+  "type": "object"
+}

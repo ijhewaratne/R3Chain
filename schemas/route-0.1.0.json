@@ -1,0 +1,163 @@
+{
+  "$defs": {
+    "Crossing": {
+      "additionalProperties": false,
+      "properties": {
+        "chainage_m": {
+          "minimum": 0.0,
+          "title": "Chainage M",
+          "type": "number"
+        },
+        "crossing_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Crossing Id",
+          "type": "string"
+        },
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "crossing_id",
+        "kind",
+        "chainage_m"
+      ],
+      "title": "Crossing",
+      "type": "object"
+    },
+    "Geometry": {
+      "additionalProperties": false,
+      "description": "A GeoJSON geometry with its coordinate reference system, for example ``EPSG:25832``.",
+      "properties": {
+        "crs": {
+          "pattern": "^[A-Za-z]+:\\d+$",
+          "title": "Crs",
+          "type": "string"
+        },
+        "geojson": {
+          "additionalProperties": true,
+          "title": "Geojson",
+          "type": "object"
+        }
+      },
+      "required": [
+        "crs",
+        "geojson"
+      ],
+      "title": "Geometry",
+      "type": "object"
+    },
+    "ProfilePoint": {
+      "additionalProperties": false,
+      "properties": {
+        "chainage_m": {
+          "minimum": 0.0,
+          "title": "Chainage M",
+          "type": "number"
+        },
+        "elevation_m": {
+          "title": "Elevation M",
+          "type": "number"
+        }
+      },
+      "required": [
+        "chainage_m",
+        "elevation_m"
+      ],
+      "title": "ProfilePoint",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A corridor between a site and a connection.\n\nTrench length and pipe lengths are stored separately so that costs cannot be counted twice.",
+  "properties": {
+    "corridor_length_m": {
+      "exclusiveMinimum": 0.0,
+      "title": "Corridor Length M",
+      "type": "number"
+    },
+    "crossings": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Crossing"
+      },
+      "title": "Crossings",
+      "type": "array"
+    },
+    "elevation_profile": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ProfilePoint"
+      },
+      "title": "Elevation Profile",
+      "type": "array"
+    },
+    "from_site_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "From Site Id",
+      "type": "string"
+    },
+    "geometry": {
+      "$ref": "#/$defs/Geometry"
+    },
+    "linked_customer_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 120,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+        "type": "string"
+      },
+      "title": "Linked Customer Ids",
+      "type": "array"
+    },
+    "return_pipe_length_m": {
+      "exclusiveMinimum": 0.0,
+      "title": "Return Pipe Length M",
+      "type": "number"
+    },
+    "route_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Route Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "supply_pipe_length_m": {
+      "exclusiveMinimum": 0.0,
+      "title": "Supply Pipe Length M",
+      "type": "number"
+    },
+    "to_connection_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "To Connection Id",
+      "type": "string"
+    },
+    "vertical_datum": {
+      "minLength": 1,
+      "title": "Vertical Datum",
+      "type": "string"
+    }
+  },
+  "required": [
+    "route_id",
+    "from_site_id",
+    "to_connection_id",
+    "geometry",
+    "corridor_length_m",
+    "supply_pipe_length_m",
+    "return_pipe_length_m",
+    "vertical_datum"
+  ],
+  "title": "Route",
+  "type": "object"
+}

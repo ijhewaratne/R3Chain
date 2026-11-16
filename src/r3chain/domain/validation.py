@@ -1,0 +1,427 @@
+"""Scenario validation.
+
+A single record validates itself when it is created. This module checks what only the whole
+scenario can show: references between records, source references, pressure references and time
+coverage. It reports everything it finds instead of stopping at the first problem.
+
+Severity:
+
+error
+    The scenario must not be executed.
+warning
+    The scenario can be executed. The reader should know about this.
+unverified
+    A check could not be carried out. It is reported so that it is never mistaken for a pass.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import json
+from collections.abc import Mapping
+from enum import StrEnum
+from pathlib import Path
+from typing import Any
+
+import yaml
+from pydantic import ValidationError
+
+from r3chain.domain.assumptions import missing_inputs
+from r3chain.domain.base import Record
+from r3chain.domain.evidence import MissingInput, ProvenanceType
+from r3chain.domain.paths import get_at, iter_provenance
+from r3chain.domain.records.common import value_or_none
+from r3chain.domain.records.network import Circuit
+from r3chain.domain.records.scenario import Scenario
+from r3chain.domain.timeseries import IntervalSeries, same_interval_set
+from r3chain.domain.topology import TopologySeverity, check_topology
+from r3chain.domain.units import Pressure
+
+
+class Severity(StrEnum):
+    ERROR = "error"
+    WARNING = "warning"
+    UNVERIFIED = "unverified"
+
+
+class Issue(Record):
+    severity: Severity
+    code: str
+    field_path: str
+    message: str
+
+
+class ValidationReport(Record):
+    scenario_id: str | None
+    revision_id: str | None
+    issues: tuple[Issue, ...] = ()
+    missing_inputs: tuple[MissingInput, ...] = ()
+    contains_synthetic_values: bool = False
+
+    @property
+    def errors(self) -> tuple[Issue, ...]:
+        return tuple(issue for issue in self.issues if issue.severity is Severity.ERROR)
+
+    @property
+    def executable(self) -> bool:
+        return not self.errors
+
+
+class _Collector:
+    def __init__(self) -> None:
+        self.issues: list[Issue] = []
+
+    def add(self, severity: Severity, code: str, field_path: str, message: str) -> None:
+        self.issues.append(
+            Issue(severity=severity, code=code, field_path=field_path, message=message)
+        )
+
+    def error(self, code: str, field_path: str, message: str) -> None:
+        self.add(Severity.ERROR, code, field_path, message)
+
+
+def validate_scenario(
+    scenario: Scenario, series: Mapping[str, IntervalSeries] | None = None
+) -> ValidationReport:
+    """Check a scenario as a whole.
+
+    ``series`` maps series identifiers to loaded time series. When it is not supplied, time
+    coverage cannot be checked and is reported as unverified.
+    """
+    found = _Collector()
+    _check_references(scenario, found)
+    synthetic = _check_sources(scenario, found)
+    _check_pressure_references(scenario, found)
+    _check_topology(scenario, found)
+    _check_time_coverage(scenario, series, found)
+    return ValidationReport(
+        scenario_id=scenario.scenario_id,
+        revision_id=scenario.revision_id(),
+        issues=tuple(found.issues),
+        missing_inputs=missing_inputs(scenario),
+        contains_synthetic_values=synthetic,
+    )
+
+
+def _check_references(scenario: Scenario, found: _Collector) -> None:
+    alternatives = {item.alternative_id for item in scenario.alternatives}
+    datasets = {item.dataset_id for item in scenario.datasets}
+    sites = {item.site_id for item in scenario.sites}
+    networks = {item.network_id: item for item in scenario.networks}
+    connections = {item.connection_id for item in scenario.connections}
+    policies = {item.policy_id for item in scenario.policies}
+
+    if scenario.study.baseline_id not in alternatives:
+        found.error(
+            "unknown_reference",
+            "study.baseline_id",
+            f"baseline {scenario.study.baseline_id!r} is not one of the alternatives",
+        )
+
+    for well_scenario in scenario.well_scenarios:
+        base = f"well_scenarios[{well_scenario.source_scenario_id}]"
+        if well_scenario.site_id not in sites:
+            found.error(
+                "unknown_reference",
+                f"{base}.site_id",
+                f"site {well_scenario.site_id!r} is not defined",
+            )
+        if well_scenario.parameter_package_id not in datasets:
+            found.error(
+                "unknown_reference",
+                f"{base}.parameter_package_id",
+                f"parameter package {well_scenario.parameter_package_id!r} is not a dataset "
+                "registered in this scenario",
+            )
+        for well in well_scenario.wells:
+            if well.surface_site_id not in sites:
+                found.error(
+                    "unknown_reference",
+                    f"{base}.wells[{well.well_id}].surface_site_id",
+                    f"site {well.surface_site_id!r} is not defined",
+                )
+
+    for network in scenario.networks:
+        if network.dataset_id not in datasets:
+            found.error(
+                "unknown_reference",
+                f"networks[{network.network_id}].dataset_id",
+                f"dataset {network.dataset_id!r} is not registered in this scenario",
+            )
+
+    for connection in scenario.connections:
+        base = f"connections[{connection.connection_id}]"
+        connected = networks.get(connection.network_id)
+        if connected is None:
+            found.error(
+                "unknown_reference",
+                f"{base}.network_id",
+                f"network {connection.network_id!r} is not defined",
+            )
+            continue
+        nodes = {node.node_id: node for node in connected.nodes}
+        for field, expected in (("supply_node", Circuit.SUPPLY), ("return_node", Circuit.RETURN)):
+            node_id = getattr(connection, field)
+            node = nodes.get(node_id)
+            if node is None:
+                found.error(
+                    "unknown_reference",
+                    f"{base}.{field}",
+                    f"node {node_id!r} is not in network {connected.network_id!r}",
+                )
+            else:
+                if node.circuit is not expected:
+                    found.error(
+                        "wrong_circuit",
+                        f"{base}.{field}",
+                        f"node {node_id!r} is in the {node.circuit.value} circuit",
+                    )
+                if node.zone_id != connection.zone_id:
+                    found.error(
+                        "zone_mismatch",
+                        f"{base}.zone_id",
+                        f"node {node_id!r} is in zone {node.zone_id!r}, "
+                        f"the connection states {connection.zone_id!r}",
+                    )
+        if connection.heat_carrier is not connected.heat_carrier:
+            found.error(
+                "heat_carrier_mismatch",
+                f"{base}.heat_carrier",
+                f"connection carries {connection.heat_carrier.value}, "
+                f"network {connected.network_id!r} carries {connected.heat_carrier.value}",
+            )
+
+    for route in scenario.routes:
+        base = f"routes[{route.route_id}]"
+        if route.from_site_id not in sites:
+            found.error(
+                "unknown_reference",
+                f"{base}.from_site_id",
+                f"site {route.from_site_id!r} is not defined",
+            )
+        if route.to_connection_id not in connections:
+            found.error(
+                "unknown_reference",
+                f"{base}.to_connection_id",
+                f"connection {route.to_connection_id!r} is not defined",
+            )
+
+    document = scenario.to_json_dict()
+    for model in scenario.uncertainty_models:
+        for variable in model.variables:
+            try:
+                get_at(document, variable.field_path)
+            except (KeyError, ValueError):
+                found.error(
+                    "unknown_reference",
+                    f"uncertainty_models[{model.uncertainty_model_id}]"
+                    f".variables[{variable.variable_id}].field_path",
+                    f"{variable.field_path!r} does not address an input of this scenario",
+                )
+
+    for operating in scenario.operating_scenarios:
+        base = f"operating_scenarios[{operating.operating_scenario_id}]"
+        if operating.dispatch_policy_id not in policies:
+            found.error(
+                "unknown_reference",
+                f"{base}.dispatch_policy_id",
+                f"policy {operating.dispatch_policy_id!r} is not referenced by this scenario",
+            )
+        for reference in operating.series_refs():
+            if reference.dataset_id not in datasets:
+                found.error(
+                    "unknown_reference",
+                    f"{base}.series[{reference.series_id}].dataset_id",
+                    f"dataset {reference.dataset_id!r} is not registered in this scenario",
+                )
+
+
+def _check_sources(scenario: Scenario, found: _Collector) -> bool:
+    """Every sourced value must point at a registered dataset. Returns True if any value is
+    synthetic."""
+    datasets = {item.dataset_id: item for item in scenario.datasets}
+    synthetic = False
+    for path, provenance in iter_provenance(scenario):
+        if provenance.provenance_type is ProvenanceType.SYNTHETIC:
+            synthetic = True
+        if provenance.source_id is None:
+            continue
+        if provenance.source_id not in datasets:
+            found.error(
+                "unknown_source",
+                path,
+                f"source {provenance.source_id!r} is not a dataset registered in this scenario",
+            )
+    if synthetic and not scenario.study.synthetic:
+        found.add(
+            Severity.WARNING,
+            "synthetic_value_in_pilot",
+            "study.synthetic",
+            "the study is not marked synthetic but uses synthetic values. Results that depend "
+            "on them are labelled synthetic and cannot be ranked as pilot results",
+        )
+    return synthetic
+
+
+def _check_pressure_references(scenario: Scenario, found: _Collector) -> None:
+    """Within one network and its connections, pressures must share one reference."""
+    for network in scenario.networks:
+        located: list[tuple[str, Pressure]] = [
+            (
+                f"networks[{network.network_id}].boundary_conditions[{boundary.boundary_id}]"
+                ".pressure",
+                boundary.pressure,
+            )
+            for boundary in network.boundary_conditions
+            if boundary.pressure is not None
+        ]
+        for connection in scenario.connections:
+            if connection.network_id != network.network_id:
+                continue
+            for field in ("min_pressure", "max_pressure"):
+                pressure = value_or_none(getattr(connection.limits, field))
+                if pressure is not None:
+                    located.append(
+                        (f"connections[{connection.connection_id}].limits.{field}", pressure)
+                    )
+        references = {pressure.reference for _, pressure in located}
+        if len(references) > 1:
+            first_reference = located[0][1].reference
+            for path, pressure in located:
+                if pressure.reference is not first_reference:
+                    found.error(
+                        "inconsistent_pressure_reference",
+                        path,
+                        f"this pressure is {pressure.reference.value}, others in network "
+                        f"{network.network_id!r} are {first_reference.value}. Convert with an "
+                        "explicit ambient pressure",
+                    )
+
+
+def _check_topology(scenario: Scenario, found: _Collector) -> None:
+    """Graph checks of every network: islands, unpiped consumers, duplicates and dead ends."""
+    for network in scenario.networks:
+        pairs = [
+            (connection.supply_node, connection.return_node)
+            for connection in scenario.connections
+            if connection.network_id == network.network_id
+        ]
+        for issue in check_topology(network, pairs):
+            severity = (
+                Severity.ERROR if issue.severity is TopologySeverity.ERROR else Severity.WARNING
+            )
+            found.add(
+                severity,
+                f"topology_{issue.code}",
+                f"networks[{network.network_id}]",
+                issue.message,
+            )
+
+
+def _check_time_coverage(
+    scenario: Scenario, series: Mapping[str, IntervalSeries] | None, found: _Collector
+) -> None:
+    for operating in scenario.operating_scenarios:
+        base = f"operating_scenarios[{operating.operating_scenario_id}]"
+        if series is None:
+            found.add(
+                Severity.UNVERIFIED,
+                "time_coverage_not_checked",
+                base,
+                "no time series were supplied, so interval coverage was not checked",
+            )
+            continue
+        loaded: list[IntervalSeries] = []
+        for reference in operating.series_refs():
+            item = series.get(reference.series_id)
+            if item is None:
+                found.error(
+                    "missing_series",
+                    f"{base}.series[{reference.series_id}]",
+                    f"series {reference.series_id!r} was not supplied",
+                )
+                continue
+            loaded.append(item)
+            basis = operating.time_basis
+            if not item.covers(basis.start_utc, basis.end_utc):
+                found.error(
+                    "incomplete_time_coverage",
+                    f"{base}.series[{reference.series_id}]",
+                    "the series has gaps or does not cover the whole time basis",
+                )
+        if len(loaded) > 1 and not same_interval_set(*loaded):
+            found.error(
+                "different_interval_sets",
+                base,
+                "demand, availability, temperature and tariff series must share one interval set",
+            )
+
+
+# --- loading --------------------------------------------------------------------------------
+
+
+def _json_default(value: Any) -> Any:
+    if isinstance(value, dt.datetime | dt.date):
+        return value.isoformat()
+    raise TypeError(f"cannot serialise {type(value).__name__}")
+
+
+def read_data_file(path: Path) -> Any:
+    """Read a YAML or JSON file into plain JSON compatible data."""
+    text = path.read_text(encoding="utf-8")
+    if path.suffix.lower() in {".yaml", ".yml"}:
+        loaded = yaml.safe_load(text)
+        # Normalise YAML dates and timestamps to ISO strings.
+        return json.loads(json.dumps(loaded, default=_json_default))
+    return json.loads(text)
+
+
+def _format_location(location: tuple[int | str, ...], data: Any) -> str:
+    """Turn a validation error location into a field path, naming list elements by identifier."""
+    path = ""
+    current = data
+    for part in location:
+        if isinstance(part, int):
+            item = current[part] if isinstance(current, list) and part < len(current) else None
+            identifier = next(
+                (
+                    value
+                    for name, value in (item.items() if isinstance(item, dict) else ())
+                    if name.endswith("_id") and isinstance(value, str)
+                ),
+                str(part),
+            )
+            path += f"[{identifier}]"
+            current = item
+        elif isinstance(current, dict) and part in current:
+            path += f".{part}" if path else part
+            current = current[part]
+        # Any other part names a branch of a tagged union, which is not part of the path.
+    return path
+
+
+def parse_scenario(data: Any) -> tuple[Scenario | None, ValidationReport]:
+    """Build a scenario from data and validate it. Record level errors become report issues."""
+    try:
+        scenario = Scenario.model_validate(data)
+    except ValidationError as error:
+        issues = tuple(
+            Issue(
+                severity=Severity.ERROR,
+                code=str(item["type"]),
+                field_path=_format_location(item["loc"], data),
+                message=str(item["msg"]),
+            )
+            for item in error.errors()
+        )
+        identifier = data.get("scenario_id") if isinstance(data, dict) else None
+        return None, ValidationReport(
+            scenario_id=identifier if isinstance(identifier, str) else None,
+            revision_id=None,
+            issues=issues,
+        )
+    return scenario, validate_scenario(scenario)
+
+
+def load_scenario_file(path: Path) -> tuple[Scenario | None, ValidationReport]:
+    return parse_scenario(read_data_file(path))

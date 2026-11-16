@@ -1,0 +1,173 @@
+{
+  "$defs": {
+    "SourceNumericalSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "max_iterations_count": {
+          "minimum": 1,
+          "title": "Max Iterations Count",
+          "type": "integer"
+        },
+        "temperature_tolerance_delta_k": {
+          "exclusiveMinimum": 0.0,
+          "title": "Temperature Tolerance Delta K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "max_iterations_count",
+        "temperature_tolerance_delta_k"
+      ],
+      "title": "SourceNumericalSettings",
+      "type": "object"
+    },
+    "SourceOperatingPoint": {
+      "additionalProperties": false,
+      "description": "The operating point asked for. Whether it is acceptable is for the engine to decide.",
+      "properties": {
+        "injection_temperature_k": {
+          "title": "Injection Temperature K",
+          "type": "number"
+        },
+        "requested_mass_flow_kg_s": {
+          "title": "Requested Mass Flow Kg S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "requested_mass_flow_kg_s",
+        "injection_temperature_k"
+      ],
+      "title": "SourceOperatingPoint",
+      "type": "object"
+    },
+    "SourceWell": {
+      "additionalProperties": false,
+      "properties": {
+        "measured_length_m": {
+          "title": "Measured Length M",
+          "type": "number"
+        },
+        "role": {
+          "$ref": "#/$defs/WellRole"
+        },
+        "vertical_depth_m": {
+          "title": "Vertical Depth M",
+          "type": "number"
+        },
+        "well_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Well Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "well_id",
+        "role",
+        "vertical_depth_m",
+        "measured_length_m"
+      ],
+      "title": "SourceWell",
+      "type": "object"
+    },
+    "WellRole": {
+      "enum": [
+        "production",
+        "injection"
+      ],
+      "title": "WellRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One evaluation request. Its hash identifies the inputs of the result.",
+  "properties": {
+    "model_family": {
+      "minLength": 1,
+      "title": "Model Family",
+      "type": "string"
+    },
+    "numerical": {
+      "$ref": "#/$defs/SourceNumericalSettings"
+    },
+    "operating_point": {
+      "$ref": "#/$defs/SourceOperatingPoint"
+    },
+    "parameter_package_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Parameter Package Id",
+      "type": "string"
+    },
+    "reservoir_parameters": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Reservoir Parameters",
+      "type": "object"
+    },
+    "sample_id": {
+      "default": "deterministic",
+      "minLength": 1,
+      "title": "Sample Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "seed": {
+      "default": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "site_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Site Id",
+      "type": "string"
+    },
+    "source_scenario_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Source Scenario Id",
+      "type": "string"
+    },
+    "study_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Study Id",
+      "type": "string"
+    },
+    "well_configuration_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Well Configuration Id",
+      "type": "string"
+    },
+    "wells": {
+      "items": {
+        "$ref": "#/$defs/SourceWell"
+      },
+      "title": "Wells",
+      "type": "array"
+    }
+  },
+  "required": [
+    "study_id",
+    "source_scenario_id",
+    "site_id",
+    "parameter_package_id",
+    "model_family",
+    "well_configuration_id",
+    "wells",
+    "reservoir_parameters",
+    "operating_point",
+    "numerical"
+  ],
+  "title": "SourceRequest",
+  "type": "object"
+}

@@ -1,0 +1,585 @@
+# Requirements register.
+#
+# One entry per workshop requirement (W), open decision (O) and acceptance test (A) of the
+# implementation specification v1.0. New requirements are added here first, classified, and tied
+# to a test before code is written (implementation plan section 4.4).
+#
+# status for W and A entries:  planned | partial | built | verified | superseded
+#   partial  = part of it exists and the listed tests pass. The milestone says when it is complete.
+# status for O entries:        open | resolved
+#
+# A W entry is workshop evidence. It is not a formally accepted requirement.
+
+schema_version: "0.1.0"
+
+entries:
+  # --- workshop requirements ------------------------------------------------------------------
+  - id: W01
+    kind: workshop
+    source: "pp 3-5, 07:55-12:40"
+    statement: Preserve upstream dataset and parameter versions across the complete chain
+    milestone: M1
+    lands_in: [store, domain, adapters]
+    status: partial
+    tests: [test_dataset_version_cannot_change]
+  - id: W02
+    kind: workshop
+    source: "pp 5-6, 13:15-15:21"
+    statement: Keep geological risks and their definitions separate from numerical convergence
+    milestone: M5
+    lands_in: [domain, uncertainty]
+    status: partial
+    tests: [test_non_convergence_is_not_a_technical_failure]
+  - id: W03
+    kind: workshop
+    source: "p 6, 15:21 and p 12, 32:24"
+    statement: Declare cost ownership and reconcile against whole system economics
+    milestone: M4
+    lands_in: [economics]
+    status: partial
+    tests: [test_duplicate_cost_ownership_is_rejected]
+  - id: W04
+    kind: workshop
+    source: "p 7, 16:15-17:32"
+    statement: Use schema validated tools and preserve sampled inputs and raw results
+    milestone: M6
+    lands_in: [adapters, ports, mcp, uncertainty]
+    status: partial
+    tests: [test_performance_matches_the_hand_calculation]
+  - id: W05
+    kind: workshop
+    source: "pp 7-8, 18:51-19:34"
+    statement: Implement a bounded, controllable source component and shared result contracts
+    milestone: M2
+    lands_in: [coupling, adapters]
+    status: planned
+    tests: []
+  - id: W06
+    kind: workshop
+    source: "p 8, 20:36-21:42"
+    statement: Convert GIS into a checked topology and evaluate pressure zones explicitly
+    milestone: M3
+    lands_in: [domain, adapters, geospatial]
+    status: partial
+    tests: [test_the_synthetic_network_has_a_clean_topology, test_disconnected_parts_are_found]
+  - id: W07
+    kind: workshop
+    source: "pp 9-10, 23:04-27:26"
+    statement: Evaluate site and connection together with explicit plant coupling
+    milestone: M3
+    lands_in: [coupling, search]
+    status: planned
+    tests: []
+  - id: W08
+    kind: workshop
+    source: "p 11, 30:02-31:26"
+    statement: Add chronological demand, competing sources, dispatch and capacity constraints
+    milestone: M4
+    lands_in: [operation]
+    status: planned
+    tests: []
+  - id: W09
+    kind: workshop
+    source: "p 11, 31:39"
+    statement: Expose supported configuration types and reject unsupported configurations
+    milestone: M1
+    lands_in: [ports, adapters, pipeline]
+    status: partial
+    tests:
+      - test_an_unknown_model_family_is_unsupported
+      - test_an_unsupported_well_configuration_is_unsupported
+      - test_a_model_family_without_an_engine_is_unsupported
+  - id: W10
+    kind: workshop
+    source: "p 12, 32:24-33:42"
+    statement: Record fidelity and applicable model family in every source result
+    milestone: M1
+    lands_in: [ports, adapters]
+    status: partial
+    tests: [test_a_completed_result_is_complete_and_states_its_origin]
+  - id: W11
+    kind: workshop
+    source: "p 12, 33:42-34:41"
+    statement: Adapt the actual solver API and retain convergence diagnostics and original JSON
+    milestone: M1
+    lands_in: [adapters]
+    status: planned
+    tests: []
+  - id: W12
+    kind: workshop
+    source: "pp 13-14, 35:30-39:56"
+    statement: Keep demonstration fixtures separate from pilot data and support multiple connections
+    milestone: M3
+    lands_in: [domain, search]
+    status: partial
+    tests:
+      - test_synthetic_values_label_the_result
+      - test_synthetic_values_in_a_pilot_study_are_flagged
+      - test_a_test_engine_labels_the_result_synthetic
+  - id: W13
+    kind: workshop
+    source: "pp 14-15, 40:47-44:05"
+    statement: >-
+      Add success likelihood, load cases, heat pump assistance, drilling CAPEX and editable
+      economics as explicit scenario fields and modelled alternatives
+    milestone: M4
+    lands_in: [economics, coupling, uncertainty]
+    status: planned
+    tests: []
+  - id: W14
+    kind: workshop
+    source: "pp 16-21, 47:51-1:01:20"
+    statement: Test realistic tasks with users and preserve inspectable outcomes
+    milestone: M9
+    lands_in: [frontend]
+    status: planned
+    tests: []
+  - id: W15
+    kind: workshop
+    source: "pp 23-26, 1:05:38-1:14:25"
+    statement: Calculate source dispatch and business case on a common boundary
+    milestone: M4
+    lands_in: [operation, economics]
+    status: planned
+    tests: []
+  - id: W16
+    kind: workshop
+    source: "pp 25-27, 1:10:08-1:16:14"
+    statement: Define temperature zones and evaluate alternative integration architectures
+    milestone: M4
+    lands_in: [coupling, domain]
+    status: planned
+    tests: []
+  - id: W17
+    kind: workshop
+    source: "pp 30-31, 1:21:49-1:25:02"
+    statement: Keep optional electricity coupling behind a separate adapter
+    milestone: M9
+    lands_in: [adapters]
+    status: planned
+    tests: []
+  - id: W18
+    kind: workshop
+    source: "pp 29-30, 1:19:38-1:21:49"
+    statement: Model connection adoption and development stages as scenario inputs
+    milestone: M5
+    lands_in: [operation, uncertainty]
+    status: planned
+    tests: []
+  - id: W19
+    kind: workshop
+    source: "pp 32-34, 1:27:20-1:32:43"
+    statement: Version planning documents and scenarios and do not hard code workshop policy discussion
+    milestone: M7
+    lands_in: [store, policies, assistant]
+    status: partial
+    tests: [test_revision_records_field_level_changes, test_policy_version_cannot_change]
+  - id: W20
+    kind: workshop
+    source: "p 35, 1:34:00"
+    statement: Maintain a pilot question set linked to functional and acceptance requirements
+    milestone: M8
+    lands_in: [docs, benchmarks]
+    status: planned
+    tests: []
+  - id: W21
+    kind: workshop
+    source: "p 35, 1:34:21-1:35:29"
+    statement: Use a bounded plan, execute and check loop with auditable tool events
+    milestone: M7
+    lands_in: [assistant]
+    status: planned
+    tests: []
+  - id: W22
+    kind: workshop
+    source: "pp 36-37, 1:36:24-1:39:52"
+    statement: Support scenario branching and shared comparison views
+    milestone: M6
+    lands_in: [store, services, frontend]
+    status: partial
+    tests: [test_variant_creates_revision_with_change_record]
+  - id: W23
+    kind: workshop
+    source: "pp 38-39, 1:41:03-1:43:47"
+    statement: Separate document retrieval from calculations and freeze a reference benchmark
+    milestone: M7
+    lands_in: [assistant, benchmarks]
+    status: planned
+    tests: []
+  - id: W24
+    kind: workshop
+    source: "p 39, 1:43:55"
+    statement: Show assumptions by default and record edits in new scenario revisions
+    milestone: M6
+    lands_in: [domain, services, frontend]
+    status: partial
+    tests:
+      - test_register_lists_every_input
+      - test_variant_creates_revision_with_change_record
+      - test_change_paths_match_the_assumption_register
+  - id: W25
+    kind: workshop
+    source: "pp 39-41, 1:44:46-1:49:51"
+    statement: Tag input provenance and expose source version and locator
+    milestone: M6
+    lands_in: [domain, frontend]
+    status: partial
+    tests: [test_sourced_value_must_name_its_source, test_unregistered_source_is_an_error]
+  - id: W26
+    kind: workshop
+    source: "p 40, 1:46:36-1:48:01"
+    statement: Offer presentation preferences while retaining mandatory evidence
+    milestone: M6
+    lands_in: [frontend]
+    status: planned
+    tests: []
+  - id: W27
+    kind: workshop
+    source: "pp 41-43, 1:51:12-1:56:55"
+    statement: Make the model provider replaceable and enforce permissions before retrieval
+    milestone: M7
+    lands_in: [assistant, services]
+    status: planned
+    tests: []
+  - id: W28
+    kind: workshop
+    source: "p 44, 1:57:24"
+    statement: Track permitted uses and dataset origin before importing restricted evidence
+    milestone: M3
+    lands_in: [ingestion, domain]
+    status: planned
+    tests: []
+  - id: W29
+    kind: workshop
+    source: "pp 44-45, 1:58:14-2:00:25"
+    statement: Begin with data access and pilot definition, then reconstruct the current state
+    milestone: M8
+    lands_in: [docs]
+    status: planned
+    tests: []
+  - id: W30
+    kind: workshop
+    source: "p 45, 2:01:11"
+    statement: Create reviewed reference scenarios before autonomous workflow evaluation
+    milestone: M8
+    lands_in: [benchmarks]
+    status: planned
+    tests: []
+  - id: W31
+    kind: workshop
+    source: "p 46, 2:03:18-2:03:42"
+    statement: Store the exact document and spatial boundary and do not infer site approval
+    milestone: M3
+    lands_in: [ingestion, geospatial]
+    status: planned
+    tests: []
+  - id: W32
+    kind: workshop
+    source: "p 46, 2:03:42-2:05:04"
+    statement: Make screening criteria configurable and distinguish usable area from total parcel area
+    milestone: M3
+    lands_in: [geospatial, policies]
+    status: planned
+    tests: []
+  - id: W33
+    kind: workshop
+    source: "pp 46-47, 2:05:55-2:06:49"
+    statement: Compare routes with and without additional demand and corresponding costs
+    milestone: M4
+    lands_in: [geospatial, economics]
+    status: planned
+    tests: []
+  - id: W34
+    kind: workshop
+    source: "pp 47-48, 2:07:33-2:08:49"
+    statement: Evaluate joint uncertainty and scenario sensitivity across alternatives
+    milestone: M5
+    lands_in: [uncertainty]
+    status: planned
+    tests: []
+  - id: W35
+    kind: workshop
+    source: "p 48, 2:08:49-2:10:49"
+    statement: Compare whole alternatives and calculate incremental change from the baseline
+    milestone: M4
+    lands_in: [economics]
+    status: planned
+    tests: []
+  - id: W36
+    kind: workshop
+    source: "pp 49-50, 2:13:06-2:15:21"
+    statement: Maintain data dependencies, review points and iterative user evaluation
+    milestone: M9
+    lands_in: [docs]
+    status: planned
+    tests: []
+
+  # --- open decisions -------------------------------------------------------------------------
+  - id: O01
+    kind: open_decision
+    statement: Exact pilot boundary and principal planning question
+    reviewer: Tanja and WSW
+    milestone: M8
+    status: open
+  - id: O02
+    kind: open_decision
+    statement: Baseline and two or three alternatives
+    reviewer: WSW and Tanja
+    milestone: M8
+    status: open
+  - id: O03
+    kind: open_decision
+    statement: PyDoublet version, model family, API and reference outputs
+    reviewer: Jan
+    milestone: M1
+    status: open
+  - id: O04
+    kind: open_decision
+    statement: AP3 support for fractures, scaling, multiple injection wells and decline
+    reviewer: Jan and model specialists
+    milestone: M1
+    status: open
+  - id: O05
+    kind: open_decision
+    statement: Geological success event, distributions and dependence
+    reviewer: AP1 to AP3 specialists
+    milestone: M5
+    status: open
+  - id: O06
+    kind: open_decision
+    statement: WSW studies, raw datasets and permitted project use
+    reviewer: WSW project and data owners
+    milestone: M8
+    status: open
+  - id: O07
+    kind: open_decision
+    statement: Network carrier, temperatures, pressure zones and connection pairs
+    reviewer: WSW network planner
+    milestone: M8
+    status: open
+  - id: O08
+    kind: open_decision
+    statement: Demand and source time series, operating rules and market model interface
+    reviewer: WSW dispatch and network teams
+    milestone: M4
+    status: open
+  - id: O09
+    kind: open_decision
+    statement: Pad area by phase, access, usable land and site acceptance criteria
+    reviewer: WSW and site specialists
+    milestone: M3
+    status: open
+  - id: O10
+    kind: open_decision
+    statement: Cost sources, boundary, asset lives, discounting and baseline accounting
+    reviewer: WSW economics and source specialists
+    milestone: M4
+    status: open
+  - id: O11
+    kind: open_decision
+    statement: Technical limits and baseline validation tolerances
+    reviewer: WSW and model reviewers
+    milestone: M8
+    status: open
+  - id: O12
+    kind: open_decision
+    statement: Authorised model endpoint, deployment and access model
+    reviewer: Participating organisations
+    milestone: M6
+    status: open
+  - id: O13
+    kind: open_decision
+    statement: UX task set and evaluation protocol
+    reviewer: UX team and WSW
+    milestone: M7
+    status: open
+  - id: O14
+    kind: open_decision
+    statement: Risk preference and ranking policy
+    reviewer: WSW decision owner with Tanja
+    milestone: M5
+    status: open
+
+  # --- acceptance tests -----------------------------------------------------------------------
+  - id: A01
+    kind: acceptance
+    statement: >-
+      Known heat balance. An independent enthalpy or reviewed heat capacity calculation agrees
+      within the numerical policy
+    milestone: M2
+    lands_in: [coupling]
+    status: partial
+    tests: [test_exchanger_energy_balance_closes]
+  - id: A02
+    kind: acceptance
+    statement: >-
+      Exchanger terminal limit. An inadequate approach temperature fails direct heat with the
+      specific limiting terminal
+    milestone: M2
+    lands_in: [coupling]
+    status: planned
+    tests: []
+  - id: A03
+    kind: acceptance
+    statement: >-
+      Heat pump balance. Condenser heat equals evaporator heat plus compressor input under the
+      stated loss model
+    milestone: M2
+    lands_in: [coupling]
+    status: planned
+    tests: []
+  - id: A04
+    kind: acceptance
+    statement: >-
+      Elevation and pressure. Local pressure reflects the height change, and static head is not
+      double counted as closed loop circulation demand
+    milestone: M1
+    lands_in: [adapters, reference]
+    status: built
+    tests:
+      - test_hydrostatic_pressure_difference
+      - test_static_head_cancels_around_a_closed_loop
+      - test_elevation_changes_local_pressure_but_not_the_flows
+  - id: A05
+    kind: acceptance
+    statement: >-
+      Finite source capacity. An undersized source leaves a reported deficit or uses an explicit
+      backup source
+    milestone: M2
+    lands_in: [coupling]
+    status: planned
+    tests: []
+  - id: A06
+    kind: acceptance
+    statement: >-
+      Zero or reversed flow. Validated behaviour or a specific unsupported or numerical state,
+      and no silent NaN based ranking
+    milestone: M1
+    lands_in: [adapters]
+    status: built
+    tests:
+      - test_a_branch_without_flow_has_no_temperature
+      - test_a_network_without_any_flow_is_reported_as_such
+      - test_reversed_flow_through_a_consumer_is_refused
+  - id: A07
+    kind: acceptance
+    statement: >-
+      Demand and time basis. Interval integration, leap years and daylight saving handling
+      produce correct totals
+    milestone: M4
+    lands_in: [domain, operation]
+    status: partial
+    tests:
+      - test_annual_energy_uses_actual_intervals
+      - test_daylight_saving_days_have_23_and_25_hours
+      - test_repeated_local_hour_is_resolved
+  - id: A08
+    kind: acceptance
+    statement: >-
+      Existing base load. Geothermal useful heat and cost change when a competing source covers
+      summer demand
+    milestone: M4
+    lands_in: [operation]
+    status: planned
+    tests: []
+  - id: A09
+    kind: acceptance
+    statement: >-
+      Cost reconciliation. Each well, pump, exchanger and route item appears once on the chosen
+      boundary
+    milestone: M4
+    lands_in: [economics]
+    status: partial
+    tests: [test_duplicate_cost_ownership_is_rejected]
+  - id: A10
+    kind: acceptance
+    statement: >-
+      Discounting. Independent constant and variable cash flow fixtures agree, and zero discount
+      rate and zero heat are handled
+    milestone: M4
+    lands_in: [economics]
+    status: partial
+    tests:
+      - test_capital_recovery_factor_matches_annuity_sum
+      - test_capital_recovery_factor_at_zero_rate
+      - test_variable_cash_flow_lcoh_by_hand
+      - test_lcoh_is_undefined_without_heat
+  - id: A11
+    kind: acceptance
+    statement: >-
+      Connection alternatives. Site and connection are jointly identified and ranked, and the
+      shortest distance is not assumed cheapest
+    milestone: M3
+    lands_in: [search]
+    status: planned
+    tests: []
+  - id: A12
+    kind: acceptance
+    statement: >-
+      Data gaps. Missing operating limits or permit evidence remain visible and do not become a
+      positive check
+    milestone: M3
+    lands_in: [domain, geospatial]
+    status: partial
+    tests:
+      - test_unknown_input_is_never_defaulted
+      - test_a_missing_input_gives_no_number
+      - test_an_unknown_required_input_stops_the_request
+      - test_an_unknown_source_input_is_reported_and_not_defaulted
+  - id: A13
+    kind: acceptance
+    statement: >-
+      Failure categories. Nonconvergence remains distinct from an infeasible resource or network
+    milestone: M2
+    lands_in: [domain, adapters, coupling]
+    status: partial
+    tests:
+      - test_non_convergence_is_not_a_technical_failure
+      - test_a_numerical_failure_is_not_a_physical_one
+      - test_non_convergence_and_a_pressure_limit_are_different_outcomes
+  - id: A14
+    kind: acceptance
+    statement: >-
+      Uncertainty. A repeated seed and model versions reproduce samples, and the denominator and
+      unresolved runs are correct
+    milestone: M5
+    lands_in: [uncertainty]
+    status: planned
+    tests: []
+  - id: A15
+    kind: acceptance
+    statement: >-
+      Scenario correction. Changing a dependent assumption invalidates stale results and produces
+      a visible revision
+    milestone: M6
+    lands_in: [pipeline, store, services]
+    status: partial
+    tests:
+      - test_changed_input_recomputes_dependent_stages
+      - test_variant_creates_revision_with_change_record
+      - test_only_the_stage_that_depends_on_a_change_is_recomputed
+  - id: A16
+    kind: acceptance
+    statement: >-
+      Access and export. A user cannot retrieve unauthorised evidence through chat, runs, cache
+      or report export
+    milestone: M6
+    lands_in: [services]
+    status: planned
+    tests: []
+  - id: A17
+    kind: acceptance
+    statement: Replay. A report's frozen inputs reproduce its result without the assistant
+    milestone: M6
+    lands_in: [pipeline, reporting]
+    status: partial
+    tests: [test_replay_is_identical]
+  - id: A18
+    kind: acceptance
+    statement: >-
+      Pilot baseline. Observed baseline fit and limitations meet criteria agreed with WSW for the
+      intended decision
+    milestone: M8
+    lands_in: [adapters, docs]
+    status: planned
+    tests: []

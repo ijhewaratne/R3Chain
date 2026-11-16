@@ -1,0 +1,236 @@
+{
+  "$defs": {
+    "AdapterState": {
+      "description": "Outcome of one engine call (specification 7.4).",
+      "enum": [
+        "completed",
+        "invalid_input",
+        "unsupported_model",
+        "non_converged",
+        "physical_limit_exceeded",
+        "cancelled",
+        "tool_failure"
+      ],
+      "title": "AdapterState",
+      "type": "string"
+    },
+    "ApproximationError": {
+      "additionalProperties": false,
+      "description": "Largest difference between interpolation and engine, over all validated cell centres.",
+      "properties": {
+        "cells_checked_count": {
+          "title": "Cells Checked Count",
+          "type": "integer"
+        },
+        "max_abs_heat_error_w": {
+          "minimum": 0.0,
+          "title": "Max Abs Heat Error W",
+          "type": "number"
+        },
+        "max_abs_temperature_error_delta_k": {
+          "minimum": 0.0,
+          "title": "Max Abs Temperature Error Delta K",
+          "type": "number"
+        },
+        "max_rel_heat_error_fraction": {
+          "minimum": 0.0,
+          "title": "Max Rel Heat Error Fraction",
+          "type": "number"
+        },
+        "max_rel_pump_power_error_fraction": {
+          "minimum": 0.0,
+          "title": "Max Rel Pump Power Error Fraction",
+          "type": "number"
+        }
+      },
+      "required": [
+        "cells_checked_count",
+        "max_abs_heat_error_w",
+        "max_rel_heat_error_fraction",
+        "max_abs_temperature_error_delta_k",
+        "max_rel_pump_power_error_fraction"
+      ],
+      "title": "ApproximationError",
+      "type": "object"
+    },
+    "EnvelopeCell": {
+      "additionalProperties": false,
+      "properties": {
+        "flow_index": {
+          "title": "Flow Index",
+          "type": "integer"
+        },
+        "temperature_index": {
+          "title": "Temperature Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "flow_index",
+        "temperature_index"
+      ],
+      "title": "EnvelopeCell",
+      "type": "object"
+    },
+    "EnvelopePoint": {
+      "additionalProperties": false,
+      "properties": {
+        "active_limits": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Active Limits",
+          "type": "array"
+        },
+        "electrical_pump_power_w": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Electrical Pump Power W"
+        },
+        "geothermal_extracted_heat_w": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geothermal Extracted Heat W"
+        },
+        "injection_temperature_k": {
+          "title": "Injection Temperature K",
+          "type": "number"
+        },
+        "mass_flow_kg_s": {
+          "title": "Mass Flow Kg S",
+          "type": "number"
+        },
+        "state": {
+          "$ref": "#/$defs/AdapterState"
+        },
+        "wellhead_production_temperature_k": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Wellhead Production Temperature K"
+        }
+      },
+      "required": [
+        "mass_flow_kg_s",
+        "injection_temperature_k",
+        "state"
+      ],
+      "title": "EnvelopePoint",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "approximation_error": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ApproximationError"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "base_input_hash": {
+      "title": "Base Input Hash",
+      "type": "string"
+    },
+    "engine": {
+      "minLength": 1,
+      "title": "Engine",
+      "type": "string"
+    },
+    "engine_version": {
+      "minLength": 1,
+      "title": "Engine Version",
+      "type": "string"
+    },
+    "injection_temperatures_k": {
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "title": "Injection Temperatures K",
+      "type": "array"
+    },
+    "mass_flows_kg_s": {
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "title": "Mass Flows Kg S",
+      "type": "array"
+    },
+    "model_family": {
+      "minLength": 1,
+      "title": "Model Family",
+      "type": "string"
+    },
+    "points": {
+      "items": {
+        "$ref": "#/$defs/EnvelopePoint"
+      },
+      "title": "Points",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_scenario_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Source Scenario Id",
+      "type": "string"
+    },
+    "synthetic": {
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "validated_cells": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/EnvelopeCell"
+      },
+      "title": "Validated Cells",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source_scenario_id",
+    "engine",
+    "engine_version",
+    "model_family",
+    "synthetic",
+    "base_input_hash",
+    "mass_flows_kg_s",
+    "injection_temperatures_k",
+    "points"
+  ],
+  "title": "SourceEnvelope",
+  "type": "object"
+}

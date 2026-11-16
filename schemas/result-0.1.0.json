@@ -1,0 +1,463 @@
+{
+  "$defs": {
+    "Check": {
+      "additionalProperties": false,
+      "description": "One engineering check with its threshold, origin, observed value and margin.",
+      "properties": {
+        "check_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Check Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit",
+          "unit": "see unit"
+        },
+        "margin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Margin",
+          "unit": "see unit"
+        },
+        "observed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observed",
+          "unit": "see unit"
+        },
+        "outcome": {
+          "$ref": "#/$defs/CheckOutcome"
+        },
+        "threshold_origin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threshold Origin"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "check_id",
+        "description",
+        "outcome"
+      ],
+      "title": "Check",
+      "type": "object"
+    },
+    "CheckOutcome": {
+      "enum": [
+        "pass",
+        "fail",
+        "not_evaluated"
+      ],
+      "title": "CheckOutcome",
+      "type": "string"
+    },
+    "EvaluationStatus": {
+      "enum": [
+        "valid",
+        "unresolved_numerical",
+        "invalid_input",
+        "unsupported",
+        "not_evaluated",
+        "cancelled",
+        "tool_failure"
+      ],
+      "title": "EvaluationStatus",
+      "type": "string"
+    },
+    "KpiDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "boundary": {
+          "minLength": 1,
+          "title": "Boundary",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "kpi_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Kpi Id",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "unit": {
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kpi_id",
+        "name",
+        "unit",
+        "boundary"
+      ],
+      "title": "KpiDefinition",
+      "type": "object"
+    },
+    "KpiValue": {
+      "additionalProperties": false,
+      "description": "A KPI is invalid without its boundary, its unit and what it was derived from.",
+      "properties": {
+        "definition": {
+          "$ref": "#/$defs/KpiDefinition"
+        },
+        "derived_from": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Derived From",
+          "type": "array"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value",
+          "unit": "see definition.unit"
+        }
+      },
+      "required": [
+        "definition",
+        "value",
+        "derived_from"
+      ],
+      "title": "KpiValue",
+      "type": "object"
+    },
+    "MissingInput": {
+      "additionalProperties": false,
+      "description": "An input that a calculation needed and that was not established.",
+      "properties": {
+        "field_path": {
+          "title": "Field Path",
+          "type": "string"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owner"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "unknown",
+            "conflict"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field_path",
+        "state",
+        "reason"
+      ],
+      "title": "MissingInput",
+      "type": "object"
+    },
+    "RankingEligibility": {
+      "additionalProperties": false,
+      "properties": {
+        "conditional": {
+          "default": false,
+          "title": "Conditional",
+          "type": "boolean"
+        },
+        "eligible": {
+          "title": "Eligible",
+          "type": "boolean"
+        },
+        "reasons": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "eligible"
+      ],
+      "title": "RankingEligibility",
+      "type": "object"
+    },
+    "SiteEvidenceStatus": {
+      "enum": [
+        "documented",
+        "conditional",
+        "unknown",
+        "conflict"
+      ],
+      "title": "SiteEvidenceStatus",
+      "type": "string"
+    },
+    "StageOutput": {
+      "additionalProperties": false,
+      "description": "The structured output of one pipeline stage.",
+      "properties": {
+        "diagnostics": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Diagnostics",
+          "type": "array"
+        },
+        "missing_inputs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/MissingInput"
+          },
+          "title": "Missing Inputs",
+          "type": "array"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "stage": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Stage",
+          "type": "string"
+        },
+        "stage_version": {
+          "minLength": 1,
+          "title": "Stage Version",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/StageStatus"
+        }
+      },
+      "required": [
+        "stage",
+        "stage_version",
+        "status"
+      ],
+      "title": "StageOutput",
+      "type": "object"
+    },
+    "StageStatus": {
+      "description": "Outcome of one pipeline stage: the adapter states plus two pipeline outcomes.",
+      "enum": [
+        "completed",
+        "invalid_input",
+        "unsupported_model",
+        "non_converged",
+        "physical_limit_exceeded",
+        "cancelled",
+        "tool_failure",
+        "not_established",
+        "not_run"
+      ],
+      "title": "StageStatus",
+      "type": "string"
+    },
+    "TechnicalStatus": {
+      "enum": [
+        "passes_evaluated_cases",
+        "fails_evaluated_case",
+        "not_established"
+      ],
+      "title": "TechnicalStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The outcome of evaluating one subject: a whole study or, later, one candidate.\n\nThe four statuses are stored separately (specification 7.5).",
+  "properties": {
+    "artifact_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Artifact Refs",
+      "type": "array"
+    },
+    "checks": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Check"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "diagnostics": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Diagnostics",
+      "type": "array"
+    },
+    "evaluation_status": {
+      "$ref": "#/$defs/EvaluationStatus"
+    },
+    "kpis": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/KpiValue"
+      },
+      "title": "Kpis",
+      "type": "array"
+    },
+    "ranking_eligibility": {
+      "$ref": "#/$defs/RankingEligibility"
+    },
+    "result_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Result Id",
+      "type": "string"
+    },
+    "run_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "sample_id": {
+      "default": "deterministic",
+      "minLength": 1,
+      "title": "Sample Id",
+      "type": "string"
+    },
+    "scenario_revision": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Scenario Revision",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "site_evidence_status": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SiteEvidenceStatus"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "stage_outputs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/StageOutput"
+      },
+      "title": "Stage Outputs",
+      "type": "array"
+    },
+    "subject": {
+      "minLength": 1,
+      "title": "Subject",
+      "type": "string"
+    },
+    "synthetic": {
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "technical_status": {
+      "$ref": "#/$defs/TechnicalStatus"
+    }
+  },
+  "required": [
+    "result_id",
+    "run_id",
+    "scenario_revision",
+    "subject",
+    "synthetic",
+    "technical_status",
+    "evaluation_status",
+    "ranking_eligibility"
+  ],
+  "title": "Result",
+  "type": "object"
+}

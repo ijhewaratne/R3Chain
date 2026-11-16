@@ -1,0 +1,12 @@
+# Site screening criteria for the synthetic study (used from milestone M3).
+policy_id: screening-synthetic
+kind: screening
+version: "1"
+title: Site screening criteria for the synthetic study
+origin: >-
+  Workshop point W32 mentions a drilling pad of 5000 to 6000 square metres. The lower value is
+  used here as a configurable preliminary criterion for the synthetic study only. Pad needs by
+  drilling and operating phase are open decision O09.
+status: unreviewed
+parameters:
+  min_usable_pad_area_m2: 5000

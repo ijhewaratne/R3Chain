@@ -1,0 +1,434 @@
+# Synthetic study, milestone M1 version.
+#
+# Every value in this file is invented for software development and testing. Nothing here
+# describes Wuppertal, WSW assets or any real site. See definitions.md.
+#
+# Each engineering input states whether it is known (with its provenance), unknown (with the
+# person expected to resolve it) or in conflict.
+
+scenario_id: synthetic-study
+
+study:
+  study_id: synthetic-study
+  project_id: r3chain
+  title: Synthetic four consumer study
+  objective: Exercise every part of the evaluation chain with invented data
+  study_area:
+    crs: "EPSG:25832"
+    geojson:
+      type: Polygon
+      coordinates: [[[500000, 5700000], [506000, 5700000], [506000, 5704000], [500000, 5704000], [500000, 5700000]]]
+  planning_date: 2026-11-15
+  baseline_id: baseline-existing
+  synthetic: true
+
+alternatives:
+  - alternative_id: baseline-existing
+    label: Existing supply without geothermal heat
+  - alternative_id: geothermal-direct
+    label: Geothermal heat through a direct exchanger
+  - alternative_id: geothermal-heat-pump
+    label: Geothermal heat with heat pump assistance
+
+datasets:
+  - dataset_id: syn-definitions
+    version: "2"
+    kind: definitions
+    title: Definitions of the synthetic study
+    source_uri: definitions.md
+    checksum: "sha256:4647771c15a08f63db6f22eea0611c0d99c86fd0311a62334cd7b7e7ce8cb925"
+    owner: R3CHAIN development
+    acquired_at: 2026-11-15T00:00:00Z
+    allowed_use: public
+    access_group: public
+    quality: unreviewed
+    quality_note: Invented values. Not evidence about any real site.
+    synthetic: true
+
+policies:
+  - policy_id: numerical-coupling-default
+    version: "1"
+    policy_hash: "sha256:174962dac027e208995864a3dbe24158f8ba8c87ac1b64748071815de4d91805"
+  - policy_id: screening-synthetic
+    version: "1"
+    policy_hash: "sha256:9a5c6a4409927cc7c109382e4a089371ff6354765c4873854ed398c92f60298c"
+  - policy_id: source-envelope-synthetic
+    version: "1"
+    policy_hash: "sha256:6f93e93761aa3d605d2e41c326c94a576c36f8f4cecc2a0cb3af4a2426faed1b"
+
+# --- sites ------------------------------------------------------------------------------------
+
+sites:
+  - site_id: alpha
+    name: Synthetic site Alpha
+    parcel_geometry:
+      crs: "EPSG:25832"
+      geojson: {type: Polygon, coordinates: [[[500400, 5701000], [500500, 5701000], [500500, 5701080], [500400, 5701080], [500400, 5701000]]]}
+    usable_pad_geometry:
+      state: known
+      value:
+        crs: "EPSG:25832"
+        geojson: {type: Polygon, coordinates: [[[500410, 5701005], [500490, 5701005], [500490, 5701080], [500410, 5701080], [500410, 5701005]]]}
+      provenance: &sites {provenance_type: synthetic, source_id: syn-definitions, locator: "section 2"}
+    usable_pad_area_m2: {state: known, value: 6000, provenance: *sites}
+    elevation: {state: known, value: {value_m: 165, vertical_datum: DHHN2016}, provenance: *sites}
+    access: {state: known, value: "Paved road, 6 m wide", provenance: *sites}
+    land_status: {state: known, value: available, provenance: *sites}
+    constraints:
+      - constraint_id: housing-setback
+        criterion: Setback to housing is satisfied
+        outcome: {state: known, value: satisfied, provenance: *sites}
+
+  - site_id: beta
+    name: Synthetic site Beta
+    parcel_geometry:
+      crs: "EPSG:25832"
+      geojson: {type: Polygon, coordinates: [[[501200, 5700600], [501290, 5700600], [501290, 5700670], [501200, 5700670], [501200, 5700600]]]}
+    usable_pad_geometry:
+      state: known
+      value:
+        crs: "EPSG:25832"
+        geojson: {type: Polygon, coordinates: [[[501205, 5700602], [501285, 5700602], [501285, 5700667], [501205, 5700667], [501205, 5700602]]]}
+      provenance: *sites
+    usable_pad_area_m2: {state: known, value: 5200, provenance: *sites}
+    elevation: {state: known, value: {value_m: 158, vertical_datum: DHHN2016}, provenance: *sites}
+    access: {state: known, value: "Paved road, 5 m wide", provenance: *sites}
+    land_status: {state: known, value: available, provenance: *sites}
+    constraints:
+      - constraint_id: housing-setback
+        criterion: Setback to housing is satisfied
+        outcome: {state: known, value: satisfied, provenance: *sites}
+
+  - site_id: gamma
+    name: Synthetic site Gamma
+    parcel_geometry:
+      crs: "EPSG:25832"
+      geojson: {type: Polygon, coordinates: [[[505000, 5703000], [505100, 5703000], [505100, 5703070], [505000, 5703070], [505000, 5703000]]]}
+    usable_pad_geometry:
+      state: known
+      value:
+        crs: "EPSG:25832"
+        geojson: {type: Polygon, coordinates: [[[505010, 5703000], [505090, 5703000], [505090, 5703070], [505010, 5703070], [505010, 5703000]]]}
+      provenance: *sites
+    usable_pad_area_m2: {state: known, value: 5600, provenance: *sites}
+    elevation: {state: known, value: {value_m: 205, vertical_datum: DHHN2016}, provenance: *sites}
+    access: {state: known, value: "Paved road, 6 m wide", provenance: *sites}
+    land_status: {state: known, value: available, provenance: *sites}
+    constraints:
+      - constraint_id: housing-setback
+        criterion: Setback to housing is satisfied
+        outcome: {state: known, value: satisfied, provenance: *sites}
+
+  - site_id: delta
+    name: Synthetic site Delta
+    parcel_geometry:
+      crs: "EPSG:25832"
+      geojson: {type: Polygon, coordinates: [[[503000, 5700300], [503090, 5700300], [503090, 5700380], [503000, 5700380], [503000, 5700300]]]}
+    usable_pad_geometry:
+      state: unknown
+      reason: Setbacks on this parcel have not been surveyed
+      owner: Site specialist (open decision O09)
+    usable_pad_area_m2:
+      state: unknown
+      reason: Depends on the setback survey
+      owner: Site specialist (open decision O09)
+    elevation: {state: known, value: {value_m: 172, vertical_datum: DHHN2016}, provenance: *sites}
+    access:
+      state: conflict
+      note: Two invented sources disagree about the access road
+      candidates:
+        - {state: known, value: "Gravel track, 3 m wide", provenance: *sites}
+        - state: known
+          value: "Paved road, 5 m wide"
+          provenance: {provenance_type: synthetic, source_id: syn-definitions, locator: "section 2, second statement"}
+    land_status: {state: known, value: restricted, provenance: *sites}
+    constraints:
+      - constraint_id: housing-setback
+        criterion: Setback to housing is satisfied
+        outcome:
+          state: unknown
+          reason: Depends on the setback survey
+          owner: Site specialist (open decision O09)
+
+# --- subsurface -------------------------------------------------------------------------------
+
+well_scenarios:
+  - source_scenario_id: source-alpha
+    site_id: alpha
+    target_id: target-alpha
+    model_family: synthetic-test-model
+    parameter_package_id: syn-definitions
+    well_configuration_id: doublet
+    wells:
+      - well_id: alpha-production
+        role: production
+        surface_site_id: alpha
+        bottom_hole_target_id: target-alpha-production
+        vertical_depth: {state: known, value: {value_m: 3000, kind: vertical}, provenance: &subsurface {provenance_type: synthetic, source_id: syn-definitions, locator: "section 3"}}
+        measured_length: {state: known, value: {value_m: 3250, kind: measured}, provenance: *subsurface}
+        trajectory: &no_trajectory {state: unknown, reason: No well trajectory has been designed, owner: Geothermal specialist}
+      - well_id: alpha-injection
+        role: injection
+        surface_site_id: alpha
+        bottom_hole_target_id: target-alpha-injection
+        vertical_depth: {state: known, value: {value_m: 3000, kind: vertical}, provenance: *subsurface}
+        measured_length: {state: known, value: {value_m: 3400, kind: measured}, provenance: *subsurface}
+        trajectory: *no_trajectory
+    reservoir_parameters:
+      reservoir_temperature_k: {state: known, value: 378.15, provenance: *subsurface}
+      reservoir_thickness_m: {state: known, value: 40, provenance: *subsurface}
+      net_to_gross_fraction: {state: known, value: 0.25, provenance: *subsurface}
+      permeability_m2: {state: known, value: 1.0e-13, provenance: *subsurface}
+      max_mass_flow_kg_s: {state: known, value: 25, provenance: *subsurface}
+      min_injection_temperature_k: {state: known, value: 303.15, provenance: *subsurface}
+      max_drawdown_pa: {state: known, value: 6.0e+6, provenance: *subsurface}
+
+  - source_scenario_id: source-beta
+    site_id: beta
+    target_id: target-beta
+    model_family: synthetic-test-model
+    parameter_package_id: syn-definitions
+    well_configuration_id: doublet
+    wells:
+      - well_id: beta-production
+        role: production
+        surface_site_id: beta
+        bottom_hole_target_id: target-beta-production
+        vertical_depth: {state: known, value: {value_m: 2200, kind: vertical}, provenance: *subsurface}
+        measured_length: {state: known, value: {value_m: 2350, kind: measured}, provenance: *subsurface}
+        trajectory: *no_trajectory
+      - well_id: beta-injection
+        role: injection
+        surface_site_id: beta
+        bottom_hole_target_id: target-beta-injection
+        vertical_depth: {state: known, value: {value_m: 2200, kind: vertical}, provenance: *subsurface}
+        measured_length: {state: known, value: {value_m: 2450, kind: measured}, provenance: *subsurface}
+        trajectory: *no_trajectory
+    reservoir_parameters:
+      reservoir_temperature_k: {state: known, value: 348.15, provenance: *subsurface}
+      reservoir_thickness_m: {state: known, value: 35, provenance: *subsurface}
+      net_to_gross_fraction: {state: known, value: 0.2, provenance: *subsurface}
+      permeability_m2: {state: known, value: 8.0e-14, provenance: *subsurface}
+      max_mass_flow_kg_s: {state: known, value: 25, provenance: *subsurface}
+      min_injection_temperature_k: {state: known, value: 303.15, provenance: *subsurface}
+      max_drawdown_pa: {state: known, value: 6.0e+6, provenance: *subsurface}
+
+  - source_scenario_id: source-gamma
+    site_id: gamma
+    target_id: target-gamma
+    model_family: synthetic-test-model
+    parameter_package_id: syn-definitions
+    well_configuration_id: doublet
+    wells:
+      - well_id: gamma-production
+        role: production
+        surface_site_id: gamma
+        bottom_hole_target_id: target-gamma-production
+        vertical_depth: {state: known, value: {value_m: 3200, kind: vertical}, provenance: *subsurface}
+        measured_length: {state: known, value: {value_m: 3500, kind: measured}, provenance: *subsurface}
+        trajectory: *no_trajectory
+      - well_id: gamma-injection
+        role: injection
+        surface_site_id: gamma
+        bottom_hole_target_id: target-gamma-injection
+        vertical_depth: {state: known, value: {value_m: 3200, kind: vertical}, provenance: *subsurface}
+        measured_length: {state: known, value: {value_m: 3650, kind: measured}, provenance: *subsurface}
+        trajectory: *no_trajectory
+    reservoir_parameters:
+      reservoir_temperature_k: {state: known, value: 383.15, provenance: *subsurface}
+      reservoir_thickness_m: {state: known, value: 45, provenance: *subsurface}
+      net_to_gross_fraction: {state: known, value: 0.3, provenance: *subsurface}
+      permeability_m2: {state: known, value: 1.2e-13, provenance: *subsurface}
+      max_mass_flow_kg_s: {state: known, value: 25, provenance: *subsurface}
+      min_injection_temperature_k: {state: known, value: 303.15, provenance: *subsurface}
+      max_drawdown_pa: {state: known, value: 6.0e+6, provenance: *subsurface}
+
+# --- network ----------------------------------------------------------------------------------
+
+networks:
+  - network_id: syn-network
+    version: "1"
+    dataset_id: syn-definitions
+    heat_carrier: hot_water
+    fluid: {name: water, property_model: incompressible}
+    vertical_datum: DHHN2016
+    nodes:
+      - {node_id: s0, circuit: supply, elevation_m: 160, zone_id: zone-main}
+      - {node_id: s1, circuit: supply, elevation_m: 150, zone_id: zone-main}
+      - {node_id: s2, circuit: supply, elevation_m: 175, zone_id: zone-main}
+      - {node_id: s3, circuit: supply, elevation_m: 195, zone_id: zone-main}
+      - {node_id: s4, circuit: supply, elevation_m: 210, zone_id: zone-main}
+      - {node_id: r0, circuit: return, elevation_m: 160, zone_id: zone-main}
+      - {node_id: r1, circuit: return, elevation_m: 150, zone_id: zone-main}
+      - {node_id: r2, circuit: return, elevation_m: 175, zone_id: zone-main}
+      - {node_id: r3, circuit: return, elevation_m: 195, zone_id: zone-main}
+      - {node_id: r4, circuit: return, elevation_m: 210, zone_id: zone-main}
+    pipes:
+      - {pipe_id: supply-0-1, from_node: s0, to_node: s1, length_m: 400, inner_diameter_m: 0.2, roughness_m: 0.0001, heat_transfer_coefficient_w_m2_k: 0.6}
+      - {pipe_id: supply-1-2, from_node: s1, to_node: s2, length_m: 600, inner_diameter_m: 0.2, roughness_m: 0.0001, heat_transfer_coefficient_w_m2_k: 0.6}
+      - {pipe_id: supply-2-3, from_node: s2, to_node: s3, length_m: 500, inner_diameter_m: 0.15, roughness_m: 0.0001, heat_transfer_coefficient_w_m2_k: 0.6, estimated_fields: [roughness_m]}
+      - {pipe_id: supply-3-4, from_node: s3, to_node: s4, length_m: 450, inner_diameter_m: 0.15, roughness_m: 0.0001, heat_transfer_coefficient_w_m2_k: 0.6}
+      - {pipe_id: return-1-0, from_node: r1, to_node: r0, length_m: 400, inner_diameter_m: 0.2, roughness_m: 0.0001, heat_transfer_coefficient_w_m2_k: 0.6}
+      - {pipe_id: return-2-1, from_node: r2, to_node: r1, length_m: 600, inner_diameter_m: 0.2, roughness_m: 0.0001, heat_transfer_coefficient_w_m2_k: 0.6}
+      - {pipe_id: return-3-2, from_node: r3, to_node: r2, length_m: 500, inner_diameter_m: 0.15, roughness_m: 0.0001, heat_transfer_coefficient_w_m2_k: 0.6, estimated_fields: [roughness_m]}
+      - {pipe_id: return-4-3, from_node: r4, to_node: r3, length_m: 450, inner_diameter_m: 0.15, roughness_m: 0.0001, heat_transfer_coefficient_w_m2_k: 0.6}
+    consumers:
+      - {consumer_id: consumer-1, supply_node: s1, return_node: r1, design_heat_w: 800000}
+      - {consumer_id: consumer-2, supply_node: s2, return_node: r2, design_heat_w: 1200000}
+      - {consumer_id: consumer-3, supply_node: s3, return_node: r3, design_heat_w: 600000}
+      - {consumer_id: consumer-4, supply_node: s4, return_node: r4, design_heat_w: 400000}
+    boundary_conditions:
+      - boundary_id: pressure-reference
+        node_id: r0
+        kind: pressure_reference
+        pressure: {value_pa: 750000, reference: absolute}
+
+connections:
+  - connection_id: conn-west
+    network_id: syn-network
+    zone_id: zone-main
+    supply_node: s0
+    return_node: r0
+    interface_type: separated_exchanger
+    heat_carrier: hot_water
+    limits:
+      max_heat_w: {state: known, value: 4000000, provenance: &network {provenance_type: synthetic, source_id: syn-definitions, locator: "section 4"}}
+      max_mass_flow_kg_s: {state: known, value: 30, provenance: *network}
+      required_supply_temperature_k: {state: known, value: 353.15, provenance: *network}
+      return_temperature_k: {state: known, value: 323.15, provenance: *network}
+      min_pressure: {state: known, value: {value_pa: 200000, reference: absolute}, provenance: *network}
+      max_pressure: {state: known, value: {value_pa: 1600000, reference: absolute}, provenance: *network}
+
+  - connection_id: conn-east
+    network_id: syn-network
+    zone_id: zone-main
+    supply_node: s3
+    return_node: r3
+    interface_type: separated_exchanger
+    heat_carrier: hot_water
+    limits:
+      max_heat_w: {state: known, value: 2500000, provenance: *network}
+      max_mass_flow_kg_s: {state: known, value: 20, provenance: *network}
+      required_supply_temperature_k: {state: known, value: 353.15, provenance: *network}
+      return_temperature_k: {state: known, value: 323.15, provenance: *network}
+      min_pressure: {state: known, value: {value_pa: 200000, reference: absolute}, provenance: *network}
+      max_pressure:
+        state: unknown
+        reason: The pressure rating at this connection has not been supplied
+        owner: Network planner (open decision O07)
+
+routes:
+  - route_id: route-alpha-west
+    from_site_id: alpha
+    to_connection_id: conn-west
+    geometry: {crs: "EPSG:25832", geojson: {type: LineString, coordinates: [[500450, 5701000], [500450, 5700400], [501050, 5700400]]}}
+    corridor_length_m: 1200
+    supply_pipe_length_m: 1200
+    return_pipe_length_m: 1200
+    vertical_datum: DHHN2016
+    elevation_profile:
+      - {chainage_m: 0, elevation_m: 165}
+      - {chainage_m: 1200, elevation_m: 160}
+
+  - route_id: route-beta-west
+    from_site_id: beta
+    to_connection_id: conn-west
+    geometry: {crs: "EPSG:25832", geojson: {type: LineString, coordinates: [[501245, 5700600], [501245, 5700400], [501050, 5700400]]}}
+    corridor_length_m: 395
+    supply_pipe_length_m: 395
+    return_pipe_length_m: 395
+    vertical_datum: DHHN2016
+    elevation_profile:
+      - {chainage_m: 0, elevation_m: 158}
+      - {chainage_m: 395, elevation_m: 160}
+
+  - route_id: route-gamma-east
+    from_site_id: gamma
+    to_connection_id: conn-east
+    geometry: {crs: "EPSG:25832", geojson: {type: LineString, coordinates: [[505050, 5703000], [505050, 5701500], [503550, 5701500]]}}
+    corridor_length_m: 3000
+    supply_pipe_length_m: 3000
+    return_pipe_length_m: 3000
+    vertical_datum: DHHN2016
+    crossings:
+      - {crossing_id: road-crossing-1, kind: road, chainage_m: 1100}
+      - {crossing_id: stream-crossing-1, kind: watercourse, chainage_m: 2300}
+    elevation_profile:
+      - {chainage_m: 0, elevation_m: 205}
+      - {chainage_m: 1500, elevation_m: 188}
+      - {chainage_m: 3000, elevation_m: 195}
+    linked_customer_ids: [potential-customer-1, potential-customer-2]
+
+# --- economics --------------------------------------------------------------------------------
+
+economic_scenarios:
+  - economic_scenario_id: econ-base
+    price_base_year: 2026
+    currency: EUR
+    price_convention: real
+    vat_included: false
+    discount_rate_per_year: {state: known, value: 0.04, provenance: &economics {provenance_type: synthetic, source_id: syn-definitions, locator: "section 5"}}
+    horizon_years: {state: known, value: 20, provenance: *economics}
+    cost_items:
+      - item_id: wells-alpha-capex
+        asset_id: wells-alpha
+        category: capex
+        cost_owner: system
+        location: source
+        included: true
+        amount: {state: known, value: 12000000, provenance: *economics}
+        amount_basis: total
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        lifetime_years: {state: known, value: 30, provenance: *economics}
+      - item_id: exchanger-alpha-capex
+        asset_id: exchanger-alpha
+        category: capex
+        cost_owner: system
+        location: plant
+        included: true
+        amount: {state: known, value: 600000, provenance: *economics}
+        amount_basis: total
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        lifetime_years: {state: known, value: 20, provenance: *economics}
+      - item_id: route-alpha-west-capex
+        asset_id: route-alpha-west
+        category: capex
+        cost_owner: system
+        location: route
+        included: true
+        amount:
+          state: unknown
+          reason: No unit rates for trench and pipe have been defined
+          owner: Economics reviewer (open decision O10)
+        amount_basis: total
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+
+# --- uncertainty ------------------------------------------------------------------------------
+
+uncertainty_models:
+  - uncertainty_model_id: uncertainty-base
+    variables:
+      - variable_id: alpha-reservoir-temperature
+        field_path: "well_scenarios[source-alpha].reservoir_parameters[reservoir_temperature_k]"
+        unit: K
+        kind: scenario_set
+        scenario_values: [368.15, 378.15, 388.15]
+        support: {lower: 358.15, upper: 398.15}
+        evidence: &uncertainty {provenance_type: synthetic, source_id: syn-definitions, locator: "section 6"}
+      - variable_id: discount-rate
+        field_path: "economic_scenarios[econ-base].discount_rate_per_year"
+        unit: "1/a"
+        kind: scenario_set
+        scenario_values: [0.03, 0.04, 0.06]
+        support: {lower: 0.0, upper: 0.1}
+        evidence: *uncertainty
+    success_definition:
+      state: unknown
+      reason: The geological success event has not been defined
+      owner: AP1 to AP3 specialists (open decision O05)

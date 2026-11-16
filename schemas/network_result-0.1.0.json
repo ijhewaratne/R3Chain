@@ -1,0 +1,574 @@
+{
+  "$defs": {
+    "AdapterState": {
+      "description": "Outcome of one engine call (specification 7.4).",
+      "enum": [
+        "completed",
+        "invalid_input",
+        "unsupported_model",
+        "non_converged",
+        "physical_limit_exceeded",
+        "cancelled",
+        "tool_failure"
+      ],
+      "title": "AdapterState",
+      "type": "string"
+    },
+    "CalculationMode": {
+      "enum": [
+        "hydraulic",
+        "thermal"
+      ],
+      "title": "CalculationMode",
+      "type": "string"
+    },
+    "Check": {
+      "additionalProperties": false,
+      "description": "One engineering check with its threshold, origin, observed value and margin.",
+      "properties": {
+        "check_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Check Id",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit",
+          "unit": "see unit"
+        },
+        "margin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Margin",
+          "unit": "see unit"
+        },
+        "observed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observed",
+          "unit": "see unit"
+        },
+        "outcome": {
+          "$ref": "#/$defs/CheckOutcome"
+        },
+        "threshold_origin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threshold Origin"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "check_id",
+        "description",
+        "outcome"
+      ],
+      "title": "Check",
+      "type": "object"
+    },
+    "CheckOutcome": {
+      "enum": [
+        "pass",
+        "fail",
+        "not_evaluated"
+      ],
+      "title": "CheckOutcome",
+      "type": "string"
+    },
+    "ConsumerResult": {
+      "additionalProperties": false,
+      "properties": {
+        "closed": {
+          "title": "Closed",
+          "type": "boolean"
+        },
+        "consumer_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Consumer Id",
+          "type": "string"
+        },
+        "delivered_heat_w": {
+          "minimum": 0.0,
+          "title": "Delivered Heat W",
+          "type": "number"
+        },
+        "differential_pressure_pa": {
+          "title": "Differential Pressure Pa",
+          "type": "number"
+        },
+        "mass_flow_kg_s": {
+          "minimum": 0.0,
+          "title": "Mass Flow Kg S",
+          "type": "number"
+        },
+        "return_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Return Temperature K"
+        },
+        "supply_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Supply Temperature K"
+        }
+      },
+      "required": [
+        "consumer_id",
+        "closed",
+        "delivered_heat_w",
+        "mass_flow_kg_s",
+        "differential_pressure_pa"
+      ],
+      "title": "ConsumerResult",
+      "type": "object"
+    },
+    "EnergyBalance": {
+      "additionalProperties": false,
+      "properties": {
+        "heat_delivered_w": {
+          "title": "Heat Delivered W",
+          "type": "number"
+        },
+        "heat_supplied_w": {
+          "title": "Heat Supplied W",
+          "type": "number"
+        },
+        "pipe_heat_loss_w": {
+          "title": "Pipe Heat Loss W",
+          "type": "number"
+        },
+        "residual_w": {
+          "title": "Residual W",
+          "type": "number"
+        }
+      },
+      "required": [
+        "heat_supplied_w",
+        "heat_delivered_w",
+        "pipe_heat_loss_w",
+        "residual_w"
+      ],
+      "title": "EnergyBalance",
+      "type": "object"
+    },
+    "NodeResult": {
+      "additionalProperties": false,
+      "properties": {
+        "node_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "pressure": {
+          "$ref": "#/$defs/Pressure"
+        },
+        "temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temperature K"
+        }
+      },
+      "required": [
+        "node_id",
+        "pressure"
+      ],
+      "title": "NodeResult",
+      "type": "object"
+    },
+    "PipeResult": {
+      "additionalProperties": false,
+      "description": "Signed quantities are positive in the direction from ``from_node`` to ``to_node``.",
+      "properties": {
+        "friction_pressure_drop_pa": {
+          "title": "Friction Pressure Drop Pa",
+          "type": "number"
+        },
+        "heat_loss_w": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heat Loss W"
+        },
+        "inlet_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Inlet Temperature K"
+        },
+        "mass_flow_kg_s": {
+          "title": "Mass Flow Kg S",
+          "type": "number"
+        },
+        "outlet_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Outlet Temperature K"
+        },
+        "pipe_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Pipe Id",
+          "type": "string"
+        },
+        "pressure_drop_pa": {
+          "title": "Pressure Drop Pa",
+          "type": "number"
+        },
+        "stagnant": {
+          "title": "Stagnant",
+          "type": "boolean"
+        },
+        "velocity_m_s": {
+          "title": "Velocity M S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "pipe_id",
+        "mass_flow_kg_s",
+        "velocity_m_s",
+        "pressure_drop_pa",
+        "friction_pressure_drop_pa",
+        "stagnant"
+      ],
+      "title": "PipeResult",
+      "type": "object"
+    },
+    "Pressure": {
+      "additionalProperties": false,
+      "description": "A pressure together with its reference.",
+      "properties": {
+        "reference": {
+          "$ref": "#/$defs/PressureReference"
+        },
+        "value_pa": {
+          "title": "Value Pa",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value_pa",
+        "reference"
+      ],
+      "title": "Pressure",
+      "type": "object"
+    },
+    "PressureReference": {
+      "enum": [
+        "absolute",
+        "gauge"
+      ],
+      "title": "PressureReference",
+      "type": "string"
+    },
+    "SupplyPointResult": {
+      "additionalProperties": false,
+      "properties": {
+        "heat_supplied_w": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heat Supplied W"
+        },
+        "hydraulic_power_w": {
+          "title": "Hydraulic Power W",
+          "type": "number"
+        },
+        "mass_flow_kg_s": {
+          "title": "Mass Flow Kg S",
+          "type": "number"
+        },
+        "pressure_lift_pa": {
+          "title": "Pressure Lift Pa",
+          "type": "number"
+        },
+        "return_temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Return Temperature K"
+        },
+        "supply_point_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Supply Point Id",
+          "type": "string"
+        },
+        "supply_temperature_k": {
+          "exclusiveMinimum": 0.0,
+          "title": "Supply Temperature K",
+          "type": "number"
+        }
+      },
+      "required": [
+        "supply_point_id",
+        "mass_flow_kg_s",
+        "pressure_lift_pa",
+        "hydraulic_power_w",
+        "supply_temperature_k"
+      ],
+      "title": "SupplyPointResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "active_limits": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Active Limits",
+      "type": "array"
+    },
+    "calculation": {
+      "$ref": "#/$defs/CalculationMode"
+    },
+    "case_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "checks": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Check"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "consumers": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ConsumerResult"
+      },
+      "title": "Consumers",
+      "type": "array"
+    },
+    "energy_balance": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EnergyBalance"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "engine": {
+      "minLength": 1,
+      "title": "Engine",
+      "type": "string"
+    },
+    "engine_version": {
+      "minLength": 1,
+      "title": "Engine Version",
+      "type": "string"
+    },
+    "fluid_model": {
+      "minLength": 1,
+      "title": "Fluid Model",
+      "type": "string"
+    },
+    "input_hash": {
+      "title": "Input Hash",
+      "type": "string"
+    },
+    "mass_balance_residual_kg_s": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mass Balance Residual Kg S"
+    },
+    "network_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Network Id",
+      "type": "string"
+    },
+    "nodes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/NodeResult"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "pipes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PipeResult"
+      },
+      "title": "Pipes",
+      "type": "array"
+    },
+    "pressure_reference": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PressureReference"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reason": {
+      "default": "",
+      "title": "Reason",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/AdapterState"
+    },
+    "supply_points": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SupplyPointResult"
+      },
+      "title": "Supply Points",
+      "type": "array"
+    },
+    "warnings": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "engine",
+    "engine_version",
+    "fluid_model",
+    "network_id",
+    "case_id",
+    "input_hash",
+    "calculation",
+    "state"
+  ],
+  "title": "NetworkResult",
+  "type": "object"
+}

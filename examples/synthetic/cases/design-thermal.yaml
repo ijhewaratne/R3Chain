@@ -1,0 +1,37 @@
+# A steady thermal operating case of the synthetic network. Every value is invented.
+#
+# All four consumers take their design heat and return water at 323.15 K. One ideal supply point
+# at the western connection holds the return side at the network's pressure reference and feeds
+# the supply side at 353.15 K.
+#
+#   r3chain network examples/synthetic/scenario.yaml examples/synthetic/cases/design-thermal.yaml
+
+case_id: design-thermal
+network_id: syn-network
+calculation: thermal
+ground_temperature_k: 283.15
+
+loads:
+  - {consumer_id: consumer-1, heat_w: 800000, return_temperature_k: 323.15}
+  - {consumer_id: consumer-2, heat_w: 1200000, return_temperature_k: 323.15}
+  - {consumer_id: consumer-3, heat_w: 600000, return_temperature_k: 323.15}
+  - {consumer_id: consumer-4, heat_w: 400000, return_temperature_k: 323.15}
+
+supply_points:
+  - supply_point_id: west
+    supply_node: s0
+    return_node: r0
+    supply_temperature_k: 353.15
+    return_pressure: {value_pa: 750000, reference: absolute}
+    pressure_lift_pa: 150000
+
+# Illustrative limits for the synthetic study. Real limits are open decisions O07 and O11.
+min_node_pressure: {value_pa: 200000, reference: absolute}
+max_node_pressure: {value_pa: 1600000, reference: absolute}
+pressure_limit_origin: Invented limits of the synthetic study, connection conn-west
+
+numerical:
+  max_iterations_count: 30
+  pipe_sections_count: 5
+  friction_model: swamee_jain
+  zero_flow_tolerance_kg_s: 0.000001

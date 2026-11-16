@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "r3chain"
+version = "0.1.0"
+description = "R3CHAIN geothermal planning system: coupled site, source, network and economic evaluation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "pydantic>=2.8,<3",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+# The network engine. The adapter in r3chain.adapters.pandapipes_network is written against
+# exactly this release. Change the pin only together with the adapter and its tests.
+network = [
+  "pandapipes==0.17.0",
+]
+dev = [
+  "pandapipes==0.17.0",
+  "pytest>=8.0",
+  "hypothesis>=6.100",
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "types-PyYAML",
+]
+
+[project.scripts]
+r3chain = "r3chain.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/r3chain"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+  "requirement(id): links a test to an entry in requirements/register.yaml",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["src/r3chain"]
+
+[[tool.mypy.overrides]]
+module = ["pandapipes", "pandapipes.*"]
+ignore_missing_imports = true
+follow_imports = "skip"

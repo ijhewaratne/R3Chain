@@ -1,0 +1,19 @@
+# Operating grid and numerical settings for source performance envelopes (milestone M1).
+policy_id: source-envelope-synthetic
+kind: source
+version: "1"
+title: Operating grid for source envelopes in the synthetic study
+origin: >-
+  Invented for the synthetic study and the synthetic test model. Not derived from any real well.
+  The grid for a real source must come from the reviewed operating range of its model
+  (open decisions O03 and O04).
+status: unreviewed
+parameters:
+  min_mass_flow_kg_s: 2
+  max_mass_flow_kg_s: 20
+  mass_flow_points_count: 10
+  min_injection_temperature_k: 303.15
+  max_injection_temperature_k: 333.15
+  injection_temperature_points_count: 4
+  max_iterations_count: 50
+  temperature_tolerance_delta_k: 0.000001

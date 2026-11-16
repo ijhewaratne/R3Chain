@@ -1,0 +1,452 @@
+{
+  "$defs": {
+    "BoundaryCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "boundary_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Boundary Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/BoundaryKind"
+        },
+        "node_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "pressure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pressure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "temperature_k": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temperature K"
+        }
+      },
+      "required": [
+        "boundary_id",
+        "node_id",
+        "kind"
+      ],
+      "title": "BoundaryCondition",
+      "type": "object"
+    },
+    "BoundaryKind": {
+      "enum": [
+        "pressure_reference",
+        "fixed_supply_temperature"
+      ],
+      "title": "BoundaryKind",
+      "type": "string"
+    },
+    "Circuit": {
+      "enum": [
+        "supply",
+        "return"
+      ],
+      "title": "Circuit",
+      "type": "string"
+    },
+    "Consumer": {
+      "additionalProperties": false,
+      "properties": {
+        "consumer_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Consumer Id",
+          "type": "string"
+        },
+        "design_heat_w": {
+          "exclusiveMinimum": 0.0,
+          "title": "Design Heat W",
+          "type": "number"
+        },
+        "return_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Return Node",
+          "type": "string"
+        },
+        "supply_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Supply Node",
+          "type": "string"
+        }
+      },
+      "required": [
+        "consumer_id",
+        "supply_node",
+        "return_node",
+        "design_heat_w"
+      ],
+      "title": "Consumer",
+      "type": "object"
+    },
+    "Control": {
+      "additionalProperties": false,
+      "properties": {
+        "control_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Control Id",
+          "type": "string"
+        },
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Parameters",
+          "type": "object"
+        },
+        "target_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Target Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "control_id",
+        "kind",
+        "target_id"
+      ],
+      "title": "Control",
+      "type": "object"
+    },
+    "Equipment": {
+      "additionalProperties": false,
+      "properties": {
+        "equipment_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Equipment Id",
+          "type": "string"
+        },
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        },
+        "node_ids": {
+          "items": {
+            "maxLength": 120,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+            "type": "string"
+          },
+          "title": "Node Ids",
+          "type": "array"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Parameters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "equipment_id",
+        "kind",
+        "node_ids"
+      ],
+      "title": "Equipment",
+      "type": "object"
+    },
+    "Fluid": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "property_model": {
+          "minLength": 1,
+          "title": "Property Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "property_model"
+      ],
+      "title": "Fluid",
+      "type": "object"
+    },
+    "HeatCarrier": {
+      "enum": [
+        "hot_water",
+        "steam"
+      ],
+      "title": "HeatCarrier",
+      "type": "string"
+    },
+    "NetworkNode": {
+      "additionalProperties": false,
+      "properties": {
+        "circuit": {
+          "$ref": "#/$defs/Circuit"
+        },
+        "elevation_m": {
+          "title": "Elevation M",
+          "type": "number"
+        },
+        "node_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "original_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Original Id"
+        },
+        "zone_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Zone Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node_id",
+        "circuit",
+        "elevation_m",
+        "zone_id"
+      ],
+      "title": "NetworkNode",
+      "type": "object"
+    },
+    "NetworkPipe": {
+      "additionalProperties": false,
+      "properties": {
+        "estimated_fields": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Estimated Fields",
+          "type": "array"
+        },
+        "from_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "From Node",
+          "type": "string"
+        },
+        "heat_transfer_coefficient_w_m2_k": {
+          "minimum": 0.0,
+          "title": "Heat Transfer Coefficient W M2 K",
+          "type": "number"
+        },
+        "inner_diameter_m": {
+          "exclusiveMinimum": 0.0,
+          "title": "Inner Diameter M",
+          "type": "number"
+        },
+        "length_m": {
+          "exclusiveMinimum": 0.0,
+          "title": "Length M",
+          "type": "number"
+        },
+        "original_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Original Id"
+        },
+        "pipe_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Pipe Id",
+          "type": "string"
+        },
+        "roughness_m": {
+          "minimum": 0.0,
+          "title": "Roughness M",
+          "type": "number"
+        },
+        "to_node": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "To Node",
+          "type": "string"
+        }
+      },
+      "required": [
+        "pipe_id",
+        "from_node",
+        "to_node",
+        "length_m",
+        "inner_diameter_m",
+        "roughness_m",
+        "heat_transfer_coefficient_w_m2_k"
+      ],
+      "title": "NetworkPipe",
+      "type": "object"
+    },
+    "Pressure": {
+      "additionalProperties": false,
+      "description": "A pressure together with its reference.",
+      "properties": {
+        "reference": {
+          "$ref": "#/$defs/PressureReference"
+        },
+        "value_pa": {
+          "title": "Value Pa",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value_pa",
+        "reference"
+      ],
+      "title": "Pressure",
+      "type": "object"
+    },
+    "PressureReference": {
+      "enum": [
+        "absolute",
+        "gauge"
+      ],
+      "title": "PressureReference",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A district heating network with separate supply and return circuits.",
+  "properties": {
+    "boundary_conditions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/BoundaryCondition"
+      },
+      "title": "Boundary Conditions",
+      "type": "array"
+    },
+    "consumers": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Consumer"
+      },
+      "title": "Consumers",
+      "type": "array"
+    },
+    "controls": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Control"
+      },
+      "title": "Controls",
+      "type": "array"
+    },
+    "dataset_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "equipment": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Equipment"
+      },
+      "title": "Equipment",
+      "type": "array"
+    },
+    "fluid": {
+      "$ref": "#/$defs/Fluid"
+    },
+    "heat_carrier": {
+      "$ref": "#/$defs/HeatCarrier"
+    },
+    "network_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Network Id",
+      "type": "string"
+    },
+    "nodes": {
+      "items": {
+        "$ref": "#/$defs/NetworkNode"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "pipes": {
+      "items": {
+        "$ref": "#/$defs/NetworkPipe"
+      },
+      "title": "Pipes",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    },
+    "vertical_datum": {
+      "minLength": 1,
+      "title": "Vertical Datum",
+      "type": "string"
+    }
+  },
+  "required": [
+    "network_id",
+    "version",
+    "dataset_id",
+    "heat_carrier",
+    "fluid",
+    "vertical_datum",
+    "nodes",
+    "pipes"
+  ],
+  "title": "Network",
+  "type": "object"
+}

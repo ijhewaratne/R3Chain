@@ -1,0 +1,183 @@
+{
+  "$defs": {
+    "AllowedUse": {
+      "enum": [
+        "public",
+        "project_internal",
+        "restricted"
+      ],
+      "title": "AllowedUse",
+      "type": "string"
+    },
+    "DatasetKind": {
+      "enum": [
+        "gis",
+        "timeseries",
+        "measurement",
+        "document",
+        "parameter_package",
+        "definitions"
+      ],
+      "title": "DatasetKind",
+      "type": "string"
+    },
+    "Geometry": {
+      "additionalProperties": false,
+      "description": "A GeoJSON geometry with its coordinate reference system, for example ``EPSG:25832``.",
+      "properties": {
+        "crs": {
+          "pattern": "^[A-Za-z]+:\\d+$",
+          "title": "Crs",
+          "type": "string"
+        },
+        "geojson": {
+          "additionalProperties": true,
+          "title": "Geojson",
+          "type": "object"
+        }
+      },
+      "required": [
+        "crs",
+        "geojson"
+      ],
+      "title": "Geometry",
+      "type": "object"
+    },
+    "QualityStatus": {
+      "enum": [
+        "reviewed",
+        "unreviewed",
+        "known_issues"
+      ],
+      "title": "QualityStatus",
+      "type": "string"
+    },
+    "TimeExtent": {
+      "additionalProperties": false,
+      "properties": {
+        "end_utc": {
+          "format": "date-time",
+          "title": "End Utc",
+          "type": "string"
+        },
+        "start_utc": {
+          "format": "date-time",
+          "title": "Start Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_utc",
+        "end_utc"
+      ],
+      "title": "TimeExtent",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One immutable version of a source file or package, identified by its checksum.",
+  "properties": {
+    "access_group": {
+      "minLength": 1,
+      "title": "Access Group",
+      "type": "string"
+    },
+    "acquired_at": {
+      "format": "date-time",
+      "title": "Acquired At",
+      "type": "string"
+    },
+    "allowed_use": {
+      "$ref": "#/$defs/AllowedUse"
+    },
+    "checksum": {
+      "title": "Checksum",
+      "type": "string"
+    },
+    "dataset_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/DatasetKind"
+    },
+    "owner": {
+      "minLength": 1,
+      "title": "Owner",
+      "type": "string"
+    },
+    "quality": {
+      "$ref": "#/$defs/QualityStatus"
+    },
+    "quality_note": {
+      "default": "",
+      "title": "Quality Note",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_uri": {
+      "minLength": 1,
+      "title": "Source Uri",
+      "type": "string"
+    },
+    "spatial_extent": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Geometry"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "synthetic": {
+      "default": false,
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "time_extent": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TimeExtent"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "dataset_id",
+    "version",
+    "kind",
+    "title",
+    "source_uri",
+    "checksum",
+    "owner",
+    "acquired_at",
+    "allowed_use",
+    "access_group",
+    "quality"
+  ],
+  "title": "Dataset",
+  "type": "object"
+}

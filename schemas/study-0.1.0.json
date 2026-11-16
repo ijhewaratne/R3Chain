@@ -1,0 +1,88 @@
+{
+  "$defs": {
+    "Geometry": {
+      "additionalProperties": false,
+      "description": "A GeoJSON geometry with its coordinate reference system, for example ``EPSG:25832``.",
+      "properties": {
+        "crs": {
+          "pattern": "^[A-Za-z]+:\\d+$",
+          "title": "Crs",
+          "type": "string"
+        },
+        "geojson": {
+          "additionalProperties": true,
+          "title": "Geojson",
+          "type": "object"
+        }
+      },
+      "required": [
+        "crs",
+        "geojson"
+      ],
+      "title": "Geometry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A declared study inside a project. All candidates and documents belong to one.",
+  "properties": {
+    "baseline_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Baseline Id",
+      "type": "string"
+    },
+    "objective": {
+      "minLength": 1,
+      "title": "Objective",
+      "type": "string"
+    },
+    "planning_date": {
+      "format": "date",
+      "title": "Planning Date",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "study_area": {
+      "$ref": "#/$defs/Geometry"
+    },
+    "study_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Study Id",
+      "type": "string"
+    },
+    "synthetic": {
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "study_id",
+    "project_id",
+    "title",
+    "objective",
+    "study_area",
+    "planning_date",
+    "baseline_id",
+    "synthetic"
+  ],
+  "title": "Study",
+  "type": "object"
+}

@@ -1,0 +1,199 @@
+{
+  "$defs": {
+    "RunStatus": {
+      "enum": [
+        "running",
+        "completed",
+        "cancelled",
+        "failed"
+      ],
+      "title": "RunStatus",
+      "type": "string"
+    },
+    "StageRecord": {
+      "additionalProperties": false,
+      "description": "How one stage was executed in one run: computed, or validly reused from a cache.",
+      "properties": {
+        "cache_hit": {
+          "title": "Cache Hit",
+          "type": "boolean"
+        },
+        "cache_key": {
+          "title": "Cache Key",
+          "type": "string"
+        },
+        "duration_s": {
+          "minimum": 0.0,
+          "title": "Duration S",
+          "type": "number"
+        },
+        "output_hash": {
+          "title": "Output Hash",
+          "type": "string"
+        },
+        "reused_from_run_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reused From Run Id"
+        },
+        "stage": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Stage",
+          "type": "string"
+        },
+        "stage_version": {
+          "minLength": 1,
+          "title": "Stage Version",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/StageStatus"
+        }
+      },
+      "required": [
+        "stage",
+        "stage_version",
+        "status",
+        "cache_key",
+        "cache_hit",
+        "output_hash",
+        "duration_s"
+      ],
+      "title": "StageRecord",
+      "type": "object"
+    },
+    "StageStatus": {
+      "description": "Outcome of one pipeline stage: the adapter states plus two pipeline outcomes.",
+      "enum": [
+        "completed",
+        "invalid_input",
+        "unsupported_model",
+        "non_converged",
+        "physical_limit_exceeded",
+        "cancelled",
+        "tool_failure",
+        "not_established",
+        "not_run"
+      ],
+      "title": "StageStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "code_version": {
+      "minLength": 1,
+      "title": "Code Version",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "engine_versions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Engine Versions",
+      "type": "object"
+    },
+    "finished_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Finished At"
+    },
+    "input_hashes": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Input Hashes",
+      "type": "object"
+    },
+    "parent_run_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 120,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+        "type": "string"
+      },
+      "title": "Parent Run Ids",
+      "type": "array"
+    },
+    "result_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Result Hash"
+    },
+    "run_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "scenario_revision": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Scenario Revision",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "seed": {
+      "title": "Seed",
+      "type": "integer"
+    },
+    "stages": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/StageRecord"
+      },
+      "title": "Stages",
+      "type": "array"
+    },
+    "status": {
+      "$ref": "#/$defs/RunStatus"
+    }
+  },
+  "required": [
+    "run_id",
+    "scenario_revision",
+    "input_hashes",
+    "code_version",
+    "engine_versions",
+    "seed",
+    "status",
+    "created_at"
+  ],
+  "title": "Run",
+  "type": "object"
+}

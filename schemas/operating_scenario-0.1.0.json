@@ -1,0 +1,140 @@
+{
+  "$defs": {
+    "SeriesRef": {
+      "additionalProperties": false,
+      "description": "A time series inside a registered dataset.",
+      "properties": {
+        "dataset_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "series_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Series Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "series_id",
+        "dataset_id"
+      ],
+      "title": "SeriesRef",
+      "type": "object"
+    },
+    "SourceAvailability": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {
+          "$ref": "#/$defs/SeriesRef"
+        },
+        "source_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "availability"
+      ],
+      "title": "SourceAvailability",
+      "type": "object"
+    },
+    "TimeBasis": {
+      "additionalProperties": false,
+      "properties": {
+        "end_utc": {
+          "format": "date-time",
+          "title": "End Utc",
+          "type": "string"
+        },
+        "interval_s": {
+          "exclusiveMinimum": 0.0,
+          "title": "Interval S",
+          "type": "number"
+        },
+        "presentation_timezone": {
+          "default": "Europe/Berlin",
+          "title": "Presentation Timezone",
+          "type": "string"
+        },
+        "start_utc": {
+          "format": "date-time",
+          "title": "Start Utc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_utc",
+        "end_utc",
+        "interval_s"
+      ],
+      "title": "TimeBasis",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Demand, source availability, temperature requirements, tariffs and dispatch policy.\n\nDemand, tariffs and availability must cover the same intervals. That is checked against the\nactual series by ``validate_scenario``.",
+  "properties": {
+    "demand": {
+      "$ref": "#/$defs/SeriesRef"
+    },
+    "dispatch_policy_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Dispatch Policy Id",
+      "type": "string"
+    },
+    "operating_scenario_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Operating Scenario Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_availability": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SourceAvailability"
+      },
+      "title": "Source Availability",
+      "type": "array"
+    },
+    "tariffs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SeriesRef"
+      },
+      "title": "Tariffs",
+      "type": "array"
+    },
+    "temperature_curves": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SeriesRef"
+      },
+      "title": "Temperature Curves",
+      "type": "array"
+    },
+    "time_basis": {
+      "$ref": "#/$defs/TimeBasis"
+    }
+  },
+  "required": [
+    "operating_scenario_id",
+    "demand",
+    "dispatch_policy_id",
+    "time_basis"
+  ],
+  "title": "OperatingScenario",
+  "type": "object"
+}

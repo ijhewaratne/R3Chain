@@ -1,0 +1,158 @@
+{
+  "$defs": {
+    "AssumptionStatus": {
+      "enum": [
+        "active",
+        "unknown",
+        "conflict"
+      ],
+      "title": "AssumptionStatus",
+      "type": "string"
+    },
+    "ProvenanceType": {
+      "enum": [
+        "measured",
+        "imported",
+        "guideline",
+        "user_supplied",
+        "estimated",
+        "inferred",
+        "synthetic"
+      ],
+      "title": "ProvenanceType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One row of the assumption register.\n\nThe register is derived from the evidence stored on the scenario fields. It is a view of the\nscenario, so a value and its provenance cannot drift apart.",
+  "properties": {
+    "assumption_id": {
+      "title": "Assumption Id",
+      "type": "string"
+    },
+    "author": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Author"
+    },
+    "field_path": {
+      "title": "Field Path",
+      "type": "string"
+    },
+    "locator": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Locator"
+    },
+    "method": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Method"
+    },
+    "note": {
+      "default": "",
+      "title": "Note",
+      "type": "string"
+    },
+    "owner": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Owner"
+    },
+    "provenance_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProvenanceType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reviewer": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reviewer"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Id"
+    },
+    "status": {
+      "$ref": "#/$defs/AssumptionStatus"
+    },
+    "unit": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Unit"
+    },
+    "value": {
+      "default": null,
+      "title": "Value"
+    }
+  },
+  "required": [
+    "assumption_id",
+    "field_path",
+    "status"
+  ],
+  "title": "Assumption",
+  "type": "object"
+}
