@@ -4,20 +4,20 @@ A placeholder declares the inputs its future calculation depends on and always e
 ``not_established``. It never produces a number. Each milestone replaces placeholders with real
 calculations.
 
-    site_evidence   real          how well each site is documented             milestone M0
-    source          real          source performance envelope per well concept milestone M1
-    screen          real          site screening against the screening policy  milestone M3
-    routes          real          route alternatives per site and connection   milestone M3
-    candidates      real          candidate enumeration and rejection table    milestone M3
-    couple          real          coupled operating point of every candidate   milestones M2, M3
-    assess          real          statuses, KPIs and the provisional ranking   milestone M3
-    operate         placeholder   dispatch and annual operation                milestone M4
-    cost            placeholder   cost ledger and discounted cost              milestone M4
-    compare         placeholder   uncertainty, eligibility, ranking            milestone M5
+    site_evidence   real   how well each site is documented             milestone M0
+    source          real   source performance envelope per well concept milestone M1
+    screen          real   site screening against the screening policy  milestone M3
+    routes          real   route alternatives per site and connection   milestone M3
+    candidates      real   candidate enumeration and rejection table    milestone M3
+    couple          real   coupled operating point of every candidate   milestones M2, M3
+    assess          real   statuses, KPIs and the provisional ranking   milestone M3
+    operate         real   dispatch and annual operation                milestone M4
+    cost            real   cost ledger and discounted cost              milestone M4
+    compare         real   uncertainty, resilience and decision rules   milestone M5
 
-The stages of milestone M3 live in ``r3chain.pipeline.evaluation``. The coupling cases that a
-scenario writes out are reference cases for ``r3chain couple``. The pipeline couples the
-candidates.
+The stages of milestone M3 live in ``r3chain.pipeline.evaluation``, and those of M4 in
+``r3chain.pipeline.operation_cost``. The coupling cases that a scenario writes out are
+reference cases for ``r3chain couple``. The pipeline couples the candidates.
 """
 
 from __future__ import annotations
@@ -43,7 +43,9 @@ from r3chain.pipeline.evaluation import (
     ScreeningStage,
     single_policy,
 )
+from r3chain.pipeline.operation_cost import CostStage, OperateStage
 from r3chain.pipeline.runner import Stage, StageContext
+from r3chain.pipeline.uncertainty_compare import CompareStage
 from r3chain.ports.network import NetworkModel
 from r3chain.ports.source import (
     SourceModel,
@@ -311,22 +313,7 @@ def default_stages(
         CandidateStage(),
         CouplingStage(models, network),
         AssessStage(),
-        PlaceholderStage(
-            "operate",
-            ("couple",),
-            "M4",
-            lambda scenario: (("operating_scenarios", scenario.operating_scenarios),),
-        ),
-        PlaceholderStage(
-            "cost",
-            ("operate",),
-            "M4",
-            lambda scenario: (("economic_scenarios", scenario.economic_scenarios),),
-        ),
-        PlaceholderStage(
-            "compare",
-            ("cost",),
-            "M5",
-            lambda scenario: (("uncertainty_models", scenario.uncertainty_models),),
-        ),
+        OperateStage(),
+        CostStage(),
+        CompareStage(models, network),
     )

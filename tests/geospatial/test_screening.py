@@ -160,6 +160,51 @@ def test_policy_values_change_the_outcome_without_code(
     assert alpha.criterion("geological_target").outcome is CriterionOutcome.FAIL
     assert alpha.targets[0].reason == "the target lies 240 m from the pad"
 
+    # A restriction further than restriction_search_distance_m whose setback still reaches the
+    # parcel is included (effective search radius is max(search_distance, max_setback)).
+    from r3chain.domain.records.spatial import Feature
+
+    far_housing = scenario.model_copy(
+        update={
+            "spatial_layers": tuple(
+                layer.model_copy(
+                    update={
+                        "features": (
+                            *layer.features,
+                            Feature.model_validate(
+                                {
+                                    "feature_id": "R-far",
+                                    "geometry": {
+                                        "type": "Polygon",
+                                        "coordinates": [
+                                            [
+                                                [500000.0, 5701250.0],
+                                                [500200.0, 5701250.0],
+                                                [500200.0, 5701260.0],
+                                                [500000.0, 5701260.0],
+                                                [500000.0, 5701250.0],
+                                            ]
+                                        ],
+                                    },
+                                    "properties": {"restriction_kind": "housing"},
+                                }
+                            ),
+                        )
+                    }
+                )
+                if layer.layer_id == "restrictions"
+                else layer
+                for layer in scenario.spatial_layers
+            )
+        }
+    )
+    tight_search = policy_variant(
+        POLICY, restriction_search_distance_m=100.0, setback_housing_m=300.0
+    )
+    alpha_far = screen(far_housing, "alpha", tight_search)
+    assert alpha_far.criterion("usable_pad_area").outcome is CriterionOutcome.FAIL
+    assert (alpha_far.usable_pad_area_m2 or 0.0) < 5000.0
+
 
 @pytest.mark.requirement("W32")
 def test_a_policy_without_a_needed_value_is_refused() -> None:

@@ -927,7 +927,8 @@ def solve_coupled(
             threshold_origin=problem.settings_origin,
         )
     )
-    checks.extend(_connection_checks(problem, network, demand_heat, supply.mass_flow_kg_s))
+    connection_heat = demand_heat - (transmission_loss or 0.0)
+    checks.extend(_connection_checks(problem, network, connection_heat, supply.mass_flow_kg_s))
     electricity = point.compressor_electricity_w + pump_electricity
     if "max_electrical_import_w" in spec.parameters:
         checks.append(

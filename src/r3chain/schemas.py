@@ -14,8 +14,10 @@ from r3chain.coupling.envelope import SourceEnvelope
 from r3chain.coupling.loop import CouplingResult
 from r3chain.domain.base import VersionedRecord
 from r3chain.domain.records import VERSIONED_RECORDS as DOMAIN_RECORDS
+from r3chain.explain.records import ExplanationRecord
 from r3chain.geospatial.importers import LayerMapping
 from r3chain.ports import CONTRACT_RECORDS
+from r3chain.services.contracts import JobRecord, ToolResult
 
 DEFAULT_SCHEMA_DIRECTORY = Path("schemas")
 
@@ -26,6 +28,9 @@ VERSIONED_RECORDS: tuple[type[VersionedRecord], ...] = (
     SourceEnvelope,
     CouplingResult,
     LayerMapping,
+    ExplanationRecord,
+    JobRecord,
+    ToolResult,
 )
 
 

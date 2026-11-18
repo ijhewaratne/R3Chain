@@ -1,0 +1,24 @@
+# Economic accounting policy and route CAPEX unit rates for the synthetic study (milestone M4).
+policy_id: economic-synthetic
+kind: economic
+version: "1"
+title: Economic accounting and route cost policy for the synthetic study
+origin: >-
+  Specification section 13 and open decision O10. Unit rates, asset lives, fixed OPEX share and
+  residual value treatment are invented for the synthetic study and are not WSW project
+  estimates.
+status: unreviewed
+parameters:
+  residual_value_method: linear_remaining_life
+  evaluate_funded_case: true
+  route_lifetime_years: 40
+  route_fixed_opex_fraction: 0.005
+  link_corridor_kind: field_path
+  trench_cost_street_currency_per_m: 900
+  trench_cost_field_path_currency_per_m: 350
+  route_pipe_cost_currency_per_m: 250
+  crossing_cost_watercourse_currency: 150000
+  crossing_cost_railway_currency: 400000
+  crossing_cost_road_currency: 50000
+  additional_customer_connection_currency: 25000
+  additional_customer_pipe_cost_currency_per_m: 200

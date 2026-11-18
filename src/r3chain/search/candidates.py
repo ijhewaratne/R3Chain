@@ -30,10 +30,10 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from r3chain.domain import policies
-from r3chain.domain.base import Identifier, NonEmptyStr, Real, Record
+from r3chain.domain.base import Identifier, NonEmptyStr, NonNegativeReal, Real, Record
 from r3chain.domain.evidence import Known, Provenance, ProvenanceType, Unknown
 from r3chain.domain.hashing import content_hash, short_hash
 from r3chain.domain.records.network import Connection, Route
@@ -71,6 +71,8 @@ class Candidate(Record):
     customer_ids: tuple[Identifier, ...] = ()
     operating_case_ids: tuple[Identifier, ...]
     coupling_case_ids: tuple[Identifier, ...]
+    capacity_case_ids: tuple[Identifier, ...] = ()
+    capacity_coupling_case_ids: tuple[Identifier, ...] = ()
     screening_status: ScreeningStatus
     route_rank: int
     route_bases: tuple[str, ...]
@@ -87,6 +89,16 @@ class RejectedOption(Record):
     details: tuple[str, ...] = ()
 
 
+class CapacityCaseOutcome(Record):
+    """Summary of one capacity-only coupling case (does not affect technical eligibility)."""
+
+    coupling_case_id: Identifier
+    operating_case_id: Identifier
+    outcome: Literal["limit_found", "demand_covered", "not_established"]
+    delivered_heat_w: NonNegativeReal | None = None
+    reason: str = ""
+
+
 class CandidateAssessment(Record):
     candidate_id: Identifier
     label: NonEmptyStr
@@ -98,6 +110,7 @@ class CandidateAssessment(Record):
     rank: int | None = None
     # State of the coupling in each operating case.
     case_states: dict[str, str]
+    capacity_cases: tuple[CapacityCaseOutcome, ...] = ()
     limiting_conditions: tuple[str, ...] = ()
     # Why the candidate failed, could not be evaluated or cannot be ranked.
     explanation: tuple[str, ...] = ()
@@ -133,11 +146,18 @@ class CandidateSettings:
     roughness_m: float
     heat_transfer_coefficient_w_m2_k: float
     origin: str
+    capacity_case_ids: tuple[str, ...] = ()
 
     @classmethod
     def from_policy(cls, policy: Policy) -> CandidateSettings:
+        capacity = (
+            policies.names(policy, "capacity_case_ids")
+            if "capacity_case_ids" in policy.parameters
+            else ()
+        )
         return cls(
             operating_case_ids=policies.names(policy, "operating_case_ids"),
+            capacity_case_ids=capacity,
             include_conditional_sites=policies.flag(policy, "include_conditional_sites"),
             network_pressure_lift_pa=policies.number(policy, "network_pressure_lift_pa"),
             max_velocity_m_s=policies.number(policy, "transmission_max_velocity_m_s"),
@@ -246,11 +266,21 @@ def enumerate_candidates(
     routes: dict[str, Route] = {}
     by_pair = {(pair.site_id, pair.connection_id): pair for pair in pairs}
     known_cases = {item.operating_case_id for item in scenario.operating_cases}
-    absent = [name for name in settings.operating_case_ids if name not in known_cases]
+    absent = [
+        name
+        for name in (*settings.operating_case_ids, *settings.capacity_case_ids)
+        if name not in known_cases
+    ]
     if absent:
         raise policies.PolicyError(
             f"{settings.origin} names operating cases that are not in the scenario: "
             + ", ".join(absent)
+        )
+    overlap = [name for name in settings.capacity_case_ids if name in settings.operating_case_ids]
+    if overlap:
+        raise policies.PolicyError(
+            f"{settings.origin} names cases in both operating and capacity lists: "
+            + ", ".join(overlap)
         )
     designs = {
         connection.connection_id: transmission_design(connection, settings)
@@ -356,6 +386,24 @@ def enumerate_candidates(
                                     transmission=designs[connection.connection_id],
                                 )
                             )
+                        cap_case_ids: list[str] = []
+                        for capacity_case_id in settings.capacity_case_ids:
+                            case_id = f"{identifier}-{capacity_case_id}"
+                            cap_case_ids.append(case_id)
+                            cases.append(
+                                CouplingCase(
+                                    coupling_case_id=case_id,
+                                    description=f"{label}, {capacity_case_id} (capacity)",
+                                    source_scenario_id=concept.source_scenario_id,
+                                    plant_id=plant.plant_id,
+                                    connection_id=connection.connection_id,
+                                    route_id=route.route_id,
+                                    operating_case_id=capacity_case_id,
+                                    flow_control=FlowControl.FOLLOW_DEMAND,
+                                    network_pressure_lift_pa=lift,
+                                    transmission=designs[connection.connection_id],
+                                )
+                            )
                         candidates.append(
                             Candidate(
                                 candidate_id=identifier,
@@ -370,6 +418,8 @@ def enumerate_candidates(
                                 arrangement=plant.arrangement,
                                 operating_case_ids=settings.operating_case_ids,
                                 coupling_case_ids=tuple(case_ids),
+                                capacity_case_ids=settings.capacity_case_ids,
+                                capacity_coupling_case_ids=tuple(cap_case_ids),
                                 screening_status=screening.status,
                                 route_rank=generated.rank,
                                 route_bases=generated.bases,
@@ -429,6 +479,42 @@ def _operating_kpis(
     return found
 
 
+def _capacity_case_outcome(
+    case_id: str, operating_case_id: str, summary: Mapping[str, Any]
+) -> CapacityCaseOutcome:
+    state = str(summary.get("state", "not_run"))
+    point = summary.get("operating_point")
+    limits = tuple(str(item) for item in summary.get("limiting_conditions", ()))
+    if state not in {"completed", "physical_limit_exceeded"} or point is None:
+        base_reason = str(summary.get("reason") or state)
+        reason = (
+            f"{', '.join(limits)}: {base_reason}"
+            if limits and base_reason
+            else (", ".join(limits) or base_reason)
+        )
+        return CapacityCaseOutcome(
+            coupling_case_id=case_id,
+            operating_case_id=operating_case_id,
+            outcome="not_established",
+            delivered_heat_w=None,
+            reason=reason,
+        )
+    causes = tuple(str(item) for item in summary.get("shortfall_causes", ()))
+    deficit_w = float(point.get("deficit_heat_w") or 0.0)
+    plant_w = float(point.get("plant_heat_w") or 0.0)
+    loss_w = float(point.get("transmission_heat_loss_w") or 0.0)
+    delivered_w = 0.0 if "insufficient_temperature" in causes else max(plant_w - loss_w, 0.0)
+    limit_hit = state == "physical_limit_exceeded" or deficit_w > 1.0 or bool(causes)
+    reason = ", ".join(limits) if limits else str(summary.get("reason") or "")
+    return CapacityCaseOutcome(
+        coupling_case_id=case_id,
+        operating_case_id=operating_case_id,
+        outcome="limit_found" if limit_hit else "demand_covered",
+        delivered_heat_w=delivered_w,
+        reason=reason,
+    )
+
+
 def assess_candidates(
     candidates: Sequence[Candidate],
     outcomes: Mapping[str, Mapping[str, Mapping[str, Any]]],
@@ -477,6 +563,15 @@ def assess_candidates(
                 for path in summary.get("inputs_not_established", ()):
                     explanation.append(f"{operating_case_id}: needs {path}")
             kpis.extend(_operating_kpis(candidate, case_id, operating_case_id, summary))
+
+        capacity_outcomes: list[CapacityCaseOutcome] = []
+        for cap_case_id, cap_op_id in zip(
+            candidate.capacity_coupling_case_ids, candidate.capacity_case_ids, strict=True
+        ):
+            cap_summary = summaries.get(cap_case_id, {"state": "not_run", "reason": "not coupled"})
+            synthetic = synthetic or bool(cap_summary.get("synthetic"))
+            capacity_outcomes.append(_capacity_case_outcome(cap_case_id, cap_op_id, cap_summary))
+
         technical, evaluation = summarise_stage_statuses(statuses)
         evidence = site_evidence.get(candidate.site_id, SiteEvidenceStatus.UNKNOWN)
         metric = next(
@@ -515,6 +610,7 @@ def assess_candidates(
                 screening_status=candidate.screening_status,
                 ranking_eligibility=eligibility,
                 case_states=states,
+                capacity_cases=tuple(capacity_outcomes),
                 limiting_conditions=tuple(dict.fromkeys(limiting)),
                 explanation=tuple(explanation),
                 kpis=tuple(kpis),

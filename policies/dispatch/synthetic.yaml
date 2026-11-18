@@ -1,0 +1,15 @@
+# Rule-based chronological annual dispatch policy for the synthetic study (milestone M4).
+policy_id: dispatch-synthetic
+kind: dispatch
+version: "1"
+title: Rule-based chronological dispatch policy for the synthetic study
+origin: >-
+  Specification section 12.2 and open decision O08. Priority order, curtailment rule and
+  interval reduction bounds are invented for the synthetic study.
+status: unreviewed
+parameters:
+  geothermal_priority_count: 50
+  allow_curtailment: true
+  interval_mode: full
+  max_reduction_error_fraction: 0.02
+  reduced_stride_count: 12

@@ -1,0 +1,608 @@
+{
+  "$defs": {
+    "Conflict_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "Conflict_SuccessDefinition_": {
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Known_SuccessDefinition_"
+          },
+          "minItems": 2,
+          "title": "Candidates",
+          "type": "array"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "state": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidates"
+      ],
+      "title": "Conflict[SuccessDefinition]",
+      "type": "object"
+    },
+    "CorrelationGroupSpec": {
+      "additionalProperties": false,
+      "description": "Joint dependence specification across correlated uncertain variables (section 14.3).",
+      "properties": {
+        "group_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Group Id",
+          "type": "string"
+        },
+        "method": {
+          "default": "rank_correlation",
+          "enum": [
+            "gaussian_copula",
+            "rank_correlation"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "pairs": {
+          "items": {
+            "$ref": "#/$defs/CorrelationPair"
+          },
+          "minItems": 1,
+          "title": "Pairs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "group_id",
+        "pairs"
+      ],
+      "title": "CorrelationGroupSpec",
+      "type": "object"
+    },
+    "CorrelationPair": {
+      "additionalProperties": false,
+      "description": "Pairwise Spearman rank correlation between two uncertain variables.",
+      "properties": {
+        "rank_correlation": {
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Rank Correlation",
+          "type": "number",
+          "unit": "dimensionless"
+        },
+        "variable_a": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Variable A",
+          "type": "string"
+        },
+        "variable_b": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Variable B",
+          "type": "string"
+        }
+      },
+      "required": [
+        "variable_a",
+        "variable_b",
+        "rank_correlation"
+      ],
+      "title": "CorrelationPair",
+      "type": "object"
+    },
+    "DistributionSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "minLength": 1,
+          "title": "Family",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Parameters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "family",
+        "parameters"
+      ],
+      "title": "DistributionSpec",
+      "type": "object"
+    },
+    "Evidence_Annotated_float__Strict_strict_True___": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_Annotated_float__Strict_strict_True___",
+          "known": "#/$defs/Known_Annotated_float__Strict_strict_True___",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_Annotated_float__Strict_strict_True___"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_Annotated_float__Strict_strict_True___"
+        }
+      ]
+    },
+    "Evidence_SuccessDefinition_": {
+      "discriminator": {
+        "mapping": {
+          "conflict": "#/$defs/Conflict_SuccessDefinition_",
+          "known": "#/$defs/Known_SuccessDefinition_",
+          "unknown": "#/$defs/Unknown"
+        },
+        "propertyName": "state"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Known_SuccessDefinition_"
+        },
+        {
+          "$ref": "#/$defs/Unknown"
+        },
+        {
+          "$ref": "#/$defs/Conflict_SuccessDefinition_"
+        }
+      ]
+    },
+    "Known_Annotated_float__Strict_strict_True___": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[Annotated[float, Strict(strict=True)]]",
+      "type": "object"
+    },
+    "Known_SuccessDefinition_": {
+      "additionalProperties": false,
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "state": {
+          "const": "known",
+          "default": "known",
+          "title": "State",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/SuccessDefinition"
+        }
+      },
+      "required": [
+        "value",
+        "provenance"
+      ],
+      "title": "Known[SuccessDefinition]",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Where a value came from.",
+      "properties": {
+        "author": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Author"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        },
+        "provenance_type": {
+          "$ref": "#/$defs/ProvenanceType"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Id"
+        }
+      },
+      "required": [
+        "provenance_type"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "ProvenanceType": {
+      "enum": [
+        "measured",
+        "imported",
+        "guideline",
+        "user_supplied",
+        "estimated",
+        "inferred",
+        "synthetic"
+      ],
+      "title": "ProvenanceType",
+      "type": "string"
+    },
+    "SuccessDefinition": {
+      "additionalProperties": false,
+      "description": "The event that counts as geological success (specification 14.2).",
+      "properties": {
+        "conditional_on": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Conditional On"
+        },
+        "criteria": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Criteria",
+          "type": "array"
+        },
+        "event": {
+          "minLength": 1,
+          "title": "Event",
+          "type": "string"
+        },
+        "information_time": {
+          "minLength": 1,
+          "title": "Information Time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event",
+        "criteria",
+        "information_time"
+      ],
+      "title": "SuccessDefinition",
+      "type": "object"
+    },
+    "Support": {
+      "additionalProperties": false,
+      "properties": {
+        "lower": {
+          "title": "Lower",
+          "type": "number",
+          "unit": "unit of the variable"
+        },
+        "upper": {
+          "title": "Upper",
+          "type": "number",
+          "unit": "unit of the variable"
+        }
+      },
+      "required": [
+        "lower",
+        "upper"
+      ],
+      "title": "Support",
+      "type": "object"
+    },
+    "UncertainVariable": {
+      "additionalProperties": false,
+      "description": "One uncertain input.\n\nA range alone does not imply a probability distribution. A variable is either a scenario set\nwithout probabilities or a named distribution with its own evidence.",
+      "properties": {
+        "correlation_group": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Correlation Group"
+        },
+        "distribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DistributionSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evidence": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "field_path": {
+          "minLength": 1,
+          "title": "Field Path",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/UncertaintyKind"
+        },
+        "scenario_values": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "Scenario Values",
+          "type": "array",
+          "unit": "unit of the variable"
+        },
+        "support": {
+          "$ref": "#/$defs/Support"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "variable_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Variable Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "variable_id",
+        "field_path",
+        "unit",
+        "kind",
+        "support",
+        "evidence"
+      ],
+      "title": "UncertainVariable",
+      "type": "object"
+    },
+    "UncertaintyKind": {
+      "enum": [
+        "distribution",
+        "scenario_set"
+      ],
+      "title": "UncertaintyKind",
+      "type": "string"
+    },
+    "Unknown": {
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "state": {
+          "const": "unknown",
+          "default": "unknown",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason",
+        "owner"
+      ],
+      "title": "Unknown",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "abandonment_cost_currency": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "correlation_groups": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CorrelationGroupSpec"
+      },
+      "title": "Correlation Groups",
+      "type": "array"
+    },
+    "failure_drilling_cost_fraction": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "const": "0.2.0",
+      "default": "0.2.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "success_definition": {
+      "$ref": "#/$defs/Evidence_SuccessDefinition_"
+    },
+    "success_probability_fraction": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Evidence_Annotated_float__Strict_strict_True___"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "uncertainty_model_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Uncertainty Model Id",
+      "type": "string"
+    },
+    "variables": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/UncertainVariable"
+      },
+      "title": "Variables",
+      "type": "array"
+    }
+  },
+  "required": [
+    "uncertainty_model_id",
+    "success_definition"
+  ],
+  "title": "UncertaintyModel",
+  "type": "object"
+}

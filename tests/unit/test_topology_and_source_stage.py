@@ -178,11 +178,15 @@ def test_a_test_engine_labels_the_result_synthetic(
     assert stage(result, "source").synthetic
     assert not stage(result, "site_evidence").synthetic
     assert result.synthetic
-    # Operation and cost do not exist yet, so the study has no technical result.
+    # All stages complete on the synthetic scenario and propagate the synthetic engine label.
     assert stage(result, "screen").status is StageStatus.COMPLETED
     assert stage(result, "couple").synthetic and stage(result, "assess").synthetic
-    assert stage(result, "operate").status is StageStatus.NOT_ESTABLISHED
-    assert result.evaluation_status is EvaluationStatus.NOT_EVALUATED
+    assert stage(result, "operate").status is StageStatus.COMPLETED
+    assert stage(result, "operate").synthetic
+    assert stage(result, "cost").status is StageStatus.COMPLETED
+    assert stage(result, "compare").status is StageStatus.COMPLETED
+    assert stage(result, "compare").synthetic
+    assert result.evaluation_status is EvaluationStatus.VALID
     assert result.kpis == ()
 
 
@@ -282,7 +286,9 @@ def test_a_new_engine_version_recomputes_the_source_stage(
     )
     run, result = newer.run(revision)
     hits = {record.stage: record.cache_hit for record in run.stages}
-    # A result of an older engine version is never reused for a newer one.
+    # A result of an older engine version is never reused for a newer one; cost reuses its cache
+    # when candidates and operate produce identical numerical outputs, while compare recomputes
+    # because it invokes source models on uncertain parameter realizations.
     assert hits == {
         "site_evidence": True,
         "source": False,
@@ -292,7 +298,7 @@ def test_a_new_engine_version_recomputes_the_source_stage(
         "couple": False,
         "assess": False,
         "operate": False,
-        "cost": False,
+        "cost": True,
         "compare": False,
     }
     versions = {
@@ -322,7 +328,7 @@ def test_records_written_before_this_milestone_still_load() -> None:
         "parameters": {"min_usable_pad_area_m2": 5000.0},
     }
     policy = Policy.model_validate(old_policy)
-    assert policy.schema_version == "0.3.0" and policy.kind.value == "screening"
+    assert policy.schema_version == "0.4.0" and policy.kind.value == "screening"
 
     old_result = {
         "schema_version": "0.1.0",

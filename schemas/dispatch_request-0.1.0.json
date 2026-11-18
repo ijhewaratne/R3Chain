@@ -1,0 +1,309 @@
+{
+  "$defs": {
+    "DispatchElectricityPoint": {
+      "additionalProperties": false,
+      "description": "Measured coupled plant handover heat and auxiliary electricity demand.",
+      "properties": {
+        "compressor_electricity_w": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Compressor Electricity W",
+          "type": "number"
+        },
+        "plant_heat_w": {
+          "minimum": 0.0,
+          "title": "Plant Heat W",
+          "type": "number"
+        },
+        "source_pump_electricity_w": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Source Pump Electricity W",
+          "type": "number"
+        }
+      },
+      "required": [
+        "plant_heat_w"
+      ],
+      "title": "DispatchElectricityPoint",
+      "type": "object"
+    },
+    "DispatchGeothermalSpec": {
+      "additionalProperties": false,
+      "description": "Geothermal plant and route supply envelope exposed to chronological dispatch.",
+      "properties": {
+        "availability_fraction": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "Availability Fraction",
+          "type": "array"
+        },
+        "capacity_basis": {
+          "default": "lower_bound",
+          "enum": [
+            "limit_proven",
+            "lower_bound"
+          ],
+          "title": "Capacity Basis",
+          "type": "string"
+        },
+        "capacity_series_w": {
+          "default": [],
+          "items": {
+            "minimum": 0.0,
+            "type": "number"
+          },
+          "title": "Capacity Series W",
+          "type": "array"
+        },
+        "compressor_electricity_per_plant_heat_ratio": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Compressor Electricity Per Plant Heat Ratio",
+          "type": "number"
+        },
+        "electricity_curve": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/DispatchElectricityPoint"
+          },
+          "title": "Electricity Curve",
+          "type": "array"
+        },
+        "max_delivered_heat_w": {
+          "minimum": 0.0,
+          "title": "Max Delivered Heat W",
+          "type": "number"
+        },
+        "max_plant_handover_heat_w": {
+          "minimum": 0.0,
+          "title": "Max Plant Handover Heat W",
+          "type": "number"
+        },
+        "min_output_fraction": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Min Output Fraction",
+          "type": "number"
+        },
+        "plant_loss_series_w": {
+          "default": [],
+          "items": {
+            "minimum": 0.0,
+            "type": "number"
+          },
+          "title": "Plant Loss Series W",
+          "type": "array"
+        },
+        "route_loss_when_active_w": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Route Loss When Active W",
+          "type": "number"
+        },
+        "source_electricity_per_plant_heat_ratio": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Source Electricity Per Plant Heat Ratio",
+          "type": "number"
+        },
+        "unit_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Unit Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "unit_id",
+        "max_delivered_heat_w",
+        "max_plant_handover_heat_w"
+      ],
+      "title": "DispatchGeothermalSpec",
+      "type": "object"
+    },
+    "DispatchUnit": {
+      "additionalProperties": false,
+      "description": "One existing heat unit in the merit order (waste heat base load or peak/backup boiler).",
+      "properties": {
+        "availability_fraction": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "Availability Fraction",
+          "type": "array"
+        },
+        "fuel_price_currency_per_j": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "Fuel Price Currency Per J",
+          "type": "array"
+        },
+        "label": {
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "max_heat_w": {
+          "minimum": 0.0,
+          "title": "Max Heat W",
+          "type": "number"
+        },
+        "min_output_w": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Min Output W",
+          "type": "number"
+        },
+        "priority": {
+          "title": "Priority",
+          "type": "integer"
+        },
+        "role": {
+          "$ref": "#/$defs/ExistingUnitRole"
+        },
+        "thermal_efficiency_fraction": {
+          "default": 1.0,
+          "exclusiveMinimum": 0.0,
+          "title": "Thermal Efficiency Fraction",
+          "type": "number"
+        },
+        "unit_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Unit Id",
+          "type": "string"
+        },
+        "variable_om_currency_per_j": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Variable Om Currency Per J",
+          "type": "number"
+        }
+      },
+      "required": [
+        "unit_id",
+        "label",
+        "role",
+        "priority",
+        "max_heat_w"
+      ],
+      "title": "DispatchUnit",
+      "type": "object"
+    },
+    "ExistingUnitRole": {
+      "enum": [
+        "base_load",
+        "peak_backup"
+      ],
+      "title": "ExistingUnitRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Interval-resolved demand, sources and tariffs for one dispatch calculation.",
+  "properties": {
+    "allow_curtailment": {
+      "default": true,
+      "title": "Allow Curtailment",
+      "type": "boolean"
+    },
+    "demand_heat_w": {
+      "items": {
+        "minimum": 0.0,
+        "type": "number"
+      },
+      "minItems": 1,
+      "title": "Demand Heat W",
+      "type": "array"
+    },
+    "durations_s": {
+      "items": {
+        "exclusiveMinimum": 0.0,
+        "type": "number"
+      },
+      "minItems": 1,
+      "title": "Durations S",
+      "type": "array"
+    },
+    "electricity_price_currency_per_j": {
+      "default": [],
+      "items": {
+        "type": "number"
+      },
+      "title": "Electricity Price Currency Per J",
+      "type": "array"
+    },
+    "existing_units": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DispatchUnit"
+      },
+      "title": "Existing Units",
+      "type": "array"
+    },
+    "geothermal": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DispatchGeothermalSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "geothermal_priority": {
+      "default": 50,
+      "title": "Geothermal Priority",
+      "type": "integer"
+    },
+    "operating_scenario_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Operating Scenario Id",
+      "type": "string"
+    },
+    "request_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "requires_storage": {
+      "default": false,
+      "title": "Requires Storage",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "starts_utc": {
+      "items": {
+        "format": "date-time",
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Starts Utc",
+      "type": "array"
+    }
+  },
+  "required": [
+    "request_id",
+    "operating_scenario_id",
+    "starts_utc",
+    "durations_s",
+    "demand_heat_w"
+  ],
+  "title": "DispatchRequest",
+  "type": "object"
+}

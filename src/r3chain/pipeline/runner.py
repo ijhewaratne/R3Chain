@@ -43,7 +43,13 @@ from r3chain.domain.records.runs import (
     StageRecord,
 )
 from r3chain.domain.records.scenario import Scenario
-from r3chain.domain.status import RankingEligibility, StageStatus, summarise_stage_statuses
+from r3chain.domain.status import (
+    EvaluationStatus,
+    RankingEligibility,
+    StageStatus,
+    TechnicalStatus,
+    summarise_stage_statuses,
+)
 from r3chain.domain.validation import ValidationReport, validate_scenario
 from r3chain.store.store import Store, policy_ref, utc_now
 
@@ -142,12 +148,14 @@ class PipelineRunner:
         *,
         clock: Callable[[], datetime] = utc_now,
         code_version_text: str | None = None,
+        access_context: str = ACCESS_CONTEXT_LOCAL,
     ) -> None:
         _check_order(stages)
         self._store = store
         self._stages = tuple(stages)
         self._clock = clock
         self._code_version = code_version_text or code_version()
+        self._access_context = access_context
 
     def engine_versions(self) -> dict[str, str]:
         versions = {"r3chain": r3chain.__version__, "python": platform.python_version()}
@@ -176,7 +184,7 @@ class PipelineRunner:
                     name: context.upstream[name].content_hash() for name in stage.requires
                 },
                 "seed": context.seed if stage.stochastic else None,
-                "access_context": ACCESS_CONTEXT_LOCAL,
+                "access_context": self._access_context,
             }
         )
 
@@ -213,6 +221,9 @@ class PipelineRunner:
         use_cache: bool = True,
         parent_run_ids: tuple[str, ...] = (),
         raise_on_error: bool = False,
+        should_cancel: Callable[[], bool] | None = None,
+        on_stage_complete: Callable[[StageRecord, int, int], None] | None = None,
+        on_run_created: Callable[[Run], None] | None = None,
     ) -> tuple[Run, Result]:
         scenario = self._store.get_scenario(revision_id)
         report = validate_scenario(scenario)
@@ -234,56 +245,80 @@ class PipelineRunner:
             parent_run_ids=parent_run_ids,
         )
         self._store.create_run(running)
+        if on_run_created is not None:
+            on_run_created(running)
 
         outputs: dict[str, StageOutput] = {}
         records: list[StageRecord] = []
         input_hashes: dict[str, str] = {}
         reused_from: set[str] = set()
+        cancelled = False
+        total_stages = len(self._stages)
 
-        for stage in self._stages:
+        for idx, stage in enumerate(self._stages, start=1):
             started = time.perf_counter()
-            blocked = [
-                name for name in stage.requires if outputs[name].status is not StageStatus.COMPLETED
-            ]
-            cache_key = ""
-            cache_hit = False
-            source_run: str | None = None
-            if blocked:
-                first = blocked[0]
+            if cancelled or (should_cancel is not None and should_cancel()):
+                cancelled = True
                 output = StageOutput(
                     stage=stage.name,
                     stage_version=stage.version,
-                    status=StageStatus.NOT_RUN,
-                    reason=f"upstream stage {first} ended as {outputs[first].status.value}",
+                    status=StageStatus.CANCELLED,
+                    reason="run was cancelled before this stage completed",
                 )
+                cache_key = ""
+                cache_hit = False
+                source_run: str | None = None
             else:
-                context = StageContext(scenario, revision_id, policies, seed, dict(outputs))
-                cache_key = self._cache_key(stage, context)
-                input_hashes[stage.name] = cache_key
-                cached = self._store.cache_get(cache_key) if use_cache else None
-                if cached is not None:
-                    output, source_run = cached
-                    cache_hit = True
-                    reused_from.add(source_run)
+                blocked = [
+                    name
+                    for name in stage.requires
+                    if outputs[name].status is not StageStatus.COMPLETED
+                ]
+                cache_key = ""
+                cache_hit = False
+                source_run = None
+                if blocked:
+                    first = blocked[0]
+                    output = StageOutput(
+                        stage=stage.name,
+                        stage_version=stage.version,
+                        status=StageStatus.NOT_RUN,
+                        reason=f"upstream stage {first} ended as {outputs[first].status.value}",
+                    )
                 else:
-                    output = self._execute(stage, context, raise_on_error)
-                    if output.status in _CACHEABLE:
-                        self._store.cache_put(cache_key, output, run_id)
+                    context = StageContext(scenario, revision_id, policies, seed, dict(outputs))
+                    cache_key = self._cache_key(stage, context)
+                    input_hashes[stage.name] = cache_key
+                    cached = self._store.cache_get(cache_key) if use_cache else None
+                    if cached is not None:
+                        output, source_run = cached
+                        cache_hit = True
+                        reused_from.add(source_run)
+                    else:
+                        output = self._execute(stage, context, raise_on_error)
+                        if should_cancel is not None and should_cancel():
+                            cancelled = True
+                        elif output.status in _CACHEABLE:
+                            self._store.cache_put(cache_key, output, run_id)
             outputs[stage.name] = output
-            records.append(
-                StageRecord(
-                    stage=stage.name,
-                    stage_version=stage.version,
-                    status=output.status,
-                    cache_key=cache_key,
-                    cache_hit=cache_hit,
-                    reused_from_run_id=source_run,
-                    output_hash=output.content_hash(),
-                    duration_s=time.perf_counter() - started,
-                )
+            stage_record = StageRecord(
+                stage=stage.name,
+                stage_version=stage.version,
+                status=output.status,
+                cache_key=cache_key,
+                cache_hit=cache_hit,
+                reused_from_run_id=source_run,
+                output_hash=output.content_hash(),
+                duration_s=time.perf_counter() - started,
             )
+            records.append(stage_record)
+            if on_stage_complete is not None:
+                on_stage_complete(stage_record, idx, total_stages)
 
         technical, evaluation = summarise_stage_statuses(item.status for item in outputs.values())
+        if cancelled:
+            evaluation = EvaluationStatus.CANCELLED
+            technical = TechnicalStatus.NOT_ESTABLISHED
         result = Result(
             result_id=run_id.replace("run-", "res-", 1),
             run_id=run_id,
@@ -304,7 +339,7 @@ class PipelineRunner:
         )
         finished = running.model_copy(
             update={
-                "status": RunStatus.COMPLETED,
+                "status": RunStatus.CANCELLED if cancelled else RunStatus.COMPLETED,
                 "finished_at": self._clock(),
                 "input_hashes": input_hashes,
                 "stages": tuple(records),
@@ -313,35 +348,112 @@ class PipelineRunner:
             }
         )
         self._store.add_result(result)
-        for subject_result in self._subject_results(outputs, result):
-            self._store.add_result(subject_result)
+        if not cancelled:
+            for subject_result in self._subject_results(outputs, result):
+                self._store.add_result(subject_result)
         self._store.finalize_run(finished)
         return finished, result
 
     @staticmethod
     def _subject_results(outputs: Mapping[str, StageOutput], study: Result) -> list[Result]:
-        """Results for the subjects a stage reports on, for example one per candidate.
+        """Results for the subjects stages report on, merged across completed stages.
 
-        A stage reports them in its payload under ``subject_results``. Each becomes a result
-        record of the run with its own four statuses.
+        A stage reports subject updates under ``subject_results``. Earlier stages such as
+        ``assess`` seed the subject record and its statuses; later stages such as ``operate`` and
+        ``cost`` merge in their KPIs, checks and diagnostics without duplicating results.
         """
-        found: list[Result] = []
+        eval_rank = {
+            EvaluationStatus.VALID.value: 0,
+            EvaluationStatus.NOT_EVALUATED.value: 1,
+            EvaluationStatus.INVALID_INPUT.value: 2,
+        }
+        merged: dict[str, dict[str, Any]] = {}
+        reasons_by_subject: dict[str, list[str]] = {}
+        base_eligible_by_subject: dict[str, bool] = {}
+        conditional_by_subject: dict[str, bool] = {}
+
         for output in outputs.values():
             if output.status is not StageStatus.COMPLETED:
                 continue
             for item in output.payload.get("subject_results", []):
-                found.append(
-                    Result.model_validate(
-                        {
-                            **item,
-                            "result_id": f"{study.result_id}-{item['subject']}",
-                            "run_id": study.run_id,
-                            "scenario_revision": study.scenario_revision,
-                            "synthetic": study.synthetic or bool(item.get("synthetic")),
-                        }
+                subject = str(item["subject"])
+                if subject not in merged:
+                    merged[subject] = {
+                        **item,
+                        "kpis": list(item.get("kpis", ())),
+                        "checks": list(item.get("checks", ())),
+                        "diagnostics": list(item.get("diagnostics", ())),
+                        "artifact_refs": list(item.get("artifact_refs", ())),
+                        "synthetic": study.synthetic or bool(item.get("synthetic")),
+                    }
+                    reasons_by_subject[subject] = []
+                    base_eligible_by_subject[subject] = True
+                    conditional_by_subject[subject] = False
+                else:
+                    target = merged[subject]
+                    target["synthetic"] = bool(target["synthetic"]) or bool(item.get("synthetic"))
+                    for field in ("label", "site_evidence_status", "technical_status"):
+                        if item.get(field) is not None:
+                            target[field] = item[field]
+                    if item.get("evaluation_status"):
+                        new_eval = str(item["evaluation_status"])
+                        prev_eval = target.get("evaluation_status")
+                        if prev_eval is None or eval_rank.get(new_eval, 2) >= eval_rank.get(
+                            str(prev_eval), 0
+                        ):
+                            target["evaluation_status"] = new_eval
+                    for key in ("kpis", "checks", "diagnostics", "artifact_refs"):
+                        if item.get(key):
+                            target[key].extend(item[key])
+
+                elig_item = item.get("ranking_eligibility")
+                if elig_item:
+                    if not elig_item.get("eligible", True):
+                        base_eligible_by_subject[subject] = False
+                    if elig_item.get("conditional"):
+                        conditional_by_subject[subject] = True
+                    reasons_by_subject[subject].extend(
+                        str(r) for r in elig_item.get("reasons", ()) if r
                     )
-                )
-        return found
+                extra_reason = item.get("ranking_ineligibility_reason")
+                if extra_reason:
+                    reasons_by_subject[subject].append(str(extra_reason))
+
+        for subject, target in merged.items():
+            eval_status = EvaluationStatus(
+                target.get("evaluation_status", EvaluationStatus.VALID.value)
+            )
+            tech_raw = target.get("technical_status")
+            if tech_raw is None:
+                tech_status = TechnicalStatus.NOT_ESTABLISHED
+                target["technical_status"] = tech_status.value
+            else:
+                tech_status = TechnicalStatus(tech_raw)
+            reasons = list(dict.fromkeys(reasons_by_subject[subject]))
+            eligible = (
+                base_eligible_by_subject[subject]
+                and eval_status is EvaluationStatus.VALID
+                and tech_status is TechnicalStatus.PASSES_EVALUATED_CASES
+            )
+            if not eligible and not reasons and eval_status is not EvaluationStatus.VALID:
+                reasons.append(f"evaluation status is {eval_status.value}")
+            target["evaluation_status"] = eval_status.value
+            target["ranking_eligibility"] = {
+                "eligible": eligible,
+                "conditional": conditional_by_subject[subject],
+                "reasons": tuple(reasons),
+            }
+        return [
+            Result.model_validate(
+                {
+                    **payload,
+                    "result_id": f"{study.result_id}-{subject}",
+                    "run_id": study.run_id,
+                    "scenario_revision": study.scenario_revision,
+                }
+            )
+            for subject, payload in merged.items()
+        ]
 
     def replay(self, run_id: str) -> ReplayOutcome:
         """Execute a stored run again from its frozen revision, without the cache."""

@@ -20,10 +20,13 @@ TESTS = REPO_ROOT / "tests"
 EXPECTED_IDS = (
     [f"W{number:02d}" for number in range(1, 37)]
     + [f"O{number:02d}" for number in range(1, 15)]
+    + [f"D{number:02d}" for number in range(1, 7)]
     + [f"A{number:02d}" for number in range(1, 19)]
+    + [f"V{number:02d}" for number in range(1, 14)]
+    + [f"E{number:02d}" for number in range(1, 6)]
 )
 MILESTONES = {f"M{number}" for number in range(10)}
-# The modules of the implementation plan, section 3.2.
+# The modules of implementation plan v2, section 3.2.
 PLANNED_MODULES = {
     "domain",
     "ports",
@@ -41,7 +44,9 @@ PLANNED_MODULES = {
     "api",
     "mcp",
     "assistant",
+    "explain",
     "reporting",
+    "experiments",
     "reference",
     "policies",
     "benchmarks",
@@ -72,7 +77,14 @@ def test_register_covers_every_requirement(entries: list[dict[str, Any]]) -> Non
 
 
 def test_entries_are_well_formed(entries: list[dict[str, Any]]) -> None:
-    kinds = {"W": "workshop", "O": "open_decision", "A": "acceptance"}
+    kinds = {
+        "W": "workshop",
+        "O": "open_decision",
+        "D": "open_decision",
+        "A": "acceptance",
+        "V": "plan_item",
+        "E": "experiment",
+    }
     for entry in entries:
         identifier = entry["id"]
         assert entry["kind"] == kinds[identifier[0]], identifier
@@ -122,7 +134,7 @@ def test_requirement_markers_point_at_register_entries(
 
 
 # The milestone the repository has reached. Raise it when a milestone gate passes.
-CURRENT_MILESTONE = 3
+CURRENT_MILESTONE = 6
 
 
 def test_no_acceptance_test_is_claimed_complete_before_its_milestone(
@@ -140,13 +152,35 @@ def test_no_acceptance_test_is_claimed_complete_before_its_milestone(
     # Milestone M1 completes elevation and pressure, and zero or reversed flow. Milestone M2
     # completes the heat balance, the exchanger terminal limit, the heat pump balance, the
     # finite source capacity and the failure categories. Milestone M3 completes connection
-    # alternatives and data gaps (gate R1).
+    # alternatives and data gaps (gate R1). Milestone M4 completes demand/time basis, existing
+    # base load dispatch, cost ownership reconciliation, and lifecycle discounting. Milestone M5
+    # delivers uncertainty sampling, pre-drilling expected risk, resilience cases, and gate R2.
+    # Milestone M6 completes scenario correction/staleness, access & export enforcement, and
+    # assistant-free replay across CLI, HTTP API, MCP server, and browser workspace UI.
     built = sorted(
         entry["id"]
         for entry in entries
         if entry["kind"] == "acceptance" and entry["status"] in {"built", "verified"}
     )
-    assert built == ["A01", "A02", "A03", "A04", "A05", "A06", "A11", "A12", "A13"]
+    assert built == [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+        "A11",
+        "A12",
+        "A13",
+        "A14",
+        "A15",
+        "A16",
+        "A17",
+    ]
 
 
 def test_register_file_is_where_the_plan_says(repo_root: Path) -> None:

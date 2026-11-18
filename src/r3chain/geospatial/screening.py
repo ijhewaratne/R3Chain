@@ -218,7 +218,11 @@ def _usable_pad(
 ) -> tuple[ScreeningCriterion, BaseGeometry | None]:
     description = "largest contiguous usable pad area after restrictions and their setbacks"
     restriction_layers = _layers(layers, LayerKind.RESTRICTION)
-    search = parcel.buffer(settings.restriction_search_distance_m)
+    search_distance = max(
+        settings.restriction_search_distance_m,
+        max(settings.setbacks_m.values(), default=0.0),
+    )
+    search = parcel.buffer(search_distance)
     zones: list[BaseGeometry] = []
     evidence = [f"sites[{site.site_id}].parcel_geometry", settings.origin]
     open_points: list[str] = []
@@ -245,7 +249,11 @@ def _usable_pad(
                 )
                 evidence.append(_ref(layer, item.feature_id))
     usable = parcel.difference(shapely.union_all(zones)) if zones else parcel
-    parts = [part for part in shapely.get_parts(usable) if part.geom_type == "Polygon"]
+    parts = [
+        part
+        for part in shapely.get_parts(usable)
+        if part.geom_type == "Polygon" and not part.is_empty
+    ]
     largest = max(parts, key=lambda part: part.area) if parts else None
     area = float(largest.area) if largest is not None else 0.0
     limit = settings.min_usable_pad_area_m2

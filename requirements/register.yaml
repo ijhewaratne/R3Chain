@@ -1,12 +1,12 @@
 # Requirements register.
 #
-# One entry per workshop requirement (W), open decision (O) and acceptance test (A) of the
-# implementation specification v1.0. New requirements are added here first, classified, and tied
-# to a test before code is written (implementation plan section 4.4).
+# One entry per workshop requirement (W), open decision (O, D), acceptance test (A), plan item
+# (V), and experiment (E) of the implementation specification and plan v2. New requirements are
+# added here first, classified, and tied to a test before code is written (plan section 4.4).
 #
-# status for W and A entries:  planned | partial | built | verified | superseded
+# status for W, A, V, and E entries:  planned | partial | built | verified | superseded
 #   partial  = part of it exists and the listed tests pass. The milestone says when it is complete.
-# status for O entries:        open | resolved
+# status for O and D entries:        open | resolved
 #
 # A W entry is workshop evidence. It is not a formally accepted requirement.
 
@@ -28,24 +28,31 @@ entries:
     statement: Keep geological risks and their definitions separate from numerical convergence
     milestone: M5
     lands_in: [domain, uncertainty]
-    status: partial
-    tests: [test_non_convergence_is_not_a_technical_failure]
+    status: built
+    tests:
+      - test_non_convergence_is_not_a_technical_failure
+      - test_pre_drilling_expected_case_accounts_for_failed_drilling_abandonment_and_fallback
+      - test_probabilistic_correlated_point_estimate_and_progressive_policies_on_same_revision
   - id: W03
     kind: workshop
     source: "p 6, 15:21 and p 12, 32:24"
     statement: Declare cost ownership and reconcile against whole system economics
     milestone: M4
     lands_in: [economics]
-    status: partial
-    tests: [test_duplicate_cost_ownership_is_rejected]
+    status: built
+    tests:
+      - test_duplicate_cost_ownership_is_rejected
+      - test_upstream_cost_reconciliation_prevents_double_counting
   - id: W04
     kind: workshop
     source: "p 7, 16:15-17:32"
     statement: Use schema validated tools and preserve sampled inputs and raw results
     milestone: M6
     lands_in: [adapters, ports, mcp, uncertainty]
-    status: partial
-    tests: [test_performance_matches_the_hand_calculation]
+    status: built
+    tests:
+      - test_performance_matches_the_hand_calculation
+      - test_http_api_and_mcp_server_end_to_end_and_cli_equivalence
   - id: W05
     kind: workshop
     source: "pp 7-8, 18:51-19:34"
@@ -90,8 +97,16 @@ entries:
     statement: Add chronological demand, competing sources, dispatch and capacity constraints
     milestone: M4
     lands_in: [operation]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_dispatch_conserves_energy_and_separates_curtailment
+      - test_dispatch_respects_maintenance_and_min_output
+      - test_underused_geothermal_plant_earns_no_credit_for_curtailed_heat
+      - test_geothermal_capacity_uses_max_coupled_heat_and_marks_limit_proven
+      - test_interval_reduction_measures_error_and_rejects_excessive_approximation
+      - test_pipeline_operate_and_cost_stages_merge_kpis_and_replay_identically
+      - test_piecewise_linear_electricity_curve_interpolates_from_origin_and_holds_top_ratio
+      - test_negative_demand_and_unequal_baseline_heat_fail_loudly
   - id: W09
     kind: workshop
     source: "p 11, 31:39"
@@ -139,12 +154,15 @@ entries:
     statement: >-
       Add success likelihood, load cases, heat pump assistance, drilling CAPEX and editable
       economics as explicit scenario fields and modelled alternatives
-    milestone: M4
+    milestone: M5
     lands_in: [economics, coupling, uncertainty]
-    status: partial
+    status: built
     tests:
       - test_heat_pump_assisted_case_balances_in_the_ledger
       - test_screening_model_results_are_labelled
+      - test_joint_correlated_sampling_reproduces_identically_and_rejects_non_psd
+      - test_pareto_regret_decision_drivers_and_no_defensible_preference
+      - test_synthetic_compare_runs_scenario_sweep_resilience_and_reports
   - id: W14
     kind: workshop
     source: "pp 16-21, 47:51-1:01:20"
@@ -159,8 +177,16 @@ entries:
     statement: Calculate source dispatch and business case on a common boundary
     milestone: M4
     lands_in: [operation, economics]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_underused_geothermal_plant_earns_no_credit_for_curtailed_heat
+      - test_longer_route_carries_supply_and_return_quantities_and_losses
+      - test_winter_vs_summer_tariffs_change_annual_energy_cost
+      - test_plant_and_delivered_boundaries_stay_separate_and_funded_is_labelled
+      - test_pipeline_operate_and_cost_stages_merge_kpis_and_replay_identically
+      - test_piecewise_linear_electricity_curve_interpolates_from_origin_and_holds_top_ratio
+      - test_funding_rule_applies_to_replacements_controls_replacement_grants_and_residual
+      - test_negative_demand_and_unequal_baseline_heat_fail_loudly
   - id: W16
     kind: workshop
     source: "pp 25-27, 1:10:08-1:16:14"
@@ -172,6 +198,7 @@ entries:
       - test_registry_holds_the_three_arrangements_of_the_plan
       - test_a_new_arrangement_is_one_registry_entry
       - test_pressure_separation_costs_temperature
+      - test_geothermal_capacity_uses_max_coupled_heat_and_marks_limit_proven
   - id: W17
     kind: workshop
     source: "pp 30-31, 1:21:49-1:25:02"
@@ -186,8 +213,10 @@ entries:
     statement: Model connection adoption and development stages as scenario inputs
     milestone: M5
     lands_in: [operation, uncertainty]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_adoption_stages_and_breakeven_threshold
+      - test_synthetic_compare_runs_scenario_sweep_resilience_and_reports
   - id: W19
     kind: workshop
     source: "pp 32-34, 1:27:20-1:32:43"
@@ -218,8 +247,11 @@ entries:
     statement: Support scenario branching and shared comparison views
     milestone: M6
     lands_in: [store, services, frontend]
-    status: partial
-    tests: [test_variant_creates_revision_with_change_record]
+    status: built
+    tests:
+      - test_variant_creates_revision_with_change_record
+      - test_http_api_and_mcp_server_end_to_end_and_cli_equivalence
+      - test_workspace_ui_endpoints_schemas_map_and_static_bundle
   - id: W23
     kind: workshop
     source: "pp 38-39, 1:41:03-1:43:47"
@@ -234,27 +266,34 @@ entries:
     statement: Show assumptions by default and record edits in new scenario revisions
     milestone: M6
     lands_in: [domain, services, frontend]
-    status: partial
+    status: built
     tests:
       - test_register_lists_every_input
       - test_variant_creates_revision_with_change_record
       - test_change_paths_match_the_assumption_register
+      - test_http_api_and_mcp_server_end_to_end_and_cli_equivalence
+      - test_workspace_ui_endpoints_schemas_map_and_static_bundle
   - id: W25
     kind: workshop
     source: "pp 39-41, 1:44:46-1:49:51"
     statement: Tag input provenance and expose source version and locator
     milestone: M6
     lands_in: [domain, frontend]
-    status: partial
-    tests: [test_sourced_value_must_name_its_source, test_unregistered_source_is_an_error]
+    status: built
+    tests:
+      - test_sourced_value_must_name_its_source
+      - test_unregistered_source_is_an_error
+      - test_http_api_and_mcp_server_end_to_end_and_cli_equivalence
+      - test_workspace_ui_endpoints_schemas_map_and_static_bundle
   - id: W26
     kind: workshop
     source: "p 40, 1:46:36-1:48:01"
     statement: Offer presentation preferences while retaining mandatory evidence
     milestone: M6
     lands_in: [frontend]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_workspace_ui_endpoints_schemas_map_and_static_bundle
   - id: W27
     kind: workshop
     source: "pp 41-43, 1:51:12-1:56:55"
@@ -273,6 +312,7 @@ entries:
     tests:
       - test_permitted_uses_and_origin_must_be_declared_before_import
       - test_layer_sources_are_imported_when_a_scenario_file_is_loaded
+      - test_series_sources_verify_origin_and_load_json_and_parquet
   - id: W29
     kind: workshop
     source: "pp 44-45, 1:58:14-2:00:25"
@@ -322,24 +362,30 @@ entries:
     statement: Compare routes with and without additional demand and corresponding costs
     milestone: M4
     lands_in: [geospatial, economics]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_pipeline_operate_and_cost_stages_merge_kpis_and_replay_identically
+      - test_economics_cli_prints_boundaries_funded_and_demand_comparisons
   - id: W34
     kind: workshop
     source: "pp 47-48, 2:07:33-2:08:49"
     statement: Evaluate joint uncertainty and scenario sensitivity across alternatives
     milestone: M5
     lands_in: [uncertainty]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_pareto_regret_decision_drivers_and_no_defensible_preference
   - id: W35
     kind: workshop
     source: "p 48, 2:08:49-2:10:49"
     statement: Compare whole alternatives and calculate incremental change from the baseline
     milestone: M4
     lands_in: [economics]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_plant_and_delivered_boundaries_stay_separate_and_funded_is_labelled
+      - test_economics_cli_prints_boundaries_funded_and_demand_comparisons
+      - test_funding_rule_applies_to_replacements_controls_replacement_grants_and_residual
   - id: W36
     kind: workshop
     source: "pp 49-50, 2:13:06-2:15:21"
@@ -434,6 +480,44 @@ entries:
     reviewer: WSW decision owner with Tanja
     milestone: M5
     status: open
+  - id: D01
+    kind: open_decision
+    statement: Wording of the research question and the three contributions of section 12
+    reviewer: Tanja
+    milestone: M7
+    status: open
+  - id: D02
+    kind: open_decision
+    statement: >-
+      What pandapipesAI is, its interface and timing, and whether the tools of step 6.1 should align
+      with it or be offered to it
+    reviewer: Tanja, pandapipes developers
+    milestone: M6
+    status: open
+  - id: D03
+    kind: open_decision
+    statement: Whether cybersecurity of coupled electricity and heat networks belongs to this doctorate
+    reviewer: Tanja
+    milestone: M5
+    status: open
+  - id: D04
+    kind: open_decision
+    statement: Whether the municipal data funnel defines a format this system should import
+    reviewer: Tanja's group
+    milestone: M8
+    status: open
+  - id: D05
+    kind: open_decision
+    statement: What may be published from the pilot under the NDA, and the intended venues
+    reviewer: Tanja, WSW
+    milestone: M7
+    status: open
+  - id: D06
+    kind: open_decision
+    statement: Formal requirements of the doctorate, and consent and data handling for a study with users
+    reviewer: University, Tanja, UX team
+    milestone: M9
+    status: open
 
   # --- acceptance tests -----------------------------------------------------------------------
   - id: A01
@@ -517,11 +601,12 @@ entries:
       produce correct totals
     milestone: M4
     lands_in: [domain, operation]
-    status: partial
+    status: built
     tests:
       - test_annual_energy_uses_actual_intervals
       - test_daylight_saving_days_have_23_and_25_hours
       - test_repeated_local_hour_is_resolved
+      - test_chronological_dispatch_preserves_leap_year_and_dst_intervals
   - id: A08
     kind: acceptance
     statement: >-
@@ -529,8 +614,10 @@ entries:
       summer demand
     milestone: M4
     lands_in: [operation]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_competing_base_load_reduces_geothermal_heat_and_raises_lcoh
+      - test_underused_geothermal_plant_earns_no_credit_for_curtailed_heat
   - id: A09
     kind: acceptance
     statement: >-
@@ -538,8 +625,10 @@ entries:
       boundary
     milestone: M4
     lands_in: [economics]
-    status: partial
-    tests: [test_duplicate_cost_ownership_is_rejected]
+    status: built
+    tests:
+      - test_duplicate_cost_ownership_is_rejected
+      - test_upstream_cost_reconciliation_prevents_double_counting
   - id: A10
     kind: acceptance
     statement: >-
@@ -547,12 +636,15 @@ entries:
       rate and zero heat are handled
     milestone: M4
     lands_in: [economics]
-    status: partial
+    status: built
     tests:
       - test_capital_recovery_factor_matches_annuity_sum
       - test_capital_recovery_factor_at_zero_rate
       - test_variable_cash_flow_lcoh_by_hand
       - test_lcoh_is_undefined_without_heat
+      - test_asset_lives_replacements_and_residual_value_cashflows
+      - test_zero_discount_rate_and_undefined_zero_heat_lcoh
+      - test_pipeline_operate_and_cost_stages_merge_kpis_and_replay_identically
   - id: A11
     kind: acceptance
     statement: >-
@@ -564,6 +656,7 @@ entries:
     tests:
       - test_the_shortest_route_is_not_assumed_to_be_the_cheapest
       - test_trench_and_pipe_quantities_are_kept_apart
+      - test_capacity_cases_stay_separate_from_operating_eligibility
       - test_only_eligible_candidates_are_ranked_and_ties_share_a_rank
       - test_candidates_are_ranked_jointly_by_site_and_connection
   - id: A12
@@ -588,6 +681,7 @@ entries:
       - test_missing_evidence_never_becomes_a_pass
       - test_a_missing_rate_leaves_the_cost_unknown
       - test_a_conditional_site_is_evaluated_but_not_ranked
+      - test_unknown_economic_item_leaves_candidate_cost_not_established
   - id: A13
     kind: acceptance
     statement: >-
@@ -609,8 +703,11 @@ entries:
       unresolved runs are correct
     milestone: M5
     lands_in: [uncertainty]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_joint_correlated_sampling_reproduces_identically_and_rejects_non_psd
+      - test_unresolved_samples_stay_separate_from_physical_failures_and_denominators
+      - test_probabilistic_correlated_point_estimate_and_progressive_policies_on_same_revision
   - id: A15
     kind: acceptance
     statement: >-
@@ -618,12 +715,15 @@ entries:
       a visible revision
     milestone: M6
     lands_in: [pipeline, store, services]
-    status: partial
+    status: built
     tests:
       - test_changed_input_recomputes_dependent_stages
       - test_variant_creates_revision_with_change_record
       - test_only_the_stage_that_depends_on_a_change_is_recomputed
       - test_changing_a_plant_value_recomputes_only_the_coupling
+      - test_changing_economic_discount_rate_recomputes_only_cost_stage
+      - test_silent_choices_scenario_selection_cache_and_reconciliation_are_explicit
+      - test_a15_scenario_correction_invalidates_stale_results_and_explanations
   - id: A16
     kind: acceptance
     statement: >-
@@ -631,17 +731,21 @@ entries:
       or report export
     milestone: M6
     lands_in: [services]
-    status: planned
-    tests: []
+    status: built
+    tests:
+      - test_a16_access_and_export_block_unauthorised_evidence
+      - test_workspace_ui_endpoints_schemas_map_and_static_bundle
   - id: A17
     kind: acceptance
     statement: Replay. A report's frozen inputs reproduce its result without the assistant
     milestone: M6
     lands_in: [pipeline, reporting]
-    status: partial
+    status: built
     tests:
       - test_replay_is_identical
       - test_a_run_with_coupling_replays_to_the_identical_result
+      - test_pipeline_operate_and_cost_stages_merge_kpis_and_replay_identically
+      - test_a17_report_inputs_replay_identically_without_assistant_across_interfaces
   - id: A18
     kind: acceptance
     statement: >-
@@ -649,5 +753,161 @@ entries:
       intended decision
     milestone: M8
     lands_in: [adapters, docs]
+    status: planned
+    tests: []
+
+  # --- plan items (version 2) -----------------------------------------------------------------
+  - id: V01
+    kind: plan_item
+    statement: Decision drivers and ranking stability from the paired samples, each share with its denominator
+    milestone: M5
+    lands_in: [uncertainty, search]
+    status: built
+    tests:
+      - test_pareto_regret_decision_drivers_and_no_defensible_preference
+      - test_synthetic_compare_runs_scenario_sweep_resilience_and_reports
+  - id: V02
+    kind: plan_item
+    statement: >-
+      Resilience cases: loss of the geothermal source, of the backup, of the existing base load and
+      of the electricity supply of a heat pump plant. Reported as unserved heat, hours and largest
+      deficit, never as a probability
+    milestone: M5
+    lands_in: [operation, economics, policies]
+    status: built
+    tests:
+      - test_resilience_cases_report_unserved_heat_hours_and_largest_deficit_only
+      - test_synthetic_compare_runs_scenario_sweep_resilience_and_reports
+  - id: V03
+    kind: plan_item
+    statement: >-
+      A point estimate mode as a named policy that stays runnable next to the uncertainty workflow
+    milestone: M5
+    lands_in: [uncertainty, policies]
+    status: built
+    tests:
+      - test_probabilistic_correlated_point_estimate_and_progressive_policies_on_same_revision
+  - id: V04
+    kind: plan_item
+    statement: >-
+      Progressive sample allocation as a named policy, accepted only with its error measured
+      against the full sample set
+    milestone: M5
+    lands_in: [uncertainty, policies]
+    status: built
+    tests:
+      - test_progressive_allocation_checks_error_against_full_set
+      - test_probabilistic_correlated_point_estimate_and_progressive_policies_on_same_revision
+  - id: V05
+    kind: plan_item
+    statement: >-
+      Explanation records: typed claims with references to result records, checks, policies or
+      sources
+    milestone: M6
+    lands_in: [explain, services]
+    status: built
+    tests:
+      - test_every_synthetic_explanation_passes_claim_check_and_renders_de_en
+  - id: V06
+    kind: plan_item
+    statement: >-
+      A deterministic claim check that accepts or rejects each claim against the stored records
+    milestone: M6
+    lands_in: [explain]
+    status: built
+    tests:
+      - test_every_synthetic_explanation_passes_claim_check_and_renders_de_en
+      - test_wrong_claim_of_every_type_is_deterministically_rejected
+      - test_unresolved_numerical_status_cannot_claim_physical_infeasibility
+  - id: V07
+    kind: plan_item
+    statement: Fixed wording in German and English for every claim type, with no language model
+    milestone: M6
+    lands_in: [explain, reporting]
+    status: built
+    tests:
+      - test_every_synthetic_explanation_passes_claim_check_and_renders_de_en
+  - id: V08
+    kind: plan_item
+    statement: >-
+      An assistant configuration record that selects context design, tool access, checking role,
+      model and budget
+    milestone: M7
+    lands_in: [assistant]
+    status: planned
+    tests: []
+  - id: V09
+    kind: plan_item
+    statement: A session trace record from which tool responses can be replayed
+    milestone: M7
+    lands_in: [assistant, store]
+    status: planned
+    tests: []
+  - id: V10
+    kind: plan_item
+    statement: A fault catalogue whose faults are injected at the ports
+    milestone: M7
+    lands_in: [experiments, ports]
+    status: planned
+    tests: []
+  - id: V11
+    kind: plan_item
+    statement: >-
+      A request suite with a development part and a held out part that is frozen before tuning
+    milestone: M7
+    lands_in: [benchmarks]
+    status: planned
+    tests: []
+  - id: V12
+    kind: plan_item
+    statement: A written definition of a serious planning error, fixed before the experiments
+    milestone: M7
+    lands_in: [experiments, docs]
+    status: planned
+    tests: []
+  - id: V13
+    kind: plan_item
+    statement: >-
+      An experiment harness with repeated trials, recorded settings, paired comparisons and
+      intervals
+    milestone: M7
+    lands_in: [experiments]
+    status: planned
+    tests: []
+
+  # --- experiments (version 2) ----------------------------------------------------------------
+  - id: E01
+    kind: experiment
+    statement: "Experiment: evidence and context"
+    milestone: M7
+    lands_in: [experiments, assistant]
+    status: planned
+    tests: []
+  - id: E02
+    kind: experiment
+    statement: "Experiment: workflow reliability"
+    milestone: M7
+    lands_in: [experiments, assistant, mcp]
+    status: planned
+    tests: []
+  - id: E03
+    kind: experiment
+    statement: "Experiment: checking architecture"
+    milestone: M7
+    lands_in: [experiments, assistant]
+    status: planned
+    tests: []
+  - id: E04
+    kind: experiment
+    statement: "Experiment: uncertainty allocation"
+    milestone: M7
+    lands_in: [experiments, uncertainty]
+    status: planned
+    tests: []
+  - id: E05
+    kind: experiment
+    statement: "Experiment: human use"
+    milestone: M9
+    lands_in: [experiments, assistant, frontend]
     status: planned
     tests: []

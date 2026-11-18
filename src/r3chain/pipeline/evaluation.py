@@ -404,32 +404,39 @@ class CouplingStage(_Base):
         synthetic = False
         for candidate in candidates_of(context.upstream["candidates"]):
             results: dict[str, Any] = {}
-            for case_id in candidate.coupling_case_ids:
-                case = cases[case_id]
-                upstream = sources.get(case.source_scenario_id, {}).get("state")
-                if upstream is not None and upstream != AdapterState.COMPLETED.value:
-                    outcome = CaseOutcome(
-                        case_id,
-                        StageStatus(upstream),
-                        f"the source stage ended as {upstream} for {case.source_scenario_id}",
+            for role, case_ids in (
+                ("operating", candidate.coupling_case_ids),
+                ("capacity", candidate.capacity_coupling_case_ids),
+            ):
+                for case_id in case_ids:
+                    case = cases[case_id]
+                    upstream = sources.get(case.source_scenario_id, {}).get("state")
+                    if upstream is not None and upstream != AdapterState.COMPLETED.value:
+                        outcome = CaseOutcome(
+                            case_id,
+                            StageStatus(upstream),
+                            f"the source stage ended as {upstream} for {case.source_scenario_id}",
+                        )
+                    else:
+                        outcome = evaluate_case(
+                            scenario,
+                            case,
+                            source_models=self._source_models,
+                            network_model=network_model,
+                            source_policy=source,
+                            numerical_policy=numerical,
+                            routes=routes,
+                        )
+                    counts[outcome.status.value] = counts.get(outcome.status.value, 0) + 1
+                    missing.extend(outcome.missing_inputs)
+                    synthetic = synthetic or (
+                        outcome.result is not None and outcome.result.synthetic
                     )
-                else:
-                    outcome = evaluate_case(
-                        scenario,
-                        case,
-                        source_models=self._source_models,
-                        network_model=network_model,
-                        source_policy=source,
-                        numerical_policy=numerical,
-                        routes=routes,
-                    )
-                counts[outcome.status.value] = counts.get(outcome.status.value, 0) + 1
-                missing.extend(outcome.missing_inputs)
-                synthetic = synthetic or (outcome.result is not None and outcome.result.synthetic)
-                results[case_id] = {
-                    "summary": coupling_case_summary(outcome),
-                    "result": outcome.result.to_json_dict() if outcome.result else None,
-                }
+                    results[case_id] = {
+                        "role": role,
+                        "summary": coupling_case_summary(outcome),
+                        "result": outcome.result.to_json_dict() if outcome.result else None,
+                    }
             evaluated[candidate.candidate_id] = results
         if not evaluated:
             return self._output(StageStatus.NOT_ESTABLISHED, reason="there are no candidates")

@@ -1,7 +1,11 @@
-# Candidate enumeration for the synthetic study (milestone M3).
+# Candidate enumeration for the synthetic study (milestone M3/M4).
+#
+# operating_case_ids decide technical eligibility at base/service conditions (shoulder-season).
+# capacity_case_ids (added in v2) measure maximum plant capacity at design load (winter-design)
+# without failing technical eligibility when winter peaks require the backup boiler.
 policy_id: candidate-synthetic
 kind: candidate
-version: "1"
+version: "2"
 title: Candidate enumeration for the synthetic study
 origin: >-
   Invented for the synthetic study. The transmission sizing rule picks the smallest diameter in
@@ -9,8 +13,10 @@ origin: >-
   indicative sizing rule, not a pipe design.
 status: unreviewed
 parameters:
-  # Operating cases every candidate is coupled for, separated by commas.
+  # Operating cases that govern technical feasibility and eligibility, separated by commas.
   operating_case_ids: shoulder-season
+  # Capacity cases coupled to measure geothermal output limits for annual dispatch only.
+  capacity_case_ids: winter-design
   include_conditional_sites: true
   network_pressure_lift_pa: 150000
   transmission_max_velocity_m_s: 1.5

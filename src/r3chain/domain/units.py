@@ -74,6 +74,14 @@ def w_to_kw(power_w: float) -> float:
     return power_w / 1.0e3
 
 
+def currency_per_mwh_to_per_j(price_per_mwh: float) -> float:
+    return price_per_mwh / JOULES_PER_MWH
+
+
+def currency_per_j_to_per_mwh(price_per_j: float) -> float:
+    return price_per_j * JOULES_PER_MWH
+
+
 # --- pressure and depth carry their reference ---------------------------------------------
 
 
@@ -135,6 +143,7 @@ class Depth(Record):
 # Suffix, canonical unit. Matching always prefers the longest suffix.
 _SUFFIX_UNITS: tuple[tuple[str, str], ...] = (
     ("_delta_k", "delta_K"),
+    ("_currency_per_j", "currency/J"),
     ("_currency_per_m", "currency/m"),
     ("_currency", "currency"),
     ("_w_m2_k", "W/(m2 K)"),
@@ -226,6 +235,11 @@ _LINEAR_UNITS: dict[str, tuple[str, float]] = {
     "a": ("a", 1.0),
     "1/a": ("1/a", 1.0),
     "%/a": ("1/a", 0.01),
+    "currency": ("currency", 1.0),
+    "currency/m": ("currency/m", 1.0),
+    "currency/J": ("currency/J", 1.0),
+    "currency/kWh": ("currency/J", 1.0 / JOULES_PER_KWH),
+    "currency/MWh": ("currency/J", 1.0 / JOULES_PER_MWH),
 }
 _PRESSURE_UNITS: dict[str, float] = {
     "Pa": 1.0,

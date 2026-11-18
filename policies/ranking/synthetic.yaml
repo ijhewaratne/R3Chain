@@ -1,16 +1,17 @@
-# Provisional ranking for the synthetic study (milestone M3).
 policy_id: ranking-synthetic
 kind: ranking
-version: "1"
-title: Provisional ranking by indicative route cost
+version: "2"
+title: Synthetic technical, economic and uncertainty decision policy
 origin: >-
-  Invented for the synthetic study. Until the economics of milestone M4 exist, the only cost
-  that candidates can be compared on is the indicative cost of their route. The ranking metric,
-  the tie tolerance and the risk policy are open decision O14.
+  Plan v2 M5 decision policy: preserves M3 indicative route-cost screening in assess while
+  adding explicit primary decision metric, dominance margin, and Pareto objectives for compare.
 status: unreviewed
 parameters:
   primary_metric: indicative_route_cost_currency
+  decision_metric: lcoh_geothermal_delivered_currency_per_j
+  decision_rule: expected
   tie_tolerance_fraction: 0.01
-  # Site evidence statuses that may be ranked, separated by commas.
+  preferable_cost_margin_fraction: 0.02
+  pareto_objectives: "pv_total_cost_currency:min, geothermal_demand_share_fraction:max"
   rankable_site_evidence: documented
   rank_conditional_screening: false

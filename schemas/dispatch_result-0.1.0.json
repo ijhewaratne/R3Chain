@@ -1,0 +1,286 @@
+{
+  "$defs": {
+    "AdapterState": {
+      "description": "Outcome of one engine call (specification 7.4).",
+      "enum": [
+        "completed",
+        "invalid_input",
+        "unsupported_model",
+        "non_converged",
+        "physical_limit_exceeded",
+        "cancelled",
+        "tool_failure"
+      ],
+      "title": "AdapterState",
+      "type": "string"
+    },
+    "DispatchTotals": {
+      "additionalProperties": false,
+      "description": "Annual integrated quantities of one completed dispatch calculation.",
+      "properties": {
+        "backup_fuel_and_om_cost_currency": {
+          "title": "Backup Fuel And Om Cost Currency",
+          "type": "number"
+        },
+        "backup_heat_j": {
+          "minimum": 0.0,
+          "title": "Backup Heat J",
+          "type": "number"
+        },
+        "base_load_fuel_and_om_cost_currency": {
+          "title": "Base Load Fuel And Om Cost Currency",
+          "type": "number"
+        },
+        "base_load_heat_j": {
+          "minimum": 0.0,
+          "title": "Base Load Heat J",
+          "type": "number"
+        },
+        "by_unit_heat_j": {
+          "additionalProperties": {
+            "minimum": 0.0,
+            "type": "number"
+          },
+          "title": "By Unit Heat J",
+          "type": "object"
+        },
+        "capacity_basis": {
+          "default": "lower_bound",
+          "enum": [
+            "limit_proven",
+            "lower_bound"
+          ],
+          "title": "Capacity Basis",
+          "type": "string"
+        },
+        "compressor_electricity_j": {
+          "minimum": 0.0,
+          "title": "Compressor Electricity J",
+          "type": "number"
+        },
+        "delivered_heat_j": {
+          "minimum": 0.0,
+          "title": "Delivered Heat J",
+          "type": "number"
+        },
+        "demand_heat_j": {
+          "minimum": 0.0,
+          "title": "Demand Heat J",
+          "type": "number"
+        },
+        "energy_cost_currency": {
+          "title": "Energy Cost Currency",
+          "type": "number"
+        },
+        "equivalent_full_load_s": {
+          "minimum": 0.0,
+          "title": "Equivalent Full Load S",
+          "type": "number"
+        },
+        "geothermal_available_heat_j": {
+          "minimum": 0.0,
+          "title": "Geothermal Available Heat J",
+          "type": "number"
+        },
+        "geothermal_curtailed_heat_j": {
+          "minimum": 0.0,
+          "title": "Geothermal Curtailed Heat J",
+          "type": "number"
+        },
+        "geothermal_delivered_heat_j": {
+          "minimum": 0.0,
+          "title": "Geothermal Delivered Heat J",
+          "type": "number"
+        },
+        "geothermal_electricity_cost_currency": {
+          "title": "Geothermal Electricity Cost Currency",
+          "type": "number"
+        },
+        "geothermal_plant_handover_heat_j": {
+          "minimum": 0.0,
+          "title": "Geothermal Plant Handover Heat J",
+          "type": "number"
+        },
+        "operating_time_s": {
+          "minimum": 0.0,
+          "title": "Operating Time S",
+          "type": "number"
+        },
+        "peak_backup_heat_w": {
+          "minimum": 0.0,
+          "title": "Peak Backup Heat W",
+          "type": "number"
+        },
+        "reference_capacity_w": {
+          "minimum": 0.0,
+          "title": "Reference Capacity W",
+          "type": "number"
+        },
+        "route_heat_loss_j": {
+          "minimum": 0.0,
+          "title": "Route Heat Loss J",
+          "type": "number"
+        },
+        "source_pump_electricity_j": {
+          "minimum": 0.0,
+          "title": "Source Pump Electricity J",
+          "type": "number"
+        },
+        "total_duration_s": {
+          "exclusiveMinimum": 0.0,
+          "title": "Total Duration S",
+          "type": "number"
+        },
+        "unserved_heat_j": {
+          "minimum": 0.0,
+          "title": "Unserved Heat J",
+          "type": "number"
+        },
+        "utilisation_fraction": {
+          "minimum": 0.0,
+          "title": "Utilisation Fraction",
+          "type": "number"
+        }
+      },
+      "required": [
+        "total_duration_s",
+        "demand_heat_j",
+        "delivered_heat_j",
+        "geothermal_available_heat_j",
+        "geothermal_delivered_heat_j",
+        "geothermal_plant_handover_heat_j",
+        "geothermal_curtailed_heat_j",
+        "route_heat_loss_j",
+        "base_load_heat_j",
+        "backup_heat_j",
+        "unserved_heat_j",
+        "source_pump_electricity_j",
+        "compressor_electricity_j",
+        "operating_time_s",
+        "equivalent_full_load_s",
+        "reference_capacity_w",
+        "utilisation_fraction",
+        "geothermal_electricity_cost_currency",
+        "backup_fuel_and_om_cost_currency",
+        "base_load_fuel_and_om_cost_currency",
+        "energy_cost_currency",
+        "peak_backup_heat_w"
+      ],
+      "title": "DispatchTotals",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "by_unit_w": {
+      "additionalProperties": {
+        "items": {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "type": "array"
+      },
+      "title": "By Unit W",
+      "type": "object"
+    },
+    "curtailed_w": {
+      "default": [],
+      "items": {
+        "minimum": 0.0,
+        "type": "number"
+      },
+      "title": "Curtailed W",
+      "type": "array"
+    },
+    "diagnostics": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Diagnostics",
+      "type": "array"
+    },
+    "geothermal_plant_w": {
+      "default": [],
+      "items": {
+        "minimum": 0.0,
+        "type": "number"
+      },
+      "title": "Geothermal Plant W",
+      "type": "array"
+    },
+    "geothermal_w": {
+      "default": [],
+      "items": {
+        "minimum": 0.0,
+        "type": "number"
+      },
+      "title": "Geothermal W",
+      "type": "array"
+    },
+    "not_modelled": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Not Modelled",
+      "type": "array"
+    },
+    "reason": {
+      "default": "",
+      "title": "Reason",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "state": {
+      "$ref": "#/$defs/AdapterState"
+    },
+    "strategy": {
+      "minLength": 1,
+      "title": "Strategy",
+      "type": "string"
+    },
+    "strategy_version": {
+      "minLength": 1,
+      "title": "Strategy Version",
+      "type": "string"
+    },
+    "synthetic": {
+      "default": false,
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "totals": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DispatchTotals"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "unserved_w": {
+      "default": [],
+      "items": {
+        "minimum": 0.0,
+        "type": "number"
+      },
+      "title": "Unserved W",
+      "type": "array"
+    }
+  },
+  "required": [
+    "strategy",
+    "strategy_version",
+    "state"
+  ],
+  "title": "DispatchResult",
+  "type": "object"
+}

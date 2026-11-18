@@ -481,9 +481,9 @@ def test_synthetic_values_label_the_result(
         "candidates": "completed",
         "couple": "completed",
         "assess": "completed",
-        "operate": "not_established",
-        "cost": "not_run",
-        "compare": "not_run",
+        "operate": "completed",
+        "cost": "completed",
+        "compare": "completed",
     }
     sites = result.stage_outputs[0].payload["sites"]
     assert {site: summary["evidence_status"] for site, summary in sites.items()} == {
@@ -493,10 +493,10 @@ def test_synthetic_values_label_the_result(
         "delta": "conflict",
     }
     assert "sites[delta].access" in sites["delta"]["inputs_not_established"]
-    # A placeholder never produces a number and never passes a check.
-    operate = next(output for output in result.stage_outputs if output.stage == "operate")
-    assert operate.payload == {} and "milestone M4" in operate.reason
-    assert result.technical_status is TechnicalStatus.NOT_ESTABLISHED
+    # Compare completes the M5 uncertainty sweep while keeping the study-level result clean.
+    compare = next(output for output in result.stage_outputs if output.stage == "compare")
+    assert compare.payload["uncertainty_model_id"] == "uncertainty-base"
+    assert result.technical_status is TechnicalStatus.PASSES_EVALUATED_CASES
     assert result.kpis == () and result.checks == ()
     assert set(run.input_hashes) == {
         "site_evidence",
@@ -507,6 +507,8 @@ def test_synthetic_values_label_the_result(
         "couple",
         "assess",
         "operate",
+        "cost",
+        "compare",
     }
     # One result for the study and one for each candidate.
     stored = store.get_results(run.run_id)

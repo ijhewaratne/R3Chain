@@ -1,0 +1,186 @@
+{
+  "$defs": {
+    "FailureClass": {
+      "description": "Five separate failure categories required by specification section 16.3.",
+      "enum": [
+        "invalid_request",
+        "denied_access",
+        "physical_check_failed",
+        "numerical_non_convergence",
+        "service_fault"
+      ],
+      "title": "FailureClass",
+      "type": "string"
+    },
+    "JobStatus": {
+      "enum": [
+        "queued",
+        "running",
+        "completed",
+        "cancelled",
+        "failed"
+      ],
+      "title": "JobStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Persisted background job with stage progress, cancellation state, and access scope.",
+  "properties": {
+    "access_scope": {
+      "minLength": 1,
+      "title": "Access Scope",
+      "type": "string"
+    },
+    "cancel_requested": {
+      "default": false,
+      "title": "Cancel Requested",
+      "type": "boolean"
+    },
+    "completed_stages": {
+      "default": 0,
+      "title": "Completed Stages",
+      "type": "integer"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "current_stage": {
+      "default": "",
+      "title": "Current Stage",
+      "type": "string"
+    },
+    "diagnostics": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Diagnostics",
+      "type": "array"
+    },
+    "error_message": {
+      "default": "",
+      "title": "Error Message",
+      "type": "string"
+    },
+    "failure_class": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FailureClass"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "finished_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Finished At"
+    },
+    "job_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Job Id",
+      "type": "string"
+    },
+    "principal_id": {
+      "minLength": 1,
+      "title": "Principal Id",
+      "type": "string"
+    },
+    "progress_fraction": {
+      "default": 0.0,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Progress Fraction",
+      "type": "number",
+      "unit": "1"
+    },
+    "project_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "result_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 120,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+        "type": "string"
+      },
+      "title": "Result Ids",
+      "type": "array"
+    },
+    "run_id": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Run Id"
+    },
+    "scenario_revision": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Scenario Revision",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/JobStatus"
+    },
+    "study_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Study Id",
+      "type": "string"
+    },
+    "total_stages": {
+      "default": 0,
+      "title": "Total Stages",
+      "type": "integer"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_id",
+    "study_id",
+    "project_id",
+    "scenario_revision",
+    "principal_id",
+    "access_scope",
+    "status",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "JobRecord",
+  "type": "object"
+}

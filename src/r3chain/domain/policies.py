@@ -39,6 +39,26 @@ def text(policy: Policy, name: str) -> str:
     return value.strip()
 
 
+def optional_text(policy: Policy, name: str) -> str | None:
+    """Return a non-empty string parameter when present, or ``None`` if omitted."""
+    value = policy.parameters.get(name)
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise PolicyError(f"{_where(policy)}: {name} must be a non-empty string")
+    return value.strip()
+
+
+def optional_non_negative_number(policy: Policy, name: str) -> float | None:
+    """Return a non-negative finite number parameter when present, or ``None`` if omitted."""
+    value = policy.parameters.get(name)
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int | float) or float(value) < 0.0:
+        raise PolicyError(f"{_where(policy)}: {name} must be a non-negative number")
+    return float(value)
+
+
 def flag(policy: Policy, name: str) -> bool:
     value = policy.parameters.get(name)
     if not isinstance(value, bool):

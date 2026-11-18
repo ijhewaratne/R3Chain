@@ -9,6 +9,9 @@
     r3chain network SCENARIO CASE      solve one operating case of a network
     r3chain couple SCENARIO            evaluate the coupling cases of a scenario file
     r3chain candidates RUN             candidate, ranking and rejection tables of a run
+    r3chain economics RUN              operation, cost ledger, LCOH and baseline comparison of a run
+    r3chain compare RUN                uncertainty, Pareto and resilience comparison of a run
+    r3chain report RUN                 export reproducible Markdown or JSON evidence report
     r3chain layers RUN DIRECTORY       write the map layers of a run as GeoJSON
     r3chain policies [DIRECTORY]       list policy files with their hashes
     r3chain schemas export|check       write or verify the committed JSON Schemas
@@ -29,7 +32,6 @@ from typing import Any
 from r3chain.coupling.cases import CaseOutcome, MemoNetworkModel, evaluate_case
 from r3chain.coupling.loop import CouplingResult
 from r3chain.domain.assumptions import assumption_register
-from r3chain.domain.paths import PatchOperation, apply_patch
 from r3chain.domain.records.runs import (
     Assumption,
     CheckOutcome,
@@ -38,19 +40,18 @@ from r3chain.domain.records.runs import (
     Run,
     StageOutput,
 )
-from r3chain.domain.records.scenario import FieldChange, Scenario
+from r3chain.domain.records.scenario import FieldChange, Scenario, ScenarioRevision
 from r3chain.domain.status import AdapterState
-from r3chain.domain.units import kelvin_to_celsius, pa_to_bar
+from r3chain.domain.units import JOULES_PER_MWH, joule_to_mwh, kelvin_to_celsius, pa_to_bar
 from r3chain.domain.validation import (
     Severity,
     ValidationReport,
     load_scenario_file,
-    parse_scenario,
     read_data_file,
 )
 from r3chain.pipeline.evaluation import coupling_case_summary, single_policy
-from r3chain.pipeline.runner import PipelineRunner, ScenarioNotExecutableError
-from r3chain.pipeline.stages import default_source_models, default_stages
+from r3chain.pipeline.runner import ReplayOutcome, ScenarioNotExecutableError
+from r3chain.pipeline.stages import default_source_models
 from r3chain.ports.network import NetworkCase, NetworkResult
 from r3chain.schemas import (
     DEFAULT_SCHEMA_DIRECTORY,
@@ -70,8 +71,19 @@ DEFAULT_STORE = ".r3chain"
 DEFAULT_POLICY_DIRECTORY = "policies"
 
 
+def _store_root(arguments: argparse.Namespace) -> Path:
+    return Path(arguments.store or os.environ.get("R3CHAIN_HOME", DEFAULT_STORE))
+
+
 def _store(arguments: argparse.Namespace) -> Store:
-    return Store(Path(arguments.store or os.environ.get("R3CHAIN_HOME", DEFAULT_STORE)))
+    return Store(_store_root(arguments))
+
+
+def _service(arguments: argparse.Namespace) -> Any:
+    from r3chain.services import PlanningService
+
+    policies = Path(getattr(arguments, "policies", DEFAULT_POLICY_DIRECTORY))
+    return PlanningService(_store_root(arguments), policy_directory=policies)
 
 
 def _compact(value: Any, limit: int = 60) -> str:
@@ -424,6 +436,31 @@ def _print_stage_detail(output: StageOutput) -> None:
         counts = ", ".join(f"{value} {key}" for key, value in payload.get("counts", {}).items())
         if counts:
             print(f"      coupling cases: {counts}")
+    elif output.stage == "operate":
+        baseline = payload.get("baseline", {})
+        totals = baseline.get("totals")
+        if totals:
+            print(
+                f"      baseline {baseline.get('alternative_id', '?')}: "
+                f"{joule_to_mwh(totals['delivered_heat_j']):.0f} MWh delivered, "
+                f"base load {joule_to_mwh(totals['base_load_heat_j']):.0f} MWh, "
+                f"backup {joule_to_mwh(totals['backup_heat_j']):.0f} MWh"
+            )
+        op_counts = payload.get("counts", {})
+        if op_counts:
+            print(
+                f"      candidates operated: {op_counts.get('completed', 0)} completed, "
+                f"{op_counts.get('unresolved', 0)} unresolved"
+            )
+    elif output.stage == "cost":
+        baseline = payload.get("baseline", {}).get("unsubsidised", {})
+        if baseline:
+            lcoh = baseline.get("lcoh_currency_per_j")
+            lcoh_txt = f"{lcoh * JOULES_PER_MWH:.2f}/MWh" if lcoh is not None else "undefined"
+            print(
+                f"      baseline PV cost {_money(baseline.get('pv_cost_currency'))}, "
+                f"LCOH {lcoh_txt} ({baseline.get('currency', '')})"
+            )
 
 
 def _candidate_line(item: dict[str, Any]) -> str:
@@ -500,79 +537,94 @@ def cmd_assumptions(arguments: argparse.Namespace) -> int:
     return 0
 
 
-def _register_inputs(store: Store, scenario: Scenario, base: Path, policies: Path) -> None:
-    """Register the datasets and policies a scenario refers to.
-
-    A dataset whose source file is available is verified against its checksum and stored.
-    """
-    for dataset in scenario.datasets:
-        candidates = [Path(dataset.source_uri), base / dataset.source_uri]
-        file = next((path for path in candidates if path.is_file()), None)
-        store.register_dataset(dataset, file)
-    for policy in load_policies(policies):
-        store.register_policy(policy)
-
-
 def cmd_run(arguments: argparse.Namespace) -> int:
+    from r3chain.services import AccessPrincipal
+
     path = Path(arguments.file)
     scenario = _load_or_report(path)
     if scenario is None:
         return 1
-    store = _store(arguments)
-    _register_inputs(store, scenario, path.parent, Path(arguments.policies))
-    revision = store.add_revision(
-        scenario,
-        author=arguments.author,
-        rationale=arguments.rationale,
-        parent_revision_id=arguments.parent,
-    )
-    runner = PipelineRunner(store, default_stages())
-    run, result = runner.run(
-        revision.revision_id, seed=arguments.seed, use_cache=not arguments.no_cache
-    )
-    _print_run(run, (result,), detail=False)
-    return 0
+    svc = _service(arguments)
+    principal = AccessPrincipal.local_default()
+    try:
+        revision, _ = svc.register_inputs_and_scenario(
+            principal,
+            scenario,
+            base_dir=path.parent,
+            policies_dir=Path(arguments.policies),
+            author=arguments.author,
+            rationale=arguments.rationale,
+            parent_revision_id=arguments.parent,
+        )
+        res = svc.evaluate_study(
+            principal,
+            study_id=scenario.study.study_id,
+            revision=revision.revision_id,
+            policies_dir=Path(arguments.policies),
+            seed=arguments.seed,
+            use_cache=not arguments.no_cache,
+            wait=True,
+        )
+        run = Run.model_validate(res.data["run"])
+        store = _store(arguments)
+        results = store.get_results(run.run_id)
+        store.close()
+        _print_run(run, results, detail=False)
+        return 0
+    finally:
+        svc.close()
 
 
 def cmd_variant(arguments: argparse.Namespace) -> int:
-    store = _store(arguments)
-    parent = store.get_scenario(arguments.revision)
-    operations: list[PatchOperation] = []
+    from r3chain.services import AccessPrincipal
+
+    patches: list[dict[str, Any]] = []
     for assignment in arguments.set or []:
         field_path, _, text = assignment.partition("=")
-        operations.append(PatchOperation("set", field_path, json.loads(text)))
+        patches.append({"op": "set", "path": field_path, "value": json.loads(text)})
     for assignment in arguments.set_known or []:
         field_path, _, text = assignment.partition("=")
-        evidence = {
-            "state": "known",
-            "value": json.loads(text),
-            "provenance": {"provenance_type": "user_supplied", "author": arguments.author},
-        }
-        operations.append(PatchOperation("set", field_path, evidence))
+        patches.append({"op": "set_known", "path": field_path, "value": json.loads(text)})
     for field_path in arguments.remove or []:
-        operations.append(PatchOperation("remove", field_path))
-    if not operations:
+        patches.append({"op": "remove", "path": field_path})
+    if not patches:
         print("error: give at least one --set, --set-known or --remove", file=sys.stderr)
         return 2
-    scenario, report = parse_scenario(apply_patch(parent.to_json_dict(), operations))
-    if scenario is None or not report.executable:
-        _print_report(report)
-        return 1
-    revision = store.add_revision(
-        scenario,
-        author=arguments.author,
-        rationale=arguments.rationale,
-        parent_revision_id=arguments.revision,
-    )
-    print(f"Revision  {revision.revision_id}")
-    print(f"Parent    {revision.parent_revision_id}")
-    print(f"Changes ({len(revision.changes)})")
-    _print_changes(revision.changes)
-    if arguments.run:
-        run, result = PipelineRunner(store, default_stages()).run(revision.revision_id)
-        print()
-        _print_run(run, (result,), detail=False)
-    return 0
+
+    svc = _service(arguments)
+    principal = AccessPrincipal.local_default()
+    try:
+        res = svc.create_scenario_variant(
+            principal,
+            parent_revision=arguments.revision,
+            explicit_patch=patches,
+            rationale=arguments.rationale,
+            author=arguments.author,
+        )
+        if res.failure_class is not None:
+            _print_report(ValidationReport.model_validate(res.data["validation"]))
+            return 1
+        revision = ScenarioRevision.model_validate(res.data["revision"])
+        print(f"Revision  {revision.revision_id}")
+        print(f"Parent    {revision.parent_revision_id}")
+        print(f"Changes ({len(revision.changes)})")
+        _print_changes(revision.changes)
+        if arguments.run:
+            eval_res = svc.evaluate_study(
+                principal,
+                study_id=res.study_id or "",
+                revision=revision.revision_id,
+                wait=True,
+            )
+            run = Run.model_validate(eval_res.data["run"])
+            store = _store(arguments)
+            results = store.get_results(run.run_id)
+            store.close()
+            print()
+            _print_run(run, results, detail=False)
+        return 0
+    finally:
+        svc.close()
 
 
 def cmd_show(arguments: argparse.Namespace) -> int:
@@ -599,16 +651,23 @@ def cmd_show(arguments: argparse.Namespace) -> int:
 
 
 def cmd_replay(arguments: argparse.Namespace) -> int:
-    store = _store(arguments)
-    outcome = PipelineRunner(store, default_stages()).replay(arguments.run_id)
-    print(f"Original  {outcome.original_run_id}  {outcome.original_hash}")
-    print(f"Replay    {outcome.replay_run_id}  {outcome.replay_hash}")
-    if outcome.engine_versions_changed:
-        print(
-            f"Versions changed since the original run: {', '.join(outcome.engine_versions_changed)}"
-        )
-    print("Identical" if outcome.identical else "DIFFERENT")
-    return 0 if outcome.identical else 1
+    from r3chain.services import AccessPrincipal
+
+    svc = _service(arguments)
+    try:
+        res = svc.replay_run(AccessPrincipal.local_default(), arguments.run_id)
+        outcome = ReplayOutcome.model_validate(res.data["replay"])
+        print(f"Original  {outcome.original_run_id}  {outcome.original_hash}")
+        print(f"Replay    {outcome.replay_run_id}  {outcome.replay_hash}")
+        if outcome.engine_versions_changed:
+            print(
+                f"Versions changed since the original run: "
+                f"{', '.join(outcome.engine_versions_changed)}"
+            )
+        print("Identical" if outcome.identical else "DIFFERENT")
+        return 0 if outcome.identical else 1
+    finally:
+        svc.close()
 
 
 def cmd_network(arguments: argparse.Namespace) -> int:
@@ -748,7 +807,8 @@ def cmd_candidates(arguments: argparse.Namespace) -> int:
     print("\nExplanations")
     for item in assess["assessments"]:
         candidate = candidates.get(item["candidate_id"], {})
-        lines = [*item["explanation"], *item["ranking_eligibility"]["reasons"]]
+        cap_lines = [_format_capacity_case(cap) for cap in item.get("capacity_cases", [])]
+        lines = [*item["explanation"], *item["ranking_eligibility"]["reasons"], *cap_lines]
         print(
             f"  {item['candidate_id']}  {item['label']}  route {candidate.get('route_id', '?')}  "
             f"evaluation {item['evaluation_status']}"
@@ -778,6 +838,130 @@ def cmd_layers(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _lcoh_mwh(value: float | None, currency: str) -> str:
+    if value is None:
+        return "undefined"
+    return f"{value * JOULES_PER_MWH:.2f} {currency}/MWh"
+
+
+def _format_capacity_case(cap: dict[str, Any]) -> str:
+    op_id = cap.get("operating_case_id", cap.get("coupling_case_id", "?"))
+    outcome = cap.get("outcome", "not_established")
+    delivered_w = cap.get("delivered_heat_w")
+    reason = str(cap.get("reason", "")).strip()
+    if outcome == "limit_found":
+        mw = f"{float(delivered_w) / 1e6:.2f} MW" if delivered_w is not None else "0.00 MW"
+        detail = f"; {reason}" if reason else ""
+        return f"capacity {op_id}: limit found ({mw}{detail})"
+    if outcome == "demand_covered":
+        mw = f"{float(delivered_w) / 1e6:.2f} MW" if delivered_w is not None else "-"
+        return f"capacity {op_id}: demand covered ({mw})"
+    return f"capacity {op_id}: not established ({reason or 'no operating point'})"
+
+
+def cmd_economics(arguments: argparse.Namespace) -> int:
+    store = _store(arguments)
+    payloads = _stage_payloads(store, arguments.run_id)
+    operate = payloads.get("operate", {})
+    cost = payloads.get("cost", {})
+    assess = payloads.get("assess", {})
+    labels = {item["candidate_id"]: item["label"] for item in assess.get("assessments", [])}
+    if arguments.json:
+        print(json.dumps({"operate": operate, "cost": cost}, indent=2))
+        return 0
+    cand_costs = cost.get("candidates", {})
+    if not cand_costs:
+        print("this run has no economic evaluation yet")
+        return 1
+    baseline = cost.get("baseline", {})
+    base_unsub = baseline.get("unsubsidised", {})
+    currency = base_unsub.get("currency", "EUR")
+    print(
+        f"Baseline  {baseline.get('baseline_id', '?')}  "
+        f"{base_unsub.get('price_convention', '')} {base_unsub.get('price_base_year', '')} "
+        f"{currency}  VAT {'included' if base_unsub.get('vat_included') else 'excluded'}  "
+        f"carbon {'monetised' if base_unsub.get('carbon_monetised') else 'not monetised'}"
+    )
+    print(
+        f"          PV cost {_money(base_unsub.get('pv_cost_currency'))}  "
+        f"LCOH {_lcoh_mwh(base_unsub.get('lcoh_currency_per_j'), currency)}"
+    )
+    print(f"\nCandidates ({len(cand_costs)})")
+    for candidate_id, entry in cand_costs.items():
+        label = labels.get(candidate_id, candidate_id)
+        if entry.get("status") != "completed":
+            print(f"  {candidate_id}  {label}: {entry.get('status')} ({entry.get('reason', '')})")
+            continue
+        bounds = entry["boundaries"]
+        plant_b = bounds["plant"]
+        geo_b = bounds["geothermal_delivered"]
+        sys_b = bounds["system_delivered"]
+        comp = entry["baseline_comparison"]
+        op_cand = operate.get("candidates", {}).get(candidate_id, {}) or {}
+        op_totals = op_cand.get("totals") or {}
+        geo_mwh = joule_to_mwh(op_totals.get("geothermal_delivered_heat_j", 0.0))
+        curt_mwh = joule_to_mwh(op_totals.get("geothermal_curtailed_heat_j", 0.0))
+        cap_mw = op_totals.get("reference_capacity_w", 0.0) / 1e6
+        cap_basis = str(op_totals.get("capacity_basis", "lower_bound")).replace("_", " ")
+        reconcile = entry["reconciliation"]
+        rec_state = (
+            "reconciled"
+            if not reconcile.get("duplicate_ownership_errors")
+            else "DUPLICATE OWNERSHIP"
+        )
+        print(
+            f"  {candidate_id}  {label}  [{rec_state}]  "
+            f"cap {cap_mw:.2f} MW ({cap_basis})  geo {geo_mwh:.0f} MWh "
+            f"(curtailed {curt_mwh:.0f} MWh)"
+        )
+        print(
+            f"      LCOH plant: {_lcoh_mwh(plant_b.get('lcoh_currency_per_j'), currency)}  "
+            f"geo delivered: {_lcoh_mwh(geo_b.get('lcoh_currency_per_j'), currency)}  "
+            f"system delivered: {_lcoh_mwh(sys_b.get('lcoh_currency_per_j'), currency)}"
+        )
+        print(
+            f"      CAPEX {_money(geo_b.get('capex_currency'))}  "
+            f"PV cost {_money(sys_b.get('pv_cost_currency'))}  "
+            f"delta vs baseline {_money(comp.get('incremental_discounted_cost_currency'))}"
+            + (
+                f"  NPV {_money(sys_b.get('npv_currency'))}"
+                if sys_b.get("npv_currency") is not None
+                else ""
+            )
+        )
+        funded = entry.get("funded")
+        if funded is not None:
+            f_geo = funded["geothermal_delivered"]
+            f_comp = funded["baseline_comparison"]
+            lcoh_txt = _lcoh_mwh(f_geo.get("lcoh_currency_per_j"), currency)
+            delta_txt = _money(f_comp.get("incremental_discounted_cost_currency"))
+            print(f"      funded case: LCOH geo {lcoh_txt}  delta vs baseline {delta_txt}")
+        cap_cases = op_cand.get("capacity_cases", ())
+        for cap in cap_cases:
+            print(f"      {_format_capacity_case(cap)}")
+    extra = cost.get("route_demand_comparisons", [])
+    if extra:
+        print(f"\nRoutes with linked additional customers ({len(extra)})")
+        for row in extra:
+            b_heat = joule_to_mwh(row["base_geothermal_delivered_j"])
+            w_heat = joule_to_mwh(row["with_demand_geothermal_delivered_j"])
+            b_lcoh = _lcoh_mwh(row["base_lcoh_geothermal_delivered_currency_per_j"], currency)
+            w_lcoh = _lcoh_mwh(
+                row["with_demand_lcoh_geothermal_delivered_currency_per_j"], currency
+            )
+            count = row["linked_customer_count"]
+            print(
+                f"  {row['candidate_id']} route {row['route_id']} (+{count}): "
+                f"geo {b_heat:.0f} -> {w_heat:.0f} MWh  LCOH {b_lcoh} -> {w_lcoh}"
+            )
+    not_modelled = tuple(
+        dict.fromkeys((*operate.get("not_modelled", ()), *cost.get("not_modelled", ())))
+    )
+    if not_modelled:
+        print(f"\nNot modelled: {'; '.join(not_modelled)}")
+    return 0
+
+
 def cmd_policies(arguments: argparse.Namespace) -> int:
     policies = load_policies(Path(arguments.directory))
     if not policies:
@@ -793,20 +977,156 @@ def cmd_policies(arguments: argparse.Namespace) -> int:
 
 
 def cmd_schemas(arguments: argparse.Namespace) -> int:
-    directory = Path(arguments.directory)
     if arguments.action == "check":
-        problems = check_schemas(directory)
+        problems = check_schemas(Path(arguments.directory))
         for problem in problems:
             print(problem)
         if not problems:
             print("schemas are current")
         return 1 if problems else 0
-    written = export_schemas(directory, force=arguments.force)
+    written = export_schemas(Path(arguments.directory), force=arguments.force)
     for path in written:
         print(f"wrote {path}")
     if not written:
         print("schemas are current")
     return 0
+
+
+def cmd_compare(arguments: argparse.Namespace) -> int:
+    store = _store(arguments)
+    payloads = _stage_payloads(store, arguments.run_id)
+    compare_payload = payloads.get("compare", {})
+    if arguments.json:
+        print(json.dumps(compare_payload, indent=2))
+        return 0
+    if not compare_payload:
+        print("compare stage has no completed output")
+        return 1
+    comp = compare_payload.get("comparison", {})
+    print(f"Uncertainty compare  {compare_payload.get('uncertainty_model_id', '')}")
+    print(f"  mode: {compare_payload.get('mode')}  samples: {compare_payload.get('sample_count')}")
+    print(f"  probability basis: {compare_payload.get('probability_basis')}")
+    print(f"  preference: {comp.get('preference_outcome')}  ({comp.get('preference_reason', '')})")
+    assess_labels = {
+        a["candidate_id"]: a["label"] for a in payloads.get("assess", {}).get("assessments", [])
+    }
+    stability = {r["candidate_id"]: r for r in comp.get("ranking_stability", [])}
+    for cid in comp.get("ordered_candidate_ids", []):
+        row = comp["candidates"][cid]
+        acc = row["sample_account"]
+        stab = stability.get(cid)
+        share_txt = f"{stab['first_rank_count']}/{stab['denominator']}" if stab else "-"
+        print(
+            f"  {assess_labels.get(cid, cid)}  eval {acc['evaluated_samples']}/"
+            f"{acc['total_samples']}  feasible {acc['feasible_samples']}  "
+            f"1st-share {share_txt}  pareto {row.get('pareto_optimal')}"
+        )
+    drivers = comp.get("decision_drivers", [])
+    if drivers:
+        print(f"Decision drivers ({len(drivers)})")
+        for drv in drivers:
+            print(
+                f"  {drv['variable_id']}: rho={drv['spearman_rank_correlation']:.3f}  "
+                f"switches={drv['switches_winner']}"
+            )
+    return 0
+
+
+def cmd_report(arguments: argparse.Namespace) -> int:
+    from r3chain.services import AccessPrincipal
+
+    svc = _service(arguments)
+    try:
+        out = Path(arguments.output) if arguments.output else None
+        res = svc.export_study_report(
+            AccessPrincipal.local_default(),
+            run_id=arguments.run_id,
+            fmt=arguments.format,
+            lang=arguments.lang,
+            output_path=out,
+        )
+        text = str(res.data["content"])
+        if arguments.output:
+            print(f"wrote {arguments.output}")
+        else:
+            print(text, end="" if text.endswith("\n") else "\n")
+        return 0
+    finally:
+        svc.close()
+
+
+def cmd_explain(arguments: argparse.Namespace) -> int:
+    from r3chain.services import AccessPrincipal
+
+    svc = _service(arguments)
+    try:
+        res = svc.explain_run_target(
+            AccessPrincipal.local_default(),
+            run_id=arguments.run_id,
+            target=arguments.target,
+            kind=arguments.kind,
+            lang=arguments.lang,
+        )
+        if arguments.json:
+            print(json.dumps(res.explanation, indent=2))
+        else:
+            assert res.explanation is not None
+            print(res.explanation["rendered"])
+        return 0
+    finally:
+        svc.close()
+
+
+def cmd_serve_api(arguments: argparse.Namespace) -> int:
+    import uvicorn
+
+    from r3chain.api import create_app
+    from r3chain.services import AccessPrincipal, PlanningService
+
+    store_root = _store_root(arguments)
+    policies_dir = Path(arguments.policies)
+    seed_file = getattr(arguments, "seed_scenario", None)
+    if seed_file:
+        seed_path = Path(seed_file)
+        scenario = _load_or_report(seed_path)
+        if scenario is None:
+            return 1
+        svc = PlanningService(store_root, policy_directory=policies_dir)
+        try:
+            svc.register_inputs_and_scenario(
+                AccessPrincipal.local_default(),
+                scenario,
+                base_dir=seed_path.parent,
+                policies_dir=policies_dir,
+                author="serve-api",
+                rationale=f"seed from {seed_path.name}",
+            )
+        finally:
+            svc.close()
+
+    fe_arg = getattr(arguments, "frontend_dir", None)
+    app = create_app(
+        store_root,
+        policy_directory=policies_dir,
+        frontend_dir=Path(fe_arg) if fe_arg else None,
+    )
+    uvicorn.run(app, host=arguments.host, port=int(arguments.port))
+    return 0
+
+
+def cmd_serve_mcp(arguments: argparse.Namespace) -> int:
+    import asyncio
+
+    from r3chain.mcp import create_mcp_server
+    from r3chain.services import PlanningService
+
+    svc = PlanningService(_store_root(arguments), policy_directory=Path(arguments.policies))
+    try:
+        server = create_mcp_server(svc)
+        asyncio.run(server.run_stdio_async())
+        return 0
+    finally:
+        svc.close()
 
 
 # --- parser ---------------------------------------------------------------------------------
@@ -872,6 +1192,53 @@ def build_parser() -> argparse.ArgumentParser:
     candidates.add_argument("--json", action="store_true")
     candidates.set_defaults(handler=cmd_candidates)
 
+    economics = commands.add_parser(
+        "economics", help="operation, reconciled cost ledgers and LCOH tables of a run"
+    )
+    economics.add_argument("run_id")
+    economics.add_argument("--json", action="store_true")
+    economics.set_defaults(handler=cmd_economics)
+
+    compare = commands.add_parser(
+        "compare", help="uncertainty, Pareto, drivers and resilience comparison of a run"
+    )
+    compare.add_argument("run_id")
+    compare.add_argument("--json", action="store_true")
+    compare.set_defaults(handler=cmd_compare)
+
+    report = commands.add_parser("report", help="export reproducible evidence report of a run")
+    report.add_argument("run_id")
+    report.add_argument("--format", choices=["markdown", "json"], default="markdown")
+    report.add_argument("--lang", choices=["en", "de"], default="en")
+    report.add_argument("--output", help="write report to a file instead of stdout")
+    report.set_defaults(handler=cmd_report)
+
+    explain = commands.add_parser("explain", help="show verified claim explanations for a run")
+    explain.add_argument("run_id")
+    explain.add_argument("target", nargs="?", default="study")
+    explain.add_argument("--kind", choices=["result", "rejection", "comparison"], default="result")
+    explain.add_argument("--lang", choices=["en", "de"], default="en")
+    explain.add_argument("--json", action="store_true")
+    explain.set_defaults(handler=cmd_explain)
+
+    serve_api = commands.add_parser("serve-api", help="start the HTTP API and workspace UI")
+    serve_api.add_argument("--host", default="127.0.0.1")
+    serve_api.add_argument("--port", type=int, default=8000)
+    serve_api.add_argument("--policies", default=DEFAULT_POLICY_DIRECTORY)
+    serve_api.add_argument(
+        "--seed-scenario",
+        help="optional scenario YAML/JSON to register into the store at startup",
+    )
+    serve_api.add_argument(
+        "--frontend-dir",
+        help="optional directory containing the built frontend bundle (defaults to frontend/dist)",
+    )
+    serve_api.set_defaults(handler=cmd_serve_api)
+
+    serve_mcp = commands.add_parser("serve-mcp", help="start the stdio MCP server")
+    serve_mcp.add_argument("--policies", default=DEFAULT_POLICY_DIRECTORY)
+    serve_mcp.set_defaults(handler=cmd_serve_mcp)
+
     layers = commands.add_parser("layers", help="write the map layers of a run as GeoJSON")
     layers.add_argument("run_id")
     layers.add_argument("directory")
@@ -903,7 +1270,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     except ScenarioNotExecutableError as error:
         _print_report(error.report)
         return 1
-    except (NotFoundError, ImmutabilityError, SchemaChangedError, KeyError, ValueError) as error:
+    except (
+        NotFoundError,
+        ImmutabilityError,
+        SchemaChangedError,
+        PermissionError,
+        KeyError,
+        ValueError,
+    ) as error:
         message = error.args[0] if error.args else str(error)
         print(f"error: {message}", file=sys.stderr)
         return 1

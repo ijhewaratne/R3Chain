@@ -232,3 +232,102 @@ def test_a_route_modelled_in_the_coupling_is_visible_in_the_result(
     )
     # The route lies in the connection's pressure zone, so its limits hold along the route.
     assert "and along the route" in routed.check("connection_min_pressure").description
+
+
+@pytest.mark.requirement("A11")
+def test_capacity_cases_stay_separate_from_operating_eligibility(
+    scenario: Scenario,
+) -> None:
+    # A policy without capacity_case_ids continues to enumerate without capacity cases.
+    raw = CANDIDATE_POLICY.to_json_dict()
+    params_v1 = {k: v for k, v in raw["parameters"].items() if k != "capacity_case_ids"}
+    v1_policy = CANDIDATE_POLICY.model_copy(update={"version": "1", "parameters": params_v1})
+    s1 = CandidateSettings.from_policy(v1_policy)
+    assert s1.capacity_case_ids == ()
+
+    # Overlapping operating and capacity cases are rejected explicitly.
+    overlap_policy = CANDIDATE_POLICY.model_copy(
+        update={
+            "version": "test-overlap",
+            "parameters": {
+                **raw["parameters"],
+                "operating_case_ids": "shoulder-season",
+                "capacity_case_ids": "shoulder-season",
+            },
+        }
+    )
+    overlap_settings = CandidateSettings.from_policy(overlap_policy)
+    from r3chain.domain import policies
+    from r3chain.geospatial.screening import SiteScreening
+    from r3chain.search.candidates import enumerate_candidates
+
+    with pytest.raises(policies.PolicyError, match="both operating and capacity"):
+        enumerate_candidates(scenario, {}, (), overlap_settings)
+
+    # Deficits or failed limits in a capacity case never mark the candidate technically failed.
+    cand_ok = candidate(
+        "cap limit",
+        1_000_000.0,
+        capacity_case_ids=("winter-design",),
+        capacity_coupling_case_ids=("cand-cap-limit-winter-design",),
+    )
+    cand_net = candidate(
+        "cap unresolved",
+        2_000_000.0,
+        capacity_case_ids=("winter-design",),
+        capacity_coupling_case_ids=("cand-cap-unresolved-winter-design",),
+    )
+    outcomes = {
+        cand_ok.candidate_id: {
+            cand_ok.coupling_case_ids[0]: summary("completed"),
+            cand_ok.capacity_coupling_case_ids[0]: summary(
+                "physical_limit_exceeded",
+                reason="exchanger cold end approach reached",
+                limiting_conditions=["exchanger_cold_end_approach", "source:max_drawdown_pa"],
+                shortfall_causes=["insufficient_power"],
+                operating_point={
+                    "plant_heat_w": 2_580_000.0,
+                    "transmission_heat_loss_w": 30_000.0,
+                    "deficit_heat_w": 520_000.0,
+                },
+            ),
+        },
+        cand_net.candidate_id: {
+            cand_net.coupling_case_ids[0]: summary("completed"),
+            cand_net.capacity_coupling_case_ids[0]: summary(
+                "physical_limit_exceeded",
+                reason=(
+                    "the network case fails: pressure limit exceeded: positive_absolute_pressure"
+                ),
+                limiting_conditions=["network:positive_absolute_pressure"],
+                operating_point=None,
+            ),
+        },
+    }
+    screen_ok = SiteScreening(
+        site_id="alpha",
+        status=ScreeningStatus.PASSED,
+        criteria=(),
+    )
+    assert isinstance(screen_ok, SiteScreening)
+    found, ranking = assess_candidates(
+        [cand_ok, cand_net],
+        outcomes,
+        site_evidence={"alpha": SiteEvidenceStatus.DOCUMENTED},
+        settings=RankingSettings.from_policy(RANKING_POLICY),
+        study_synthetic=True,
+        route_policy="policy route-synthetic version 1",
+    )
+    by_name = {item.label: item for item in found}
+    assert by_name["cap limit"].technical_status is TechnicalStatus.PASSES_EVALUATED_CASES
+    assert by_name["cap limit"].ranking_eligibility.eligible
+    assert by_name["cap limit"].rank == 1
+    assert by_name["cap limit"].capacity_cases[0].outcome == "limit_found"
+    assert by_name["cap limit"].capacity_cases[0].delivered_heat_w == pytest.approx(2_550_000.0)
+
+    assert by_name["cap unresolved"].technical_status is TechnicalStatus.PASSES_EVALUATED_CASES
+    assert by_name["cap unresolved"].ranking_eligibility.eligible
+    assert by_name["cap unresolved"].rank == 2
+    assert by_name["cap unresolved"].capacity_cases[0].outcome == "not_established"
+    assert "positive_absolute_pressure" in by_name["cap unresolved"].capacity_cases[0].reason
+    assert ranking.eligible_count == 2

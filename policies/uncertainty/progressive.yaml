@@ -1,0 +1,21 @@
+policy_id: uncertainty-progressive
+kind: uncertainty
+version: "1"
+title: Progressive sample allocation policy with full-batch error verification (plan v2 V04)
+origin: >-
+  Adaptive sampling policy verifying intermediate batch metrics against the full sample budget
+  before accepting an early stop.
+status: unreviewed
+parameters:
+  mode: progressive
+  sampling_method: latin_hypercube
+  sample_count: 32
+  progressive_initial_count: 8
+  progressive_step_count: 8
+  progressive_max_count: 32
+  progressive_max_error_fraction: 0.02
+  max_unresolved_fraction: 0.25
+  max_sweep_count: 128
+  resilience_cases: "source_outage, backup_loss, base_load_loss, heat_pump_electricity_loss"
+  source_outage_case_id: source-outage
+  adoption_fractions: "1.0, 0.75, 0.5"

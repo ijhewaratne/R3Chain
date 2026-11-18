@@ -1,0 +1,1038 @@
+{
+  "$defs": {
+    "CauseOfFailureClaim": {
+      "additionalProperties": false,
+      "description": "A claim explaining why an option or candidate failed or was rejected (spec 15.4).",
+      "properties": {
+        "check_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Check Id",
+          "type": "string"
+        },
+        "claim_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "const": "cause_of_failure",
+          "default": "cause_of_failure",
+          "title": "Claim Type",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "interval_or_sample": {
+          "default": "deterministic",
+          "minLength": 1,
+          "title": "Interval Or Sample",
+          "type": "string"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit",
+          "unit": "see claim.unit"
+        },
+        "margin": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Margin",
+          "unit": "see claim.unit"
+        },
+        "observed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observed",
+          "unit": "see claim.unit"
+        },
+        "result_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Id"
+        },
+        "rounding_tolerance": {
+          "default": 1e-09,
+          "minimum": 0.0,
+          "title": "Rounding Tolerance",
+          "type": "number",
+          "unit": "see claim.unit"
+        },
+        "run_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "scenario_revision": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Scenario Revision",
+          "type": "string"
+        },
+        "source_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "stage": {
+          "minLength": 1,
+          "title": "Stage",
+          "type": "string"
+        },
+        "subject": {
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "threshold_origin": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threshold Origin"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "upstream_evidence": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Upstream Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "claim_id",
+        "run_id",
+        "scenario_revision",
+        "subject",
+        "synthetic",
+        "stage",
+        "check_id"
+      ],
+      "title": "CauseOfFailureClaim",
+      "type": "object"
+    },
+    "ClaimCheckOutcome": {
+      "additionalProperties": false,
+      "description": "Deterministic verification outcome for one typed claim (V06).",
+      "properties": {
+        "accepted": {
+          "title": "Accepted",
+          "type": "boolean"
+        },
+        "claim_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "$ref": "#/$defs/ClaimType"
+        },
+        "error_codes": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Error Codes",
+          "type": "array"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "claim_type",
+        "accepted"
+      ],
+      "title": "ClaimCheckOutcome",
+      "type": "object"
+    },
+    "ClaimType": {
+      "enum": [
+        "value",
+        "status",
+        "cause_of_failure",
+        "comparison",
+        "open_assumption"
+      ],
+      "title": "ClaimType",
+      "type": "string"
+    },
+    "ComparisonClaim": {
+      "additionalProperties": false,
+      "description": "A cross-candidate ranking or uncertainty preference claim.",
+      "properties": {
+        "boundary": {
+          "minLength": 1,
+          "title": "Boundary",
+          "type": "string"
+        },
+        "candidate_ids": {
+          "items": {
+            "maxLength": 120,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Candidate Ids",
+          "type": "array"
+        },
+        "claim_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "const": "comparison",
+          "default": "comparison",
+          "title": "Claim Type",
+          "type": "string"
+        },
+        "entries": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ComparisonEntry"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "metric_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Metric Id",
+          "type": "string"
+        },
+        "preference_outcome": {
+          "minLength": 1,
+          "title": "Preference Outcome",
+          "type": "string"
+        },
+        "ranked_candidate_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 120,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+            "type": "string"
+          },
+          "title": "Ranked Candidate Ids",
+          "type": "array"
+        },
+        "ranking_policy_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Ranking Policy Id",
+          "type": "string"
+        },
+        "result_ids": {
+          "items": {
+            "maxLength": 120,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Result Ids",
+          "type": "array"
+        },
+        "rounding_tolerance": {
+          "default": 1e-09,
+          "minimum": 0.0,
+          "title": "Rounding Tolerance",
+          "type": "number",
+          "unit": "see claim.unit"
+        },
+        "run_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "sample_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sample Count"
+        },
+        "scenario_revision": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Scenario Revision",
+          "type": "string"
+        },
+        "source_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "subject": {
+          "default": "study",
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "unit": {
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        },
+        "unresolved_samples": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unresolved Samples"
+        },
+        "winner_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Winner Id"
+        }
+      },
+      "required": [
+        "claim_id",
+        "run_id",
+        "scenario_revision",
+        "synthetic",
+        "result_ids",
+        "candidate_ids",
+        "metric_id",
+        "boundary",
+        "unit",
+        "ranking_policy_id",
+        "preference_outcome"
+      ],
+      "title": "ComparisonClaim",
+      "type": "object"
+    },
+    "ComparisonEntry": {
+      "additionalProperties": false,
+      "description": "One candidate row inside a comparison claim.",
+      "properties": {
+        "candidate_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "conditional": {
+          "default": false,
+          "title": "Conditional",
+          "type": "boolean"
+        },
+        "denominator": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Denominator"
+        },
+        "eligible": {
+          "title": "Eligible",
+          "type": "boolean"
+        },
+        "first_rank_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Rank Count"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        },
+        "result_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Result Id",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value",
+          "unit": "see claim.unit"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "result_id",
+        "eligible"
+      ],
+      "title": "ComparisonEntry",
+      "type": "object"
+    },
+    "EvaluationStatus": {
+      "enum": [
+        "valid",
+        "unresolved_numerical",
+        "invalid_input",
+        "unsupported",
+        "not_evaluated",
+        "cancelled",
+        "tool_failure"
+      ],
+      "title": "EvaluationStatus",
+      "type": "string"
+    },
+    "OpenAssumptionClaim": {
+      "additionalProperties": false,
+      "description": "A claim exposing an unknown, conflicting, or conditional assumption (W24, P3).",
+      "properties": {
+        "affects_subjects": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Affects Subjects",
+          "type": "array"
+        },
+        "assumption_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assumption Id"
+        },
+        "claim_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "const": "open_assumption",
+          "default": "open_assumption",
+          "title": "Claim Type",
+          "type": "string"
+        },
+        "field_path": {
+          "minLength": 1,
+          "title": "Field Path",
+          "type": "string"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owner"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "result_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Id"
+        },
+        "run_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "scenario_revision": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Scenario Revision",
+          "type": "string"
+        },
+        "source_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "state": {
+          "enum": [
+            "unknown",
+            "conflict",
+            "conditional"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "subject": {
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "claim_id",
+        "run_id",
+        "scenario_revision",
+        "subject",
+        "synthetic",
+        "field_path",
+        "state"
+      ],
+      "title": "OpenAssumptionClaim",
+      "type": "object"
+    },
+    "SiteEvidenceStatus": {
+      "enum": [
+        "documented",
+        "conditional",
+        "unknown",
+        "conflict"
+      ],
+      "title": "SiteEvidenceStatus",
+      "type": "string"
+    },
+    "StatusClaim": {
+      "additionalProperties": false,
+      "description": "A claim about technical, evaluation, site evidence, or eligibility status.",
+      "properties": {
+        "all_checks_passed": {
+          "default": false,
+          "title": "All Checks Passed",
+          "type": "boolean"
+        },
+        "asserted_feasible": {
+          "default": false,
+          "title": "Asserted Feasible",
+          "type": "boolean"
+        },
+        "asserted_infeasible": {
+          "default": false,
+          "title": "Asserted Infeasible",
+          "type": "boolean"
+        },
+        "claim_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "const": "status",
+          "default": "status",
+          "title": "Claim Type",
+          "type": "string"
+        },
+        "conditional": {
+          "default": false,
+          "title": "Conditional",
+          "type": "boolean"
+        },
+        "eligible": {
+          "title": "Eligible",
+          "type": "boolean"
+        },
+        "evaluation_status": {
+          "$ref": "#/$defs/EvaluationStatus"
+        },
+        "result_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Result Id",
+          "type": "string"
+        },
+        "run_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "scenario_revision": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Scenario Revision",
+          "type": "string"
+        },
+        "site_evidence_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SiteEvidenceStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "subject": {
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "technical_status": {
+          "$ref": "#/$defs/TechnicalStatus"
+        }
+      },
+      "required": [
+        "claim_id",
+        "run_id",
+        "scenario_revision",
+        "subject",
+        "synthetic",
+        "result_id",
+        "technical_status",
+        "evaluation_status",
+        "eligible"
+      ],
+      "title": "StatusClaim",
+      "type": "object"
+    },
+    "TechnicalStatus": {
+      "enum": [
+        "passes_evaluated_cases",
+        "fails_evaluated_case",
+        "not_established"
+      ],
+      "title": "TechnicalStatus",
+      "type": "string"
+    },
+    "ValueClaim": {
+      "additionalProperties": false,
+      "description": "A numerical claim tied to one stored KPI, check value, or scenario input.",
+      "properties": {
+        "boundary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Boundary"
+        },
+        "check_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Check Id"
+        },
+        "claim_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "claim_type": {
+          "const": "value",
+          "default": "value",
+          "title": "Claim Type",
+          "type": "string"
+        },
+        "derived_from": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Derived From",
+          "type": "array"
+        },
+        "field_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field Path"
+        },
+        "kpi_id": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kpi Id"
+        },
+        "result_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Result Id",
+          "type": "string"
+        },
+        "rounding_tolerance": {
+          "default": 1e-09,
+          "minimum": 0.0,
+          "title": "Rounding Tolerance",
+          "type": "number",
+          "unit": "see claim.unit"
+        },
+        "run_id": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "sample_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sample Count"
+        },
+        "scenario_revision": {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "title": "Scenario Revision",
+          "type": "string"
+        },
+        "source_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "subject": {
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "unit": {
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        },
+        "unresolved_samples": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unresolved Samples"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number",
+          "unit": "see claim.unit"
+        },
+        "value_kind": {
+          "enum": [
+            "kpi",
+            "check_observed",
+            "check_limit",
+            "input"
+          ],
+          "title": "Value Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "run_id",
+        "scenario_revision",
+        "subject",
+        "synthetic",
+        "result_id",
+        "value_kind",
+        "unit",
+        "value"
+      ],
+      "title": "ValueClaim",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Structured explanation for a result, rejection, or comparison (V05).",
+  "properties": {
+    "all_claims_accepted": {
+      "default": true,
+      "title": "All Claims Accepted",
+      "type": "boolean"
+    },
+    "checks": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ClaimCheckOutcome"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "claims": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "cause_of_failure": "#/$defs/CauseOfFailureClaim",
+            "comparison": "#/$defs/ComparisonClaim",
+            "open_assumption": "#/$defs/OpenAssumptionClaim",
+            "status": "#/$defs/StatusClaim",
+            "value": "#/$defs/ValueClaim"
+          },
+          "propertyName": "claim_type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/ValueClaim"
+          },
+          {
+            "$ref": "#/$defs/StatusClaim"
+          },
+          {
+            "$ref": "#/$defs/CauseOfFailureClaim"
+          },
+          {
+            "$ref": "#/$defs/ComparisonClaim"
+          },
+          {
+            "$ref": "#/$defs/OpenAssumptionClaim"
+          }
+        ]
+      },
+      "title": "Claims",
+      "type": "array"
+    },
+    "explanation_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Explanation Id",
+      "type": "string"
+    },
+    "result_id": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Result Id"
+    },
+    "run_id": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "scenario_revision": {
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]*$",
+      "title": "Scenario Revision",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "0.1.0",
+      "default": "0.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scope": {
+      "enum": [
+        "result",
+        "rejection",
+        "comparison",
+        "study"
+      ],
+      "title": "Scope",
+      "type": "string"
+    },
+    "subject": {
+      "minLength": 1,
+      "title": "Subject",
+      "type": "string"
+    },
+    "synthetic": {
+      "title": "Synthetic",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "explanation_id",
+    "scope",
+    "subject",
+    "run_id",
+    "scenario_revision",
+    "synthetic",
+    "claims"
+  ],
+  "title": "ExplanationRecord",
+  "type": "object"
+}

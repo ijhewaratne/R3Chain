@@ -24,7 +24,12 @@ from r3chain.domain.records.common import require_unique
 from r3chain.domain.records.network import Connection, Network, Route
 from r3chain.domain.records.plant import CouplingCase, OperatingCase, Plant
 from r3chain.domain.records.runs import PolicyRef
-from r3chain.domain.records.scenarios import EconomicScenario, OperatingScenario, UncertaintyModel
+from r3chain.domain.records.scenarios import (
+    EconomicScenario,
+    OperatingScenario,
+    StoredSeries,
+    UncertaintyModel,
+)
 from r3chain.domain.records.site import Site, WellScenario
 from r3chain.domain.records.spatial import SpatialLayer
 from r3chain.domain.records.study import Dataset, Study
@@ -41,7 +46,7 @@ class Alternative(Record):
 
 class Scenario(VersionedRecord):
     SCHEMA_NAME: ClassVar[str] = "scenario"
-    schema_version: Literal["0.3.0"] = "0.3.0"
+    schema_version: Literal["0.5.0"] = "0.5.0"
 
     scenario_id: Identifier
     study: Study
@@ -54,6 +59,8 @@ class Scenario(VersionedRecord):
     routes: tuple[Route, ...] = ()
     # Imported GIS layers in the study's reference system (milestone M3).
     spatial_layers: tuple[SpatialLayer, ...] = ()
+    # Imported interval time series frozen with the scenario (milestone M4).
+    time_series: tuple[StoredSeries, ...] = ()
     plants: tuple[Plant, ...] = ()
     operating_cases: tuple[OperatingCase, ...] = ()
     coupling_cases: tuple[CouplingCase, ...] = ()
@@ -74,6 +81,7 @@ class Scenario(VersionedRecord):
         require_unique((item.connection_id for item in self.connections), "connection_id")
         require_unique((item.route_id for item in self.routes), "route_id")
         require_unique((item.layer_id for item in self.spatial_layers), "layer_id")
+        require_unique((item.series_id for item in self.time_series), "series_id")
         require_unique((item.plant_id for item in self.plants), "plant_id")
         require_unique(
             (item.operating_case_id for item in self.operating_cases), "operating_case_id"
@@ -139,4 +147,16 @@ def _scenario_gains_plants_and_cases(data: JsonDict) -> JsonDict:
 @register_migration("scenario", "0.2.0", "0.3.0")
 def _scenario_gains_spatial_layers(data: JsonDict) -> JsonDict:
     """0.3.0 adds imported spatial layers. Older scenarios have none."""
+    return data
+
+
+@register_migration("scenario", "0.3.0", "0.4.0")
+def _scenario_gains_time_series(data: JsonDict) -> JsonDict:
+    """0.4.0 adds frozen time series. Older scenarios have none."""
+    return data
+
+
+@register_migration("scenario", "0.4.0", "0.5.0")
+def _scenario_gains_uncertainty_model_v2(data: JsonDict) -> JsonDict:
+    """0.5.0 adopts uncertainty_model 0.2.0 (correlation groups and pre-drilling parameters)."""
     return data

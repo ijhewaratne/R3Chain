@@ -44,7 +44,7 @@ def _count_inputs(node: Any) -> int:
 @pytest.mark.requirement("W24")
 def test_register_lists_every_input(scenario: Scenario, scenario_data: dict[str, Any]) -> None:
     rows = assumption_register(scenario)
-    assert len(rows) == _count_inputs(scenario_data) == 115
+    assert len(rows) == _count_inputs(scenario_data) == 141
     assert len({row.field_path for row in rows}) == len(rows)
     assert len({row.assumption_id for row in rows}) == len(rows)
     by_path = {row.field_path: row for row in rows}
@@ -290,7 +290,7 @@ def _with_operating_scenario(data: dict[str, Any]) -> dict[str, Any]:
             "interval_s": 3600,
         },
     }
-    return {**data, "operating_scenarios": [operating]}
+    return {**data, "operating_scenarios": [operating], "time_series": []}
 
 
 def _hourly(series_id: str, hours: int = 24, step_s: float = 3600.0) -> IntervalSeries:
@@ -365,3 +365,104 @@ def test_json_and_yaml_files_load_alike(tmp_path: Path, scenario: Scenario) -> N
     path.write_text(scenario.model_dump_json(), encoding="utf-8")
     loaded, report = load_scenario_file(path)
     assert loaded == scenario and report.executable
+
+
+def test_economic_scenario_validation_rejects_fractional_lifetimes_and_negative_residuals(
+    scenario_data: dict[str, Any],
+) -> None:
+    # Fractional horizon_years.
+    bad_horizon = changed(scenario_data, "economic_scenarios[econ-base].horizon_years", known(20.5))
+    assert (
+        "invalid_economic_horizon",
+        "economic_scenarios[econ-base].horizon_years",
+    ) in codes(bad_horizon)
+
+    # Discount rate at or below -100% is already rejected by parse_scenario.
+    bad_rate = changed(
+        scenario_data, "economic_scenarios[econ-base].discount_rate_per_year", known(-1.0)
+    )
+    parsed_bad_rate, rate_report = parse_scenario(bad_rate)
+    assert parsed_bad_rate is None and not rate_report.executable
+
+    # Fractional CAPEX lifetime_years.
+    bad_life = changed(
+        scenario_data,
+        "economic_scenarios[econ-base].cost_items[wells-alpha-capex].lifetime_years",
+        known(12.5),
+    )
+    assert (
+        "invalid_cost_lifetime",
+        "economic_scenarios[econ-base].cost_items[wells-alpha-capex].lifetime_years",
+    ) in codes(bad_life)
+
+    # Replacement item with out-of-range year (> horizon_years) or fractional year.
+    e_base = "economic_scenarios[econ-base]"
+    items = list(scenario_data["economic_scenarios"][0]["cost_items"])
+    base_item = {
+        "item_id": "bad-repl",
+        "asset_id": "wells-alpha",
+        "category": "replacement",
+        "cost_owner": "system",
+        "location": "source",
+        "included": True,
+        "amount": known(500_000.0),
+        "amount_basis": "total",
+        "currency": "EUR",
+        "price_year": 2026,
+        "price_convention": "real",
+        "lifetime_years": known(25.0),
+        "applies_to": {"site_ids": ["alpha"]},
+    }
+    econ_entry = scenario_data["economic_scenarios"][0]
+    bad_repl_data = {
+        **scenario_data,
+        "economic_scenarios": [{**econ_entry, "cost_items": [*items, base_item]}],
+    }
+    assert ("invalid_replacement_year", f"{e_base}.cost_items[bad-repl].lifetime_years") in codes(
+        bad_repl_data
+    )
+
+    # Negative residual value is rejected (residual credit must be entered as positive).
+    res_item = {
+        **base_item,
+        "item_id": "bad-res",
+        "category": "residual_value",
+        "lifetime_years": None,
+        "amount": known(-100_000.0),
+    }
+    bad_res_data = {
+        **scenario_data,
+        "economic_scenarios": [{**econ_entry, "cost_items": [*items, res_item]}],
+    }
+    assert ("invalid_residual_value", f"{e_base}.cost_items[bad-res].amount") in codes(bad_res_data)
+
+
+def test_negative_demand_series_is_rejected_with_series_and_interval(
+    scenario_data: dict[str, Any],
+) -> None:
+    from datetime import UTC, datetime
+
+    scenario = Scenario.model_validate(_with_operating_scenario(scenario_data))
+    values = [100.0] * 24
+    values[5] = -25.0
+    neg_demand = IntervalSeries.regular(
+        series_id="demand",
+        unit="W",
+        kind=SeriesKind.INTERVAL_MEAN,
+        start_utc=datetime(2026, 1, 1, tzinfo=UTC),
+        step_s=3600.0,
+        values=values,
+    )
+    errors = validate_scenario(
+        scenario,
+        {
+            "demand": neg_demand,
+            "waste-heat": _hourly("waste-heat"),
+            "electricity-price": _hourly("electricity-price"),
+        },
+    ).errors
+    assert len(errors) == 1
+    assert errors[0].code == "negative_demand"
+    assert errors[0].field_path == "operating_scenarios[operation-base].series[demand]"
+    assert "interval 5" in errors[0].message
+    assert "2026-01-01T05:00:00" in errors[0].message

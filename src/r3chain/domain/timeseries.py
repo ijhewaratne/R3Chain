@@ -15,7 +15,7 @@ from enum import StrEnum
 from typing import Annotated
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import AfterValidator, AwareDatetime, model_validator
+from pydantic import AfterValidator, AwareDatetime, Field, model_validator
 
 from r3chain.domain.base import Identifier, Real, Record
 from r3chain.domain.units import CANONICAL_UNITS, UnitError
@@ -54,7 +54,7 @@ class IntervalSeries(Record):
     kind: SeriesKind
     starts_utc: tuple[UtcDatetime, ...]
     durations_s: tuple[Real, ...]
-    values: tuple[Real, ...]
+    values: tuple[Real, ...] = Field(json_schema_extra={"unit": "see unit"})
 
     @model_validator(mode="after")
     def _intervals_are_valid(self) -> IntervalSeries:

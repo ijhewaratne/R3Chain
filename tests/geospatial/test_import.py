@@ -320,3 +320,64 @@ def test_permitted_uses_and_origin_must_be_declared_before_import(tmp_path: Path
         "restricted",
         "wsw-geology",
     )
+
+
+def test_columns_with_spaces_and_brackets_import_and_unreadable_parquet_fails_cleanly(
+    tmp_path: Path, scenario_data: dict[str, Any]
+) -> None:
+    import geopandas as gpd
+    import pandas as pd
+    from shapely.geometry import LineString
+
+    from r3chain.domain.validation import parse_scenario
+    from r3chain.geospatial.importers import LayerImportError, LayerMapping, import_layer
+
+    gpkg_path = tmp_path / "weird_cols.geojson"
+    gdf = gpd.GeoDataFrame(
+        {"Weg ID": ["C1"], "Art": ["street"], "Breite (m)": [6.5]},
+        geometry=[LineString([(500100.0, 5700100.0), (500200.0, 5700100.0)])],
+        crs="EPSG:25832",
+    )
+    gdf.to_file(gpkg_path, driver="GeoJSON")
+    mapping = LayerMapping.model_validate(
+        {
+            "mapping_id": "m-weird",
+            "kind": "corridor",
+            "id_column": "Weg ID",
+            "coordinate_precision_m": 0.1,
+            "max_repair_size_change_fraction": 0.05,
+            "properties": [
+                {"source": "Art", "target": "corridor_kind"},
+                {"source": "Breite (m)", "target": "width_m", "unit": "m"},
+            ],
+        }
+    )
+    layer = import_layer(
+        gpkg_path,
+        layer_id="corridors-weird",
+        dataset_id="ds-weird",
+        mapping=mapping,
+        target_crs="EPSG:25832",
+    )
+    assert len(layer.features) == 1 and not layer.rejected
+    assert layer.features[0].feature_id == "C1"
+    assert layer.features[0].properties == {"corridor_kind": "street", "width_m": 6.5}
+
+    # Parquet file without geometry column raises LayerImportError, never raw ValueError.
+    bad_pq = tmp_path / "plain.parquet"
+    pd.DataFrame({"Weg ID": ["C1"], "Art": ["street"], "Breite (m)": [6.5]}).to_parquet(bad_pq)
+    with pytest.raises(LayerImportError):
+        import_layer(
+            bad_pq,
+            layer_id="corridors-bad",
+            dataset_id="ds-bad",
+            mapping=mapping,
+            target_crs="EPSG:25832",
+        )
+
+    # Connection location in another reference system is reported cleanly.
+    scenario_data["connections"][0]["location"]["crs"] = "EPSG:4326"
+    _, report = parse_scenario(scenario_data)
+    assert ("wrong_reference_system", "connections[conn-west].location.crs") in [
+        (issue.code, issue.field_path) for issue in report.errors
+    ]

@@ -113,18 +113,19 @@ def test_every_stage_of_the_chain_runs(synthetic_run: tuple[Store, Run, Result])
         "candidates": StageStatus.COMPLETED,
         "couple": StageStatus.COMPLETED,
         "assess": StageStatus.COMPLETED,
-        "operate": StageStatus.NOT_ESTABLISHED,
-        "cost": StageStatus.NOT_RUN,
-        "compare": StageStatus.NOT_RUN,
+        "operate": StageStatus.COMPLETED,
+        "cost": StageStatus.COMPLETED,
+        "compare": StageStatus.COMPLETED,
     }
     assert stage(result, "candidates").payload["counts"] == {"candidates": 27, "rejected": 1}
-    # 9 routes times 3 plants. Four direct or separated plants at Beta fail physically.
+    # 9 routes times 3 plants across 1 operating + 1 capacity case (shoulder + winter):
+    # 25 completed and 29 physical_limit_exceeded (capacity winter limits or east pressure limits).
     assert stage(result, "couple").payload["counts"] == {
-        "completed": 23,
-        "physical_limit_exceeded": 4,
+        "completed": 25,
+        "physical_limit_exceeded": 29,
     }
-    # Operation and economics do not exist yet, so the study has no technical result.
-    assert result.technical_status is TechnicalStatus.NOT_ESTABLISHED
+    # All ten active pipeline stages through compare (M5) now complete on evaluated cases.
+    assert result.technical_status is TechnicalStatus.PASSES_EVALUATED_CASES
 
 
 def test_each_candidate_has_its_own_result_record(
@@ -271,7 +272,7 @@ def test_route_heat_loss_and_lift_are_modelled_for_each_candidate(
     long = found["alpha to conn-east by route 1, plant-direct"]
 
     def point(item: CandidateAssessment) -> dict[str, Any]:
-        (case,) = coupled[item.candidate_id].values()
+        case = coupled[item.candidate_id][f"{item.candidate_id}-shoulder-season"]
         result_record = CouplingResult.model_validate(case["result"])
         assert result_record.transmission_route_id is not None
         assert not any("route" in line for line in result_record.not_modelled)
@@ -365,9 +366,14 @@ def test_a_case_that_does_not_converge_leaves_the_study_unresolved(
         item for item in found if item.evaluation_status is EvaluationStatus.UNRESOLVED_NUMERICAL
     ]
     assert unresolved
-    for item in unresolved:
-        # An unresolved calculation is never a technical failure, and never ranked.
+    pure_unresolved = [
+        item for item in unresolved if "physical_limit_exceeded" not in item.case_states.values()
+    ]
+    assert pure_unresolved
+    for item in pure_unresolved:
+        # An unresolved calculation without another failed case is never a technical failure.
         assert item.technical_status is TechnicalStatus.NOT_ESTABLISHED
+    for item in unresolved:
         assert item.rank is None
         assert any(
             "did not converge" in line or "were not reached" in line for line in item.explanation
@@ -375,7 +381,10 @@ def test_a_case_that_does_not_converge_leaves_the_study_unresolved(
     failed = [
         item for item in found if item.technical_status is TechnicalStatus.FAILS_EVALUATED_CASE
     ]
-    assert all(item.evaluation_status is EvaluationStatus.VALID for item in failed)
+    pure_failed = [item for item in failed if "non_converged" not in item.case_states.values()]
+    assert pure_failed and all(
+        item.evaluation_status is EvaluationStatus.VALID for item in pure_failed
+    )
 
 
 @pytest.mark.requirement("A12")
@@ -425,12 +434,22 @@ def test_older_scenarios_still_load(scenario_data: dict[str, Any]) -> None:
     older = {
         name: value
         for name, value in scenario_data.items()
-        if name not in {"plants", "operating_cases", "coupling_cases", "spatial_layers"}
+        if name
+        not in {
+            "plants",
+            "operating_cases",
+            "coupling_cases",
+            "spatial_layers",
+            "series_sources",
+            "time_series",
+        }
     }
-    for version in ("0.1.0", "0.2.0"):
+    for version in ("0.1.0", "0.2.0", "0.3.0", "0.4.0"):
         scenario = Scenario.model_validate({**older, "schema_version": version})
-        assert scenario.schema_version == "0.3.0"
-        assert scenario.plants == () and scenario.spatial_layers == ()
+        assert scenario.schema_version == "0.5.0"
+        assert (
+            scenario.plants == () and scenario.spatial_layers == () and scenario.time_series == ()
+        )
     with pytest.raises(ValueError, match="no migration"):
         Scenario.model_validate({**older, "schema_version": "0.0.9"})
 

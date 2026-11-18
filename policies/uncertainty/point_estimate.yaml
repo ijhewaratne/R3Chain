@@ -1,0 +1,21 @@
+policy_id: uncertainty-point-estimate
+kind: uncertainty
+version: "1"
+title: Point-estimate baseline policy at central input values (plan v2 V03)
+origin: >-
+  Central-value deterministic baseline mode kept runnable alongside probabilistic and sweep
+  uncertainty policies on the same frozen scenario revision.
+status: unreviewed
+parameters:
+  mode: point_estimate
+  sampling_method: point_estimate
+  sample_count: 1
+  progressive_initial_count: 1
+  progressive_step_count: 1
+  progressive_max_count: 1
+  progressive_max_error_fraction: 0.02
+  max_unresolved_fraction: 0.25
+  max_sweep_count: 128
+  resilience_cases: "source_outage, backup_loss, base_load_loss, heat_pump_electricity_loss"
+  source_outage_case_id: source-outage
+  adoption_fractions: "1.0, 0.75, 0.5"

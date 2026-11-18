@@ -739,3 +739,40 @@ def test_a_plant_at_a_connection_away_from_the_pressure_reference_is_evaluated(
     assert network.node("r0").pressure.value_pa == pytest.approx(750_000.0, abs=1.0)
     supply = network.supply_points[0]
     assert supply.pressure_lift_pa == pytest.approx(150_000.0, abs=1.0)
+
+
+def test_connection_max_heat_checks_delivered_heat_minus_route_loss(
+    network_model: MemoNetworkModel, scenario_data: dict[str, Any]
+) -> None:
+    design = {
+        "inner_diameter_m": known(0.175),
+        "roughness_m": known(0.0001),
+        "heat_transfer_coefficient_w_m2_k": known(0.4),
+    }
+    routed = completed(
+        couple(
+            network_model,
+            scenario_data,
+            "alpha-direct-shoulder",
+            patches=((f"{CASE}.transmission", design),),
+        )
+    )
+    point = routed.operating_point
+    assert point is not None and point.transmission_heat_loss_w is not None
+    conn_heat = point.demand_heat_w - point.transmission_heat_loss_w
+    # Place connection limit between connection heat (~1.27 MW) and plant heat (~1.30 MW).
+    midpoint_limit = conn_heat + 0.5 * point.transmission_heat_loss_w
+    checked = completed(
+        couple(
+            network_model,
+            scenario_data,
+            "alpha-direct-shoulder",
+            patches=(
+                (f"{CASE}.transmission", design),
+                ("connections[conn-west].limits.max_heat_w", known(midpoint_limit)),
+            ),
+        )
+    )
+    assert checked.state is AdapterState.COMPLETED
+    assert checked.check("connection_max_heat").outcome.value == "pass"
+    assert checked.check("connection_max_heat").observed == pytest.approx(conn_heat, rel=1e-6)

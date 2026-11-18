@@ -58,6 +58,9 @@ CREATE TABLE IF NOT EXISTS results (
 CREATE TABLE IF NOT EXISTS stage_cache (
     cache_key TEXT PRIMARY KEY, stage TEXT NOT NULL, output_json TEXT NOT NULL,
     run_id TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS jobs (
+    job_id TEXT PRIMARY KEY, study_id TEXT NOT NULL, project_id TEXT NOT NULL,
+    status TEXT NOT NULL, created_at TEXT NOT NULL, record_json TEXT NOT NULL);
 """
 
 
@@ -78,7 +81,8 @@ class Store:
         self.root = root
         self._clock = clock
         root.mkdir(parents=True, exist_ok=True)
-        self._db = sqlite3.connect(root / "r3chain.db")
+        self._db = sqlite3.connect(root / "r3chain.db", timeout=30.0)
+        self._db.execute("PRAGMA busy_timeout = 30000;")
         self._db.executescript(_TABLES)
         self._db.commit()
 
@@ -283,6 +287,22 @@ class Store:
         ).fetchall()
         return tuple(ScenarioRevision.model_validate_json(row[0]) for row in rows)
 
+    def list_all_revisions(self) -> tuple[ScenarioRevision, ...]:
+        rows = self._db.execute(
+            "SELECT record_json FROM revisions ORDER BY created_at, rowid"
+        ).fetchall()
+        return tuple(ScenarioRevision.model_validate_json(row[0]) for row in rows)
+
+    def latest_revision_for_study(self, study_id: str) -> tuple[ScenarioRevision, Scenario]:
+        rows = self._db.execute(
+            "SELECT record_json, scenario_json FROM revisions ORDER BY rowid DESC"
+        ).fetchall()
+        for rev_json, scen_json in rows:
+            scenario = Scenario.model_validate_json(scen_json)
+            if scenario.study.study_id == study_id or scenario.scenario_id == study_id:
+                return ScenarioRevision.model_validate_json(rev_json), scenario
+        raise NotFoundError(f"study {study_id}")
+
     # --- runs and results -------------------------------------------------------------------
 
     def create_run(self, run: Run) -> None:
@@ -343,6 +363,64 @@ class Store:
             "SELECT record_json FROM results WHERE run_id = ? ORDER BY rowid", (run_id,)
         ).fetchall()
         return tuple(Result.model_validate_json(row[0]) for row in rows)
+
+    def get_result(self, result_id: str) -> Result:
+        row = self._one("SELECT record_json FROM results WHERE result_id = ?", (result_id,))
+        if row is None:
+            raise NotFoundError(f"result {result_id}")
+        return Result.model_validate_json(row[0])
+
+    # --- jobs -------------------------------------------------------------------------------
+
+    def put_job_raw(
+        self,
+        *,
+        job_id: str,
+        study_id: str,
+        project_id: str,
+        status: str,
+        created_at: str,
+        record_json: str,
+    ) -> None:
+        self._insert_once(
+            "jobs",
+            {"job_id": job_id},
+            {
+                "study_id": study_id,
+                "project_id": project_id,
+                "status": status,
+                "created_at": created_at,
+                "record_json": record_json,
+            },
+            f"job {job_id}",
+        )
+
+    def update_job_raw(self, job_id: str, status: str, record_json: str) -> None:
+        cursor = self._db.execute(
+            "UPDATE jobs SET status = ?, record_json = ? WHERE job_id = ?",
+            (status, record_json, job_id),
+        )
+        self._db.commit()
+        if cursor.rowcount != 1:
+            raise NotFoundError(f"job {job_id}")
+
+    def get_job_raw(self, job_id: str) -> str:
+        row = self._one("SELECT record_json FROM jobs WHERE job_id = ?", (job_id,))
+        if row is None:
+            raise NotFoundError(f"job {job_id}")
+        return str(row[0])
+
+    def list_jobs_raw(self, study_id: str | None = None) -> tuple[str, ...]:
+        if study_id is None:
+            rows = self._db.execute(
+                "SELECT record_json FROM jobs ORDER BY created_at, rowid"
+            ).fetchall()
+        else:
+            rows = self._db.execute(
+                "SELECT record_json FROM jobs WHERE study_id = ? ORDER BY created_at, rowid",
+                (study_id,),
+            ).fetchall()
+        return tuple(str(row[0]) for row in rows)
 
     # --- stage cache ------------------------------------------------------------------------
 

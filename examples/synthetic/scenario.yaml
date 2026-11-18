@@ -1,4 +1,4 @@
-# Synthetic study, milestone M3 version.
+# Synthetic study, milestone M4 version.
 #
 # Every value in this file is invented for software development and testing. Nothing here
 # describes Wuppertal, WSW assets or any real site. See definitions.md.
@@ -32,11 +32,11 @@ alternatives:
 
 datasets:
   - dataset_id: syn-definitions
-    version: "4"
+    version: "5"
     kind: definitions
     title: Definitions of the synthetic study
     source_uri: definitions.md
-    checksum: "sha256:fed2c815fee1b765b6f9d748e630104f5766e00b42fd0ce89e526c7b45fae053"
+    checksum: "sha256:fabc941bc1530209545078729b7e7e465d1dc7dbcd70b9abf932a5ef4abe32d9"
     owner: R3CHAIN development
     acquired_at: 2026-11-15T00:00:00Z
     allowed_use: public
@@ -122,6 +122,19 @@ datasets:
     quality: unreviewed
     quality_note: Invented geometry. Not evidence about any real place.
     synthetic: true
+  - dataset_id: syn-series-2026
+    version: "1"
+    kind: timeseries
+    title: Chronological 2026 hourly demand, availability and tariff series
+    source_uri: series/annual_2026.json
+    checksum: "sha256:96f6851ed4b45dbbb1a06daf28a99c80958e5367c9f4ad6e6fd5c193f0e1f6f7"
+    owner: R3CHAIN development
+    acquired_at: 2026-11-16T00:00:00Z
+    allowed_use: public
+    access_group: public
+    quality: unreviewed
+    quality_note: Invented hourly series for software development. Not pilot measurements.
+    synthetic: true
 
 # Imported when the file is loaded. Each layer becomes part of the frozen scenario revision.
 layer_sources:
@@ -132,16 +145,30 @@ layer_sources:
   - {layer_id: barriers, dataset_id: syn-gis-barriers, mapping: gis/barriers.mapping.yaml}
   - {layer_id: demand, dataset_id: syn-gis-demand, mapping: gis/demand.mapping.yaml}
 
+series_sources:
+  - {series_id: syn-demand, dataset_id: syn-series-2026}
+  - {series_id: syn-waste-availability, dataset_id: syn-series-2026}
+  - {series_id: syn-geo-availability, dataset_id: syn-series-2026}
+  - {series_id: syn-electricity-price, dataset_id: syn-series-2026}
+  - {series_id: syn-fuel-price, dataset_id: syn-series-2026}
+  - {series_id: syn-heat-tariff, dataset_id: syn-series-2026}
+
 policies:
   - policy_id: candidate-synthetic
+    version: "2"
+    policy_hash: "sha256:94b97f0230218a2766847cadb29be58b11533ad569d02e94de284caa281966b4"
+  - policy_id: dispatch-synthetic
     version: "1"
-    policy_hash: "sha256:54777478d20f9c2efe5d84646bc825b86865f167532d50acdb2375b07e4b460c"
+    policy_hash: "sha256:9deac9ef38e371fff3074f7ae65fb21663d1775a4bfa39a110dcd0e406a634b4"
+  - policy_id: economic-synthetic
+    version: "1"
+    policy_hash: "sha256:8bb4a99ff33d425452baa242aca6e2c7ae523be4cc2403c402d5961c5a0c955d"
   - policy_id: numerical-coupling-default
     version: "3"
     policy_hash: "sha256:c68ceea9b4dc67dafd4211b388ad56479231ae4cdc0c98397eefdb96d6a3044f"
   - policy_id: ranking-synthetic
-    version: "1"
-    policy_hash: "sha256:71b860741cfd08ea8f4774627b866d99e934337506e5765f18beab23f556126f"
+    version: "2"
+    policy_hash: "sha256:2169b2d6960929062cd19b7d4c791c96fa3678844bed54864ebac691400cca51"
   - policy_id: route-synthetic
     version: "1"
     policy_hash: "sha256:22e62c1175576e23c2b698676a1f8e70b6a3a1b3d6dd5da1b8cc9415aed3f63c"
@@ -151,6 +178,9 @@ policies:
   - policy_id: source-envelope-synthetic
     version: "1"
     policy_hash: "sha256:3f4a0f5f0bcbc199d5f94b4a26095352d3eae2e41bc2b278048dcd8d27dc93db"
+  - policy_id: uncertainty-synthetic
+    version: "1"
+    policy_hash: "sha256:f081744a2026bbfc7e2f7c2bf43331b067133096fd72f80339e305fc5b88ae3b"
 
 # --- sites ------------------------------------------------------------------------------------
 
@@ -566,6 +596,61 @@ operating_cases:
         - {consumer_id: consumer-3, heat_w: 120000, return_temperature_k: 323.15}
         - {consumer_id: consumer-4, heat_w: 80000, return_temperature_k: 323.15}
 
+  - operating_case_id: source-outage
+    network_id: syn-network
+    description: Shoulder-season network demand during a planned geothermal source outage
+    ground_temperature_k: {state: known, value: 283.15, provenance: *operation}
+    loads:
+      state: known
+      provenance: *operation
+      value:
+        - {consumer_id: consumer-1, heat_w: 320000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-2, heat_w: 480000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-3, heat_w: 240000, return_temperature_k: 323.15}
+        - {consumer_id: consumer-4, heat_w: 160000, return_temperature_k: 323.15}
+
+operating_scenarios:
+  - operating_scenario_id: operation-base
+    demand: {series_id: syn-demand, dataset_id: syn-series-2026}
+    source_availability:
+      - source_id: waste-incineration
+        availability: {series_id: syn-waste-availability, dataset_id: syn-series-2026}
+      - source_id: syn-geothermal
+        availability: {series_id: syn-geo-availability, dataset_id: syn-series-2026}
+    tariffs:
+      - {series_id: syn-electricity-price, dataset_id: syn-series-2026}
+      - {series_id: syn-fuel-price, dataset_id: syn-series-2026}
+      - {series_id: syn-heat-tariff, dataset_id: syn-series-2026}
+    dispatch_policy_id: dispatch-synthetic
+    time_basis:
+      start_utc: 2026-01-01T00:00:00Z
+      end_utc: 2027-01-01T00:00:00Z
+      interval_s: 3600
+      presentation_timezone: Europe/Berlin
+    electricity_tariff: {series_id: syn-electricity-price, dataset_id: syn-series-2026}
+    heat_revenue_tariff: {series_id: syn-heat-tariff, dataset_id: syn-series-2026}
+    geothermal_availability: {series_id: syn-geo-availability, dataset_id: syn-series-2026}
+    geothermal_min_output_fraction: {state: known, value: 0.1, provenance: *operation}
+    existing_sources:
+      - source_id: waste-incineration
+        label: Existing waste heat base load
+        role: base_load
+        priority: 10
+        max_heat_w: {state: known, value: 600000, provenance: *operation}
+        min_output_w: {state: known, value: 150000, provenance: *operation}
+        thermal_efficiency_fraction: {state: known, value: 1.0, provenance: *operation}
+        availability: {series_id: syn-waste-availability, dataset_id: syn-series-2026}
+        variable_om_currency_per_j: {state: known, value: 4.166667e-9, provenance: *operation}
+      - source_id: existing-boiler
+        label: Existing peak and backup boiler
+        role: peak_backup
+        priority: 100
+        max_heat_w: {state: known, value: 4000000, provenance: *operation}
+        min_output_w: {state: known, value: 0, provenance: *operation}
+        thermal_efficiency_fraction: {state: known, value: 0.9, provenance: *operation}
+        fuel_tariff: {series_id: syn-fuel-price, dataset_id: syn-series-2026}
+        variable_om_currency_per_j: {state: known, value: 1.388889e-9, provenance: *operation}
+
 # --- coupling cases ---------------------------------------------------------------------------
 #
 # Each case names one source, one plant, one connection and one operating case. From milestone
@@ -644,8 +729,19 @@ economic_scenarios:
     currency: EUR
     price_convention: real
     vat_included: false
+    carbon_monetised: false
     discount_rate_per_year: {state: known, value: 0.04, provenance: &economics {provenance_type: synthetic, source_id: syn-definitions, locator: "section 5"}}
     horizon_years: {state: known, value: 20, provenance: *economics}
+    funding_rules:
+      - rule_id: syn-geo-exploration-grant
+        title: Illustrative exploration and drilling CAPEX grant (unreviewed)
+        effective_date: 2026-01-01
+        source_id: syn-definitions
+        reviewed: false
+        grant_fraction: 0.2
+        applies_to_replacements: false
+        locations: [source]
+        categories: [capex]
     cost_items:
       - item_id: wells-alpha-capex
         asset_id: wells-alpha
@@ -659,8 +755,71 @@ economic_scenarios:
         price_year: 2026
         price_convention: real
         lifetime_years: {state: known, value: 30, provenance: *economics}
-      - item_id: exchanger-alpha-capex
-        asset_id: exchanger-alpha
+        applies_to: {site_ids: [alpha]}
+      - item_id: wells-alpha-fixed-opex
+        asset_id: wells-alpha
+        category: fixed_opex
+        cost_owner: system
+        location: source
+        included: true
+        amount: {state: known, value: 200000, provenance: *economics}
+        amount_basis: per_year
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        applies_to: {site_ids: [alpha]}
+      - item_id: wells-beta-capex
+        asset_id: wells-beta
+        category: capex
+        cost_owner: system
+        location: source
+        included: true
+        amount: {state: known, value: 9000000, provenance: *economics}
+        amount_basis: total
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        lifetime_years: {state: known, value: 30, provenance: *economics}
+        applies_to: {site_ids: [beta]}
+      - item_id: wells-beta-fixed-opex
+        asset_id: wells-beta
+        category: fixed_opex
+        cost_owner: system
+        location: source
+        included: true
+        amount: {state: known, value: 160000, provenance: *economics}
+        amount_basis: per_year
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        applies_to: {site_ids: [beta]}
+      - item_id: wells-gamma-capex
+        asset_id: wells-gamma
+        category: capex
+        cost_owner: system
+        location: source
+        included: true
+        amount: {state: known, value: 13500000, provenance: *economics}
+        amount_basis: total
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        lifetime_years: {state: known, value: 30, provenance: *economics}
+        applies_to: {site_ids: [gamma]}
+      - item_id: wells-gamma-fixed-opex
+        asset_id: wells-gamma
+        category: fixed_opex
+        cost_owner: system
+        location: source
+        included: true
+        amount: {state: known, value: 220000, provenance: *economics}
+        amount_basis: per_year
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        applies_to: {site_ids: [gamma]}
+      - item_id: plant-direct-capex
+        asset_id: plant-direct
         category: capex
         cost_owner: system
         location: plant
@@ -671,6 +830,80 @@ economic_scenarios:
         price_year: 2026
         price_convention: real
         lifetime_years: {state: known, value: 20, provenance: *economics}
+        applies_to: {plant_ids: [plant-direct]}
+      - item_id: plant-direct-fixed-opex
+        asset_id: plant-direct
+        category: fixed_opex
+        cost_owner: system
+        location: plant
+        included: true
+        amount: {state: known, value: 30000, provenance: *economics}
+        amount_basis: per_year
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        applies_to: {plant_ids: [plant-direct]}
+      - item_id: plant-heat-pump-capex
+        asset_id: plant-heat-pump
+        category: capex
+        cost_owner: system
+        location: plant
+        included: true
+        amount: {state: known, value: 2200000, provenance: *economics}
+        amount_basis: total
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        lifetime_years: {state: known, value: 15, provenance: *economics}
+        applies_to: {plant_ids: [plant-heat-pump]}
+      - item_id: plant-heat-pump-fixed-opex
+        asset_id: plant-heat-pump
+        category: fixed_opex
+        cost_owner: system
+        location: plant
+        included: true
+        amount: {state: known, value: 90000, provenance: *economics}
+        amount_basis: per_year
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        applies_to: {plant_ids: [plant-heat-pump]}
+      - item_id: plant-separated-capex
+        asset_id: plant-separated
+        category: capex
+        cost_owner: system
+        location: plant
+        included: true
+        amount: {state: known, value: 950000, provenance: *economics}
+        amount_basis: total
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        lifetime_years: {state: known, value: 20, provenance: *economics}
+        applies_to: {plant_ids: [plant-separated]}
+      - item_id: plant-separated-fixed-opex
+        asset_id: plant-separated
+        category: fixed_opex
+        cost_owner: system
+        location: plant
+        included: true
+        amount: {state: known, value: 45000, provenance: *economics}
+        amount_basis: per_year
+        currency: EUR
+        price_year: 2026
+        price_convention: real
+        applies_to: {plant_ids: [plant-separated]}
+      - item_id: existing-boiler-fixed-opex
+        asset_id: existing-boiler
+        category: fixed_opex
+        cost_owner: system
+        location: existing
+        included: true
+        amount: {state: known, value: 60000, provenance: *economics}
+        amount_basis: per_year
+        currency: EUR
+        price_year: 2026
+        price_convention: real
       - item_id: route-alpha-west-capex
         asset_id: route-alpha-west
         category: capex
@@ -685,6 +918,7 @@ economic_scenarios:
         currency: EUR
         price_year: 2026
         price_convention: real
+        applies_to: {route_ids: [route-alpha-west]}
 
 # --- uncertainty ------------------------------------------------------------------------------
 

@@ -133,12 +133,33 @@ def _read_frame(path: Path, source_layer: str | None) -> Any:
             + ", ".join(sorted(SUPPORTED_FORMATS))
         )
     if suffix == ".parquet":
-        return geopandas.read_parquet(path)
-    if suffix == ".gpkg":
+        try:
+            frame = geopandas.read_parquet(path)
+        except Exception as error:
+            raise LayerImportError(
+                f"{path.name}: failed to read {SUPPORTED_FORMATS[suffix]} file: {error}"
+            ) from error
+    elif suffix == ".gpkg":
         if source_layer is None:
             raise LayerImportError(f"{path.name}: a GeoPackage mapping must name its source_layer")
-        return geopandas.read_file(path, layer=source_layer)
-    return geopandas.read_file(path)
+        try:
+            frame = geopandas.read_file(path, layer=source_layer)
+        except Exception as error:
+            raise LayerImportError(
+                f"{path.name}: failed to read layer {source_layer!r}: {error}"
+            ) from error
+    else:
+        try:
+            frame = geopandas.read_file(path)
+        except Exception as error:
+            raise LayerImportError(
+                f"{path.name}: failed to read {SUPPORTED_FORMATS[suffix]} file: {error}"
+            ) from error
+    try:
+        _ = frame.geometry.name
+    except (AttributeError, ValueError) as error:
+        raise LayerImportError(f"{path.name}: file has no active geometry column") from error
+    return frame
 
 
 def _json_coordinates(value: Any) -> Any:
@@ -180,7 +201,7 @@ def _raw_id(value: Any) -> str | None:
 
 
 def _is_missing(value: Any) -> bool:
-    if value is None:
+    if value is None or type(value).__name__ == "NAType":
         return True
     if isinstance(value, float | np.floating):
         return bool(np.isnan(value))
@@ -229,9 +250,11 @@ def import_layer(
     rejected: list[RejectedFeature] = []
     heights = False
 
-    for index, row in enumerate(frame.itertuples(index=False)):
-        values = row._asdict()
-        geometry = getattr(row, frame.geometry.name)
+    geom_col = frame.geometry.name
+    attr_cols = [str(name) for name in frame.columns if name != geom_col]
+    geometries = list(frame.geometry)
+    records = frame[attr_cols].to_dict(orient="records")
+    for index, (values, geometry) in enumerate(zip(records, geometries, strict=True)):
         feature_id = _raw_id(values.get(mapping.id_column)) or f"row-{index + 1}"
         bounds: tuple[float, float, float, float] | None = None
         if geometry is not None and not geometry.is_empty:

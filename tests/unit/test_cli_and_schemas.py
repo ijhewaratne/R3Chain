@@ -64,8 +64,9 @@ def test_validate_reports_gaps_and_succeeds(cli: Cli) -> None:
 
 def test_validate_fails_on_an_invalid_file(cli: Cli, tmp_path: Path) -> None:
     text = SYNTHETIC_SCENARIO.read_text(encoding="utf-8")
-    # The GIS layers are named relative to the scenario file, so they travel with the copy.
+    # The GIS layers and time series are named relative to the scenario file, so they travel along.
     shutil.copytree(SYNTHETIC_SCENARIO.parent / "gis", tmp_path / "gis")
+    shutil.copytree(SYNTHETIC_SCENARIO.parent / "series", tmp_path / "series")
     broken = tmp_path / "broken.yaml"
     broken.write_text(text.replace("baseline_id: baseline-existing", "baseline_id: nothing"))
     code, output = cli("validate", str(broken))
@@ -80,7 +81,7 @@ def test_validate_fails_on_an_invalid_file(cli: Cli, tmp_path: Path) -> None:
 def test_assumptions_are_listed_without_being_asked_for_one_by_one(cli: Cli) -> None:
     code, output = cli("assumptions", str(SYNTHETIC_SCENARIO))
     assert code == 0
-    assert "115 inputs: 100 active, 1 conflict, 14 unknown" in output
+    assert "141 inputs: 126 active, 1 conflict, 14 unknown" in output
     assert "[synthetic from syn-definitions]" in output
     code, output = cli("assumptions", str(SYNTHETIC_SCENARIO), "--status", "unknown", "--json")
     rows = json.loads(output)
@@ -94,7 +95,8 @@ def test_run_show_and_replay(cli: Cli) -> None:
     assert "site_evidence  completed        computed" in output
     assert "screen         completed        computed" in output
     assert "assess         completed        computed" in output
-    assert "technical not_established, evaluation not_evaluated, synthetic" in output
+    assert "compare        completed        computed" in output
+    assert "technical passes_evaluated_cases, evaluation valid, synthetic" in output
     assert "Candidates (27)" in output and "among the 11 eligible of the 27" in output
 
     # The same scenario again is the same revision, and its stages are reused.
@@ -214,7 +216,8 @@ def test_policies_are_listed_with_their_hashes(cli: Cli) -> None:
     code, output = cli("policies", str(POLICY_DIRECTORY))
     assert code == 0
     assert "numerical-coupling-default" in output and "screening-synthetic" in output
-    assert output.count("sha256:") == len(list(POLICY_DIRECTORY.rglob("*.yaml"))) == 6
+    assert "uncertainty-synthetic" in output
+    assert output.count("sha256:") == len(list(POLICY_DIRECTORY.rglob("*.yaml"))) == 11
 
 
 # --- schemas --------------------------------------------------------------------------------
